@@ -1,6 +1,7 @@
 import en from "./en";
 
 const zhCN: Record<keyof typeof en, string> = {
+  "Development-only tools for previewing Focus UI states.": "仅限开发版本的工具，用于预览 Focus 界面状态。",
   "<30 min": "<30 分钟",
   "30–59 min": "30–59 分钟",
   "60–89 min": "60–89 分钟",

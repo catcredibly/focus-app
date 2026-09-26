@@ -1,3 +1,4 @@
+import { Row, Toggle } from "./SettingsControls";
 import { updatePreview } from "../updatePreview";
 import { CURRENT_YEAR_KEY } from "../data";
 import { resetPreferences } from "../resetPreferences";
@@ -38,8 +39,6 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string) => voi
 type SettingsProps = { settings: FocusSettings; setSetting: <K extends keyof FocusSettings>(key: K, value: FocusSettings[K]) => Promise<void> };
 
 function SettingsHeader({ title, children }: { title: string; children: ReactNode }) { return <header className="settings-section-header"><h2>{title}</h2><p>{children}</p></header>; }
-function Row({ label, hint, children, disabled = false }: { label: string; hint?: string; children: ReactNode; disabled?: boolean }) { return <div className={`setting-row ${disabled ? "setting-row--disabled" : ""}`}><div><strong>{label}</strong>{hint && <span>{hint}</span>}</div><fieldset className="setting-control" disabled={disabled}>{children}</fieldset></div>; }
-function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (value: boolean) => void; label: string }) { return <button type="button" role="switch" aria-checked={checked} aria-label={label} className={`settings-toggle ${checked ? "on" : ""}`} onClick={() => onChange(!checked)}><span/></button>; }
 function RestoreSection({ keys }: { keys: (keyof FocusSettings)[] }) {
   const { t } = useTranslation();
   const [confirming, setConfirming] = useState(false);
@@ -263,6 +262,6 @@ function About() {
     <section><h3>{t("Application")}</h3><dl><div><dt>{t("Version")}</dt><dd>{version}</dd></div><div><dt>{t("Platform")}</dt><dd>Windows</dd></div><div><dt>{t("Data storage")}</dt><dd>{t("Local device")}</dd></div></dl></section>
     <section><h3>{t("Built with")}</h3><p>Tauri / React / TypeScript</p></section>
     <UpdateControls/>
-    {import.meta.env.DEV && isTauri() && <section><h3>{t("Developer tools")}</h3><Row label={t("Preview update dialog")}><button className="secondary-action" onClick={() => updatePreview.open(version)}>{t("Preview update dialog")}</button></Row></section>}
+    {import.meta.env.DEV && isTauri() && <section><h3>{t("Developer tools")}</h3><p>{t("Development-only tools for previewing Focus UI states.")}</p><Row label={t("Preview update dialog")}><button className="secondary-action" onClick={() => updatePreview.open(version)}>{t("Preview update dialog")}</button></Row></section>}
   </div></div>;
 }

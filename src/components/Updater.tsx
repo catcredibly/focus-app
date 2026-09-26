@@ -1,3 +1,4 @@
+import { Row, Toggle } from "./SettingsControls";
 import { useSettings } from "../hooks/useSettings";
 import { meaningfulReleaseNotes } from "../releaseNotes";
 import { ReleaseNotes } from "./ReleaseNotes";
@@ -20,7 +21,11 @@ export function UpdateControls() {
   const { settings, setSetting } = useSettings();
   const { t } = useTranslation();
   const state = useUpdater();
-  return <section className="update-controls"><div><strong>{t("Updates")}</strong><span>{t("Current version")}: {state.currentVersion}</span></div><button className="secondary-action" disabled={busy(state)} onClick={() => void updater.check(true)}>{t(state.phase === "checking" ? "Checking for updates…" : "Check for updates")}</button><label className="update-launch-preference"><input type="checkbox" checked={settings.checkForUpdatesOnLaunch} onChange={event => void setSetting("checkForUpdatesOnLaunch", event.target.checked)}/>{t("Check for updates on launch")}</label><p role="status">{statusKey(state) ? t(statusKey(state)) : "\u00a0"}</p></section>;
+  return <section className="update-controls">
+    <div className="update-controls-heading"><div><h3>{t("Updates")}</h3><p>{t("Current version")}: {state.currentVersion}</p></div><button className="secondary-action" disabled={busy(state)} onClick={() => void updater.check(true)}>{t(state.phase === "checking" ? "Checking for updates…" : "Check for updates")}</button></div>
+    <p role="status">{statusKey(state) ? t(statusKey(state)) : "\u00a0"}</p>
+    <Row label={t("Check for updates on launch")}><Toggle label={t("Check for updates on launch")} checked={settings.checkForUpdatesOnLaunch} onChange={value => void setSetting("checkForUpdatesOnLaunch", value)}/></Row>
+  </section>;
 }
 
 export function UpdatePrompt({ ready = true }: { ready?: boolean }) {

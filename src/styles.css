@@ -786,10 +786,6 @@ select, input { color-scheme: dark; }
 .analytics-page .recharts-default-legend { font-size: 11px; }
 .analytics-page .chart-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (max-width: 1150px) { .analytics-page .subjects-layout { grid-template-columns: 1fr; }.analytics-page .donut-wrap { grid-template-columns: minmax(180px,1fr) minmax(160px,1fr); } }
-.update-controls { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px 20px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border-soft); }
-.update-controls > div { display: flex; flex-direction: column; gap: 6px; }
-.update-controls span, .update-controls p { font-size: 12px; color: var(--text-muted); }
-.update-controls p { grid-column: 1 / -1; min-height: 18px; margin: 0; }
 .update-dialog { margin: auto; color: var(--text); background: var(--surface-panel); border: 1px solid var(--border); max-height: calc(100vh - 40px); overflow-y: auto; }
 .update-dialog::backdrop { background: rgba(0,0,0,.55); }
 .update-dialog progress { width: 100%; accent-color: var(--accent); }
@@ -859,7 +855,6 @@ fieldset.setting-control { border: 0; padding: 0; margin: 0; min-width: 0; }
 .setting-row--disabled .setting-control { opacity: .5; }
 .setting-row--disabled :disabled { cursor: not-allowed; }
 .settings-group-heading { padding: 14px 22px; background: var(--surface-control); border-bottom: 1px solid var(--border-soft); }
-.about-body .update-controls { border-top: 0; margin-top: 0; padding: 18px 0; }
 /* Extend only the separators; retain the capped content width and its padding. */
 .about-settings { container-type: inline-size; }
 .about-settings .about-body > .about-identity,
@@ -908,13 +903,11 @@ fieldset.setting-control { border: 0; padding: 0; margin: 0; min-width: 0; }
 .extend-menu .custom-add, .popout-menu-window .extend-menu .custom-add { color: var(--accent-text); background: var(--accent); border-color: var(--accent); }
 .extend-menu .custom-add:hover { background: var(--accent-strong); }
 .tabs button.active { color: var(--text); border-color: var(--accent); }
-.about-body .update-controls > button { justify-self: end; }
 .update-notes :is(p, ul, ol) { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
 .update-notes ul { list-style: disc; padding-left: 20px; }
 .update-notes ol { list-style: decimal; padding-left: 20px; }
 .update-notes a { color: var(--text); text-decoration: underline; }
 
-.update-launch-preference { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; color: var(--text); }
 /* Controls occupy space only while visible; native window bounds stay fixed. */
 .popout-root[data-layout="compact"] .popout-content { padding-right: 104px; transition: padding-right 180ms ease; }
 .popout-root[data-layout="compact"].popout-root--hover-controls:not(:hover):not(:focus-within) .popout-content { padding-right: 12px; transition-delay: calc(var(--controls-hide-delay,1s) + 150ms); }
@@ -938,3 +931,8 @@ fieldset.setting-control { border: 0; padding: 0; margin: 0; min-width: 0; }
 .start-mode-menu button:hover, .start-mode-menu button:focus-visible { background: var(--surface-control); }
 .expired-timer-notice { position: relative; display: grid; gap: 4px; margin-bottom: 16px; padding: 12px 34px 12px 14px; background: var(--surface-raised); border: 1px solid var(--border-soft); border-radius: 8px; font-size: 12px; }
 .expired-timer-notice button { position: absolute; top: 4px; right: 6px; background: none; border: 0; color: var(--text-muted); font-size: 20px; }
+
+/* About already supplies the horizontal inset; shared rows retain their normal height. */
+.about-body .setting-row { padding-inline: 0; }
+.update-controls-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.update-controls-heading > button { flex-shrink: 0; }

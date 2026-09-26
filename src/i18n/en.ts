@@ -1,4 +1,5 @@
 const en = {
+  "Development-only tools for previewing Focus UI states.": "Development-only tools for previewing Focus UI states.",
   "<30 min": "<30 min",
   "30–59 min": "30–59 min",
   "60–89 min": "60–89 min",

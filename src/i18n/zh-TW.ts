@@ -1,6 +1,7 @@
 import en from "./en";
 
 const zhTW: Record<keyof typeof en, string> = {
+  "Development-only tools for previewing Focus UI states.": "僅限開發版本的工具，用於預覽 Focus 介面狀態。",
   "<30 min": "<30 分鐘",
   "30–59 min": "30–59 分鐘",
   "60–89 min": "60–89 分鐘",

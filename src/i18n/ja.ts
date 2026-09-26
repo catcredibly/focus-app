@@ -1,6 +1,7 @@
 import en from "./en";
 
 const ja: Record<keyof typeof en, string> = {
+  "Development-only tools for previewing Focus UI states.": "Focus の画面状態をプレビューする開発専用ツールです。",
   "<30 min": "30分未満",
   "30–59 min": "30～59分",
   "60–89 min": "60～89分",
