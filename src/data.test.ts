@@ -18,12 +18,14 @@ afterEach(async () => {
 describe("V0.2 data management", () => {
   it("opens a fresh database without bundled study data", async () => {
     const testDb = database();
-    expect(await Promise.all([
-      testDb.academicYears.count(),
-      testDb.subjects.count(),
-      testDb.sessions.count(),
-      testDb.settings.count(),
-    ])).toEqual([0, 0, 0, 0]);
+    expect(
+      await Promise.all([
+        testDb.academicYears.count(),
+        testDb.subjects.count(),
+        testDb.sessions.count(),
+        testDb.settings.count(),
+      ]),
+    ).toEqual([0, 0, 0, 0]);
   });
 
   it("creates an Academic Year and Subject and filters archived Subjects", async () => {
@@ -33,17 +35,33 @@ describe("V0.2 data management", () => {
       { id: "maths", academicYearId: "year", name: "MATHS 120", color: "#4da3ff", archived: false },
       { id: "old", academicYearId: "year", name: "Old course", color: "#ff4d57", archived: true },
     ]);
-    const subjects = (await testDb.subjects.where("academicYearId").equals("year").toArray()).filter((subject) => !subject.archived);
+    const subjects = (await testDb.subjects.where("academicYearId").equals("year").toArray()).filter(
+      (subject) => !subject.archived,
+    );
     expect(subjects.map((subject) => subject.name)).toEqual(["MATHS 120"]);
   });
 
   it("archives and restores a completed Session without losing data", async () => {
     const testDb = database();
-    await testDb.sessions.add({ id: "session", subjectId: "maths", subjectName: "MATHS 120", academicYearId: "year", academicYearName: "University Year 1", startTime: 1_000, endTime: 3_601_000, focusedDurationSeconds: 3600, archived: false });
+    await testDb.sessions.add({
+      id: "session",
+      subjectId: "maths",
+      subjectName: "MATHS 120",
+      academicYearId: "year",
+      academicYearName: "University Year 1",
+      startTime: 1_000,
+      endTime: 3_601_000,
+      focusedDurationSeconds: 3600,
+      archived: false,
+    });
     await testDb.sessions.update("session", { archived: true });
     expect((await testDb.sessions.get("session"))?.archived).toBe(true);
     await testDb.sessions.update("session", { archived: false });
-    expect(await testDb.sessions.get("session")).toMatchObject({ subjectName: "MATHS 120", focusedDurationSeconds: 3600, archived: false });
+    expect(await testDb.sessions.get("session")).toMatchObject({
+      subjectName: "MATHS 120",
+      focusedDurationSeconds: 3600,
+      archived: false,
+    });
   });
 
   it("formats duration consistently for manual Sessions", () => {
@@ -63,11 +81,23 @@ describe("V0.2 data management", () => {
     const name = `focus-migration-${crypto.randomUUID()}`;
     const legacy = new Dexie(name);
     opened.push(legacy);
-    legacy.version(1).stores({ academicYears: "id, name, startDate, endDate, archived", subjects: "id, academicYearId, name, archived", sessions: "id, subjectId, startTime, endTime, archived" });
-    await legacy.table("sessions").add({ id: "legacy", subjectId: "physics", startTime: 1_000, endTime: 61_000, archived: false });
+    legacy
+      .version(1)
+      .stores({
+        academicYears: "id, name, startDate, endDate, archived",
+        subjects: "id, academicYearId, name, archived",
+        sessions: "id, subjectId, startTime, endTime, archived",
+      });
+    await legacy
+      .table("sessions")
+      .add({ id: "legacy", subjectId: "physics", startTime: 1_000, endTime: 61_000, archived: false });
     legacy.close();
     const upgraded = new FocusDatabase(name);
     opened.push(upgraded);
-    expect(await upgraded.sessions.get("legacy")).toMatchObject({ id: "legacy", focusedDurationSeconds: 60, subjectName: "Unknown subject" });
+    expect(await upgraded.sessions.get("legacy")).toMatchObject({
+      id: "legacy",
+      focusedDurationSeconds: 60,
+      subjectName: "Unknown subject",
+    });
   });
 });

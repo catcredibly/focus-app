@@ -80,9 +80,7 @@
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDEyNzYxODY2QzA0MUE1OQpSV1JaR2dSc2htRW5BZkhWdjc0WWhqMlBiTlE0b2l6cWRua2FJbjcyNm1lbXl3Mm43cGhSbS9TQQo=",
-      "endpoints": [
-        "https://github.com/catcredibly/shihen/releases/latest/download/latest.json"
-      ]
+      "endpoints": ["https://github.com/catcredibly/shihen/releases/latest/download/latest.json"]
     }
   }
 }

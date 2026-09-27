@@ -31,7 +31,23 @@ export type BackupAnalysis = {
   conflicts: number;
 };
 
-export type CsvMapping = Partial<Record<"sessionId" | "academicYear" | "subject" | "startDate" | "startTime" | "endDate" | "endTime" | "startDateTime" | "endDateTime" | "focusedMinutes" | "note" | "archived", string>>;
+export type CsvMapping = Partial<
+  Record<
+    | "sessionId"
+    | "academicYear"
+    | "subject"
+    | "startDate"
+    | "startTime"
+    | "endDate"
+    | "endTime"
+    | "startDateTime"
+    | "endDateTime"
+    | "focusedMinutes"
+    | "note"
+    | "archived",
+    string
+  >
+>;
 
 export type CsvPreviewRow = {
   rowNumber: number;

@@ -18,7 +18,9 @@ export function usePopoutLifecycle(enabled: boolean) {
         void navigator.locks.request("focus.popout.geometry", () => synchronizePopoutSession()).catch(console.error);
       }
     };
-    const storage = (event: StorageEvent) => { if (event.key === ACTIVE_TIMER_STORAGE_KEY || event.key === null) reconcile(); };
+    const storage = (event: StorageEvent) => {
+      if (event.key === ACTIVE_TIMER_STORAGE_KEY || event.key === null) reconcile();
+    };
     const channel = new BroadcastChannel("focus-timer");
     channel.onmessage = reconcile;
     window.addEventListener(TIMER_STATE_CHANGED, reconcile);
@@ -27,7 +29,8 @@ export function usePopoutLifecycle(enabled: boolean) {
     document.addEventListener("visibilitychange", reconcile);
     reconcile();
     return () => {
-      disposed = true; channel.close();
+      disposed = true;
+      channel.close();
       window.removeEventListener(TIMER_STATE_CHANGED, reconcile);
       window.removeEventListener("storage", storage);
       window.removeEventListener("focus", reconcile);

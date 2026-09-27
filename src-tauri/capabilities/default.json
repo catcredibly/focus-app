@@ -2,12 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Default desktop capability",
-  "windows": [
-    "main",
-    "timer",
-    "timer-menu",
-    "timer-tab"
-  ],
+  "windows": ["main", "timer", "timer-menu", "timer-tab"],
   "permissions": [
     "core:default",
     "core:window:allow-start-dragging",

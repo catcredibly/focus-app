@@ -50,11 +50,9 @@ beforeEach(async () => {
   mocks.enabled.mockResolvedValue(false);
   mocks.geometry.mockResolvedValue({ tabVisible: false });
 
-  mocks.registerReveal.mockImplementation(
-    async (_shortcut: string, applyDefaults: () => Promise<void>) => {
-      await applyDefaults();
-    },
-  );
+  mocks.registerReveal.mockImplementation(async (_shortcut: string, applyDefaults: () => Promise<void>) => {
+    await applyDefaults();
+  });
 
   await saveSetting("popoutRevealShortcut", "Ctrl+KeyF");
   await saveSetting("accentColour", "miku");
@@ -80,10 +78,7 @@ it("disables enabled autostart and registers the canonical shortcut", async () =
 
   await resetPreferences();
 
-  expect(mocks.registerReveal).toHaveBeenCalledWith(
-    DEFAULT_SETTINGS.popoutRevealShortcut,
-    expect.any(Function),
-  );
+  expect(mocks.registerReveal).toHaveBeenCalledWith(DEFAULT_SETTINGS.popoutRevealShortcut, expect.any(Function));
   expect(mocks.disable).toHaveBeenCalledTimes(1);
 });
 
@@ -111,8 +106,6 @@ it("can reset on a backend without global shortcuts without claiming a native bi
 
   await resetPreferences();
 
-  expect((await loadSettings()).popoutRevealShortcut).toBe(
-    DEFAULT_SETTINGS.popoutRevealShortcut,
-  );
+  expect((await loadSettings()).popoutRevealShortcut).toBe(DEFAULT_SETTINGS.popoutRevealShortcut);
   expect(mocks.registerReveal).not.toHaveBeenCalled();
 });

@@ -18,7 +18,8 @@ describe("translation resources", () => {
   });
 
   it("keeps interpolation placeholders aligned", () => {
-    const placeholders = (value: string) => [...value.matchAll(/{{\s*([^},\s]+)[^}]*}}/g)].map((match) => match[1]).sort();
+    const placeholders = (value: string) =>
+      [...value.matchAll(/{{\s*([^},\s]+)[^}]*}}/g)].map((match) => match[1]).sort();
     for (const locale of [zhCN, zhTW, ja]) {
       for (const key of Object.keys(en) as Array<keyof typeof en>) {
         expect(placeholders(locale[key]), key).toEqual(placeholders(en[key]));

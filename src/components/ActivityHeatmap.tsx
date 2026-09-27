@@ -5,7 +5,13 @@ import { dailyTotals, heatmapScale, heatmapLevel, localDayKey } from "../analyti
 import { formatDuration } from "../data";
 import { localeCode } from "../i18n";
 type HeatmapDay = { key: string; date: Date; seconds: number; count: number };
-export function ActivityHeatmap({ sessions, explainScale = false }: { sessions: FocusSession[]; explainScale?: boolean }) {
+export function ActivityHeatmap({
+  sessions,
+  explainScale = false,
+}: {
+  sessions: FocusSession[];
+  explainScale?: boolean;
+}) {
   const { t } = useTranslation();
   const points = dailyTotals(sessions),
     scale = heatmapScale(sessions),
@@ -56,8 +62,16 @@ export function ActivityHeatmap({ sessions, explainScale = false }: { sessions: 
         : undefined;
     })
     .filter(Boolean) as { index: number; label: string }[];
-  const selectedSessions = selected ? sessions.filter((session) => localDayKey(session.startTime) === selected.key) : [],
-    breakdown = [...selectedSessions.reduce((map, session) => map.set(session.subjectName, (map.get(session.subjectName) ?? 0) + session.focusedDurationSeconds), new Map<string, number>())].sort((a, b) => b[1] - a[1]);
+  const selectedSessions = selected
+      ? sessions.filter((session) => localDayKey(session.startTime) === selected.key)
+      : [],
+    breakdown = [
+      ...selectedSessions.reduce(
+        (map, session) =>
+          map.set(session.subjectName, (map.get(session.subjectName) ?? 0) + session.focusedDurationSeconds),
+        new Map<string, number>(),
+      ),
+    ].sort((a, b) => b[1] - a[1]);
   return (
     <>
       <div className="heatmap-shell">
@@ -78,9 +92,21 @@ export function ActivityHeatmap({ sessions, explainScale = false }: { sessions: 
           <div className="heatmap-weeks">
             {weeks.map((days, index) => (
               <div className="heatmap-week" key={index}>
-                {days.map((day) => day.date.getTime() < trackingStart || day.date.getTime() > Date.now() ? <span key={day.key} aria-hidden="true"/> : (
-                  <button aria-label={`${day.date.toLocaleDateString(localeCode())}, ${formatDuration(day.seconds)}, ${t("{{count}} sessions", { count: day.count })}`} aria-pressed={selected?.key === day.key} title={`${day.date.toLocaleDateString(localeCode(), { weekday: "short", day: "numeric", month: "short", year: "numeric" })}\n${formatDuration(day.seconds)}\n${t("{{count}} Sessions", { count: day.count })}`} onClick={() => setSelected(day)} onFocus={() => setSelected(day)} key={day.key} className={`heat-${heatmapLevel(day.seconds, scale.step)}`} />
-                ))}
+                {days.map((day) =>
+                  day.date.getTime() < trackingStart || day.date.getTime() > Date.now() ? (
+                    <span key={day.key} aria-hidden="true" />
+                  ) : (
+                    <button
+                      aria-label={`${day.date.toLocaleDateString(localeCode())}, ${formatDuration(day.seconds)}, ${t("{{count}} sessions", { count: day.count })}`}
+                      aria-pressed={selected?.key === day.key}
+                      title={`${day.date.toLocaleDateString(localeCode(), { weekday: "short", day: "numeric", month: "short", year: "numeric" })}\n${formatDuration(day.seconds)}\n${t("{{count}} Sessions", { count: day.count })}`}
+                      onClick={() => setSelected(day)}
+                      onFocus={() => setSelected(day)}
+                      key={day.key}
+                      className={`heat-${heatmapLevel(day.seconds, scale.step)}`}
+                    />
+                  ),
+                )}
               </div>
             ))}
           </div>

@@ -5,10 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#081521" />
     <title>Shihen</title>
-    <style>html,body{margin:0;background:var(--boot-surface,#081521);color:var(--boot-text,#edf5ff)}html[data-theme="light"]{--boot-surface:#eef3f6;--boot-text:#172431}html[data-utility-window]{--boot-surface:transparent}</style>
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--boot-surface, #081521);
+        color: var(--boot-text, #edf5ff);
+      }
+      html[data-theme="light"] {
+        --boot-surface: #eef3f6;
+        --boot-text: #172431;
+      }
+      html[data-utility-window] {
+        --boot-surface: transparent;
+      }
+    </style>
     <script>
       // A paint-only cache avoids awaiting IndexedDB or network work before rendering.
-      try { document.documentElement.dataset.theme = localStorage.getItem("focus.theme") === "light" ? "light" : "dark"; } catch {}
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem("focus.theme") === "light" ? "light" : "dark";
+      } catch {}
       if (/popout|auto-hide-tab/.test(location.hash)) document.documentElement.dataset.utilityWindow = "true";
     </script>
   </head>

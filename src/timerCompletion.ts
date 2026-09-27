@@ -27,7 +27,8 @@ export function playCompletionSound(choice: CompletionSound, volume: number) {
     gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, Math.min(1, volume / 100) * 0.12), start + 0.02);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + profile.duration);
     oscillator.connect(gain).connect(context.destination);
-    oscillator.start(start); oscillator.stop(start + profile.duration + 0.01);
+    oscillator.start(start);
+    oscillator.stop(start + profile.duration + 0.01);
   });
   window.setTimeout(() => void context.close(), (profile.duration + 0.3) * 1000);
 }
@@ -35,26 +36,44 @@ export function playCompletionSound(choice: CompletionSound, volume: number) {
 export async function sendFocusNotification(title: string, body: string) {
   if (!isTauri()) throw new Error("Notifications are available in the Shihen desktop app.");
   let granted = await isPermissionGranted();
-  if (!granted) granted = await requestPermission() === "granted";
+  if (!granted) granted = (await requestPermission()) === "granted";
   if (!granted) throw new Error("Notification permission was not granted.");
   sendNotification({ title, body });
 }
 
 export async function testCompletionNotification() {
-  await sendFocusNotification(i18n.t("Shihen notifications are working"), i18n.t("You will be notified when a focus Session finishes."));
+  await sendFocusNotification(
+    i18n.t("Shihen notifications are working"),
+    i18n.t("You will be notified when a focus Session finishes."),
+  );
 }
 
-export function previewCompletionSound(settings: Pick<FocusSettings, "completionSoundChoice" | "completionSoundVolume">) {
+export function previewCompletionSound(
+  settings: Pick<FocusSettings, "completionSoundChoice" | "completionSoundVolume">,
+) {
   playCompletionSound(settings.completionSoundChoice, settings.completionSoundVolume);
 }
 
 export async function handleTimerCompletion(state: TimerState) {
   const settings = await loadSettings();
-  if (settings.completionSound) try { playCompletionSound(settings.completionSoundChoice, settings.completionSoundVolume); } catch { /* Feedback must not block Session persistence. */ }
+  if (settings.completionSound)
+    try {
+      playCompletionSound(settings.completionSoundChoice, settings.completionSoundVolume);
+    } catch {
+      /* Feedback must not block Session persistence. */
+    }
   if (settings.completionNotification && isTauri()) {
     try {
-      await sendFocusNotification(i18n.t("Shihen session complete"), i18n.t("{{subject}} - {{duration}}", { subject: state.subject, duration: formatDuration(state.plannedDurationSeconds) }));
-    } catch { /* Notification denial must not interrupt Session persistence. */ }
+      await sendFocusNotification(
+        i18n.t("Shihen session complete"),
+        i18n.t("{{subject}} - {{duration}}", {
+          subject: state.subject,
+          duration: formatDuration(state.plannedDurationSeconds),
+        }),
+      );
+    } catch {
+      /* Notification denial must not interrupt Session persistence. */
+    }
   }
   // Popout closure follows active-session lifecycle, independently of feedback preferences.
 }

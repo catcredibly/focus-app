@@ -21,11 +21,17 @@ import { useTranslation } from "react-i18next";
 import { hasActiveTimer } from "./settings";
 import { usePopoutLifecycle } from "./hooks/usePopoutLifecycle";
 
-const AnalyticsPage = lazy(() => import("./components/AnalyticsPage").then((module) => ({ default: module.AnalyticsPage })));
+const AnalyticsPage = lazy(() =>
+  import("./components/AnalyticsPage").then((module) => ({ default: module.AnalyticsPage })),
+);
 
 export default function App() {
   const [collapsed, setCollapsed] = useState(false);
-  const [page, setPage] = useState(() => import.meta.env.DEV && new URLSearchParams(window.location.search).get("analyticsDemo") === "1" ? "Analytics" : "Timer");
+  const [page, setPage] = useState(() =>
+    import.meta.env.DEV && new URLSearchParams(window.location.search).get("analyticsDemo") === "1"
+      ? "Analytics"
+      : "Timer",
+  );
   const isPopoutMenu = window.location.hash.includes("popout-menu");
   const isAutoHideTab = window.location.hash.includes("auto-hide-tab");
   const isPopout = window.location.hash.includes("popout") || isAutoHideTab;
@@ -43,7 +49,8 @@ export default function App() {
   }, [page, isPopout]);
 
   useEffect(() => {
-    if (isTauri() && !isPopout && loaded) void registerRevealShortcut(settings.popoutRevealShortcut).catch(() => undefined);
+    if (isTauri() && !isPopout && loaded)
+      void registerRevealShortcut(settings.popoutRevealShortcut).catch(() => undefined);
   }, [isPopout, loaded, settings.popoutRevealShortcut]);
 
   useEffect(() => {
@@ -51,15 +58,25 @@ export default function App() {
   }, [isPopout, loaded, settings.popoutDockAutoHide]);
   useEffect(() => {
     if (!isTauri() || isPopout) return;
-    const subscription = listen("focus://reveal-shortcut", () => { void revealTimerFromShortcut().catch(console.error); });
-    return () => { void subscription.then(stop => stop()); };
+    const subscription = listen("focus://reveal-shortcut", () => {
+      void revealTimerFromShortcut().catch(console.error);
+    });
+    return () => {
+      void subscription.then((stop) => stop());
+    };
   }, [isPopout]);
 
-  useEffect(() => { void i18n.changeLanguage(settings.language); }, [settings.language]);
+  useEffect(() => {
+    void i18n.changeLanguage(settings.language);
+  }, [settings.language]);
   useEffect(() => {
     if (!loaded) return;
     document.documentElement.dataset.theme = settings.theme;
-    try { localStorage.setItem("focus.theme", settings.theme); } catch { /* The database remains authoritative. */ }
+    try {
+      localStorage.setItem("focus.theme", settings.theme);
+    } catch {
+      /* The database remains authoritative. */
+    }
   }, [loaded, settings.theme]);
 
   useEffect(() => {
@@ -71,14 +88,24 @@ export default function App() {
 
   useEffect(() => {
     if (!isTauri() || isPopout) return;
-    let stopClose: (() => void) | undefined; let stopSecond: (() => void) | undefined;
-    void getCurrentWindow().onCloseRequested((event) => {
-      event.preventDefault();
-      if (hasActiveTimer()) setCloseWarning(true);
-      else void invoke("close_main_window");
-    }).then((stop) => { stopClose = stop; });
-    void listen("focus://second-instance", () => setSecondInstanceWarning(true)).then((stop) => { stopSecond = stop; });
-    return () => { stopClose?.(); stopSecond?.(); };
+    let stopClose: (() => void) | undefined;
+    let stopSecond: (() => void) | undefined;
+    void getCurrentWindow()
+      .onCloseRequested((event) => {
+        event.preventDefault();
+        if (hasActiveTimer()) setCloseWarning(true);
+        else void invoke("close_main_window");
+      })
+      .then((stop) => {
+        stopClose = stop;
+      });
+    void listen("focus://second-instance", () => setSecondInstanceWarning(true)).then((stop) => {
+      stopSecond = stop;
+    });
+    return () => {
+      stopClose?.();
+      stopSecond?.();
+    };
   }, [isPopout]);
 
   if (isPopoutMenu) return <PopoutMenu />;
@@ -86,20 +113,75 @@ export default function App() {
   if (isPopout) return <PopoutTimer />;
 
   return (
-    <TimerProvider><div className={`app-shell ${collapsed ? "app-shell--collapsed" : ""}`} data-accent={settings.accentColour} data-theme={settings.theme} data-scale={settings.uiScale}>
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} active={page} onNavigate={setPage} />
-      <UpdatePrompt ready={loaded} />
-      <ToastHost />
-      {page === "Timer" && <TimerPage />}
-      {page === "Analytics" && <Suspense fallback={<main className="page"><div className="analytics-loading">{t("Loading analytics...")}</div></main>}><AnalyticsPage /></Suspense>}
-      {page === "Academic Years" && <AcademicYearsPage />}
-      {page === "Subjects" && <SubjectsPage />}
-      {page === "History" && <HistoryPage />}
-      {page === "Import / Export" && <ImportExportPage onNavigate={setPage} />}
-      {page === "Settings" && <SettingsPage onNavigate={setPage} />}
-      {!['Timer', 'Analytics', 'Academic Years', 'Subjects', 'History', 'Import / Export', 'Settings'].includes(page) && <main className="page"><div className="empty-state"><h1>{t(page)}</h1><p>{t("Coming in a later milestone.")}</p></div></main>}
-      {closeWarning && <div className="modal-backdrop"><section className="modal" role="dialog" aria-modal="true"><h2>{t("Close Shihen while a timer is active?")}</h2><p>{t("The timer will be recovered the next time Shihen opens. No Session will be finalized by closing the app.")}</p><div className="modal-actions"><button onClick={() => setCloseWarning(false)}>{t("Cancel")}</button><button className="danger-action" onClick={() => void invoke("close_main_window")}>{t("Close Shihen")}</button></div></section></div>}
-      {secondInstanceWarning && <div className="modal-backdrop"><section className="modal" role="alertdialog" aria-modal="true"><h2>{t("Shihen is already running")}</h2><p>{t("The existing Shihen window has been brought to the front.")}</p><div className="modal-actions"><button className="primary-action" onClick={() => setSecondInstanceWarning(false)}>{t("OK")}</button></div></section></div>}
-    </div></TimerProvider>
+    <TimerProvider>
+      <div
+        className={`app-shell ${collapsed ? "app-shell--collapsed" : ""}`}
+        data-accent={settings.accentColour}
+        data-theme={settings.theme}
+        data-scale={settings.uiScale}
+      >
+        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} active={page} onNavigate={setPage} />
+        <UpdatePrompt ready={loaded} />
+        <ToastHost />
+        {page === "Timer" && <TimerPage />}
+        {page === "Analytics" && (
+          <Suspense
+            fallback={
+              <main className="page">
+                <div className="analytics-loading">{t("Loading analytics...")}</div>
+              </main>
+            }
+          >
+            <AnalyticsPage />
+          </Suspense>
+        )}
+        {page === "Academic Years" && <AcademicYearsPage />}
+        {page === "Subjects" && <SubjectsPage />}
+        {page === "History" && <HistoryPage />}
+        {page === "Import / Export" && <ImportExportPage onNavigate={setPage} />}
+        {page === "Settings" && <SettingsPage onNavigate={setPage} />}
+        {!["Timer", "Analytics", "Academic Years", "Subjects", "History", "Import / Export", "Settings"].includes(
+          page,
+        ) && (
+          <main className="page">
+            <div className="empty-state">
+              <h1>{t(page)}</h1>
+              <p>{t("Coming in a later milestone.")}</p>
+            </div>
+          </main>
+        )}
+        {closeWarning && (
+          <div className="modal-backdrop">
+            <section className="modal" role="dialog" aria-modal="true">
+              <h2>{t("Close Shihen while a timer is active?")}</h2>
+              <p>
+                {t(
+                  "The timer will be recovered the next time Shihen opens. No Session will be finalized by closing the app.",
+                )}
+              </p>
+              <div className="modal-actions">
+                <button onClick={() => setCloseWarning(false)}>{t("Cancel")}</button>
+                <button className="danger-action" onClick={() => void invoke("close_main_window")}>
+                  {t("Close Shihen")}
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+        {secondInstanceWarning && (
+          <div className="modal-backdrop">
+            <section className="modal" role="alertdialog" aria-modal="true">
+              <h2>{t("Shihen is already running")}</h2>
+              <p>{t("The existing Shihen window has been brought to the front.")}</p>
+              <div className="modal-actions">
+                <button className="primary-action" onClick={() => setSecondInstanceWarning(false)}>
+                  {t("OK")}
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+      </div>
+    </TimerProvider>
   );
 }

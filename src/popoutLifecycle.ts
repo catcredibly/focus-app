@@ -9,7 +9,9 @@ export function activePopoutSession() {
   try {
     const timer = JSON.parse(localStorage.getItem(ACTIVE_TIMER_STORAGE_KEY) ?? "null") as TimerState | null;
     if (timer?.running && timer.sessionId) return { sessionId: timer.sessionId, deadline: null };
-  } catch { /* Invalid recovery state must never create an empty window. */ }
+  } catch {
+    /* Invalid recovery state must never create an empty window. */
+  }
   return null;
 }
 

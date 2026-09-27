@@ -143,7 +143,6 @@ src-tauri/
   tauri.conf.json   Application and window configuration
 ```
 
-
 ## Release notes and updater metadata
 
 Use one UTF-8 Markdown notes file for the GitHub Release body and updater manifest.

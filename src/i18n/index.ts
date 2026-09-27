@@ -7,7 +7,12 @@ import ja from "./ja";
 import type { Locale } from "../settings";
 
 void i18n.use(initReactI18next).init({
-  resources: { en: { translation: en }, "zh-CN": { translation: zhCN }, "zh-TW": { translation: zhTW }, ja: { translation: ja } },
+  resources: {
+    en: { translation: en },
+    "zh-CN": { translation: zhCN },
+    "zh-TW": { translation: zhTW },
+    ja: { translation: ja },
+  },
   lng: "en",
   fallbackLng: "en",
   // Translation keys are complete UI phrases, including punctuation such as colons.
@@ -17,6 +22,7 @@ void i18n.use(initReactI18next).init({
   returnNull: false,
 });
 
-export const localeCode = (language = i18n.resolvedLanguage): Locale => (["zh-CN", "zh-TW", "ja"].includes(language ?? "") ? language : "en") as Locale;
+export const localeCode = (language = i18n.resolvedLanguage): Locale =>
+  (["zh-CN", "zh-TW", "ja"].includes(language ?? "") ? language : "en") as Locale;
 
 export default i18n;

@@ -5,7 +5,9 @@ vi.mock("./backup", () => ({ createBackup: async () => ({}), backupFilename: () 
 vi.mock("../settings", () => ({ saveSetting: mocks.setting }));
 vi.mock("../toasts", () => ({ showToast: mocks.toast }));
 import { exportFullBackup } from "./exportBackup";
-beforeEach(() => { vi.clearAllMocks(); });
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 it("shows success only after a completed write", async () => {
   mocks.save.mockResolvedValueOnce(false);
   await exportFullBackup();

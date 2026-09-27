@@ -8,12 +8,34 @@ export type DevelopmentAnalyticsDataset = {
 
 const COLORS = ["#4da3ff", "#ff6b6b", "#f6c445", "#4dd39a", "#a879ff", "#ff7eb6", "#8da2b5"];
 const COURSE_NAMES = [
-  "Mathematics", "Physics", "Chemistry", "Economics", "English Literature", "Mandarin Chinese",
-  "Computer Science", "History", "Psychology", "Biology", "Statistics", "Design Technology",
-  "Linear Algebra and Differential Equations", "Software Architecture", "Research Methods", "Academic Writing",
-  "Data Structures and Algorithms", "Signals and Systems", "Human-Computer Interaction", "Machine Learning",
-  "Music Theory", "Japanese", "Photography", "Personal Finance", "Public Speaking", "Philosophy",
-  "Calculus", "Discrete Mathematics",
+  "Mathematics",
+  "Physics",
+  "Chemistry",
+  "Economics",
+  "English Literature",
+  "Mandarin Chinese",
+  "Computer Science",
+  "History",
+  "Psychology",
+  "Biology",
+  "Statistics",
+  "Design Technology",
+  "Linear Algebra and Differential Equations",
+  "Software Architecture",
+  "Research Methods",
+  "Academic Writing",
+  "Data Structures and Algorithms",
+  "Signals and Systems",
+  "Human-Computer Interaction",
+  "Machine Learning",
+  "Music Theory",
+  "Japanese",
+  "Photography",
+  "Personal Finance",
+  "Public Speaking",
+  "Philosophy",
+  "Calculus",
+  "Discrete Mathematics",
 ];
 
 function random(seed: number) {
@@ -28,8 +50,20 @@ function random(seed: number) {
 export function createDevelopmentAnalyticsDataset(sessionTarget = 12_000): DevelopmentAnalyticsDataset {
   const academicYears: AcademicYear[] = [
     { id: "demo-ib", name: "IB (2023-2025)", startDate: "2023-01-01", endDate: "2025-12-31", archived: true },
-    { id: "demo-uni-1", name: "University Year 1 (2026)", startDate: "2026-01-01", endDate: "2026-12-31", archived: true },
-    { id: "demo-uni-2", name: "University Year 2 (2027)", startDate: "2027-01-01", endDate: "2027-12-31", archived: false },
+    {
+      id: "demo-uni-1",
+      name: "University Year 1 (2026)",
+      startDate: "2026-01-01",
+      endDate: "2026-12-31",
+      archived: true,
+    },
+    {
+      id: "demo-uni-2",
+      name: "University Year 2 (2027)",
+      startDate: "2027-01-01",
+      endDate: "2027-12-31",
+      archived: false,
+    },
     { id: "demo-self", name: "Independent Study", startDate: "2023-01-01", archived: false },
   ];
   const subjects: Subject[] = COURSE_NAMES.map((name, index) => ({
@@ -39,7 +73,7 @@ export function createDevelopmentAnalyticsDataset(sessionTarget = 12_000): Devel
     color: COLORS[index % COLORS.length],
     archived: index % 11 === 0,
   }));
-  const rng = random(0xF0C05);
+  const rng = random(0xf0c05);
   const start = new Date(2023, 0, 1).getTime();
   const end = new Date(2027, 11, 20).getTime();
   const sessions: FocusSession[] = [];
@@ -52,7 +86,13 @@ export function createDevelopmentAnalyticsDataset(sessionTarget = 12_000): Devel
     day.setDate(day.getDate() + Math.floor(rng() * 5));
     day.setHours(7 + Math.floor(rng() * 15), Math.floor(rng() * 4) * 15, 0, 0);
     const independent = rng() < 0.2;
-    const yearId = independent ? "demo-self" : day.getFullYear() <= 2025 ? "demo-ib" : day.getFullYear() === 2026 ? "demo-uni-1" : "demo-uni-2";
+    const yearId = independent
+      ? "demo-self"
+      : day.getFullYear() <= 2025
+        ? "demo-ib"
+        : day.getFullYear() === 2026
+          ? "demo-uni-1"
+          : "demo-uni-2";
     const choices = subjects.filter((subject) => subject.academicYearId === yearId);
     const subject = choices[Math.floor(rng() * choices.length)];
     const minutes = durationMinutes[Math.min(durationMinutes.length - 1, Math.floor(rng() * durationMinutes.length))];

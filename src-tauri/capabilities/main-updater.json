@@ -3,9 +3,5 @@
   "identifier": "main-updater",
   "description": "Only the main window can check for and install user-approved signed updates.",
   "windows": ["main"],
-  "permissions": [
-    "updater:allow-check",
-    "updater:allow-download-and-install",
-    "process:allow-restart"
-  ]
+  "permissions": ["updater:allow-check", "updater:allow-download-and-install", "process:allow-restart"]
 }

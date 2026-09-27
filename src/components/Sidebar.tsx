@@ -1,15 +1,6 @@
 import { FocusLeaf } from "./FocusLeaf";
 import { DEFAULT_SIDEBAR_SUBTITLE } from "../settings";
-import {
-  BarChart3,
-  BookOpen,
-  CalendarDays,
-  Clock3,
-  History,
-  Import,
-  Menu,
-  Settings,
-} from "lucide-react";
+import { BarChart3, BookOpen, CalendarDays, Clock3, History, Import, Menu, Settings } from "lucide-react";
 import { useSettings } from "../hooks/useSettings";
 import { useTranslation } from "react-i18next";
 
@@ -34,12 +25,15 @@ export function Sidebar({ collapsed, onToggle, active, onNavigate }: Props) {
   const { settings } = useSettings();
   const { t } = useTranslation();
   const hour = new Date().getHours();
-  const greetingKey = hour < 12 ? "Good morning{{name}}" : hour < 18 ? "Good afternoon{{name}}" : "Good evening{{name}}";
-  const greetingName = settings.displayName.trim() ? `${settings.language === "zh-CN" ? "，" : ", "}${settings.displayName.trim()}` : "";
+  const greetingKey =
+    hour < 12 ? "Good morning{{name}}" : hour < 18 ? "Good afternoon{{name}}" : "Good evening{{name}}";
+  const greetingName = settings.displayName.trim()
+    ? `${settings.language === "zh-CN" ? "，" : ", "}${settings.displayName.trim()}`
+    : "";
   return (
     <aside className={`sidebar ${collapsed ? "sidebar--collapsed" : ""}`}>
       <div className="brand-row">
-        <FocusLeaf className="brand-mark"/>
+        <FocusLeaf className="brand-mark" />
         {!collapsed && (
           <div>
             <div className="brand-name">Shihen</div>
@@ -52,7 +46,11 @@ export function Sidebar({ collapsed, onToggle, active, onNavigate }: Props) {
 
       <nav className="nav-list">
         {items.map(([Icon, label]) => (
-          <button key={label} onClick={() => onNavigate(label)} className={`nav-item ${active === label ? "nav-item--active" : ""}`}>
+          <button
+            key={label}
+            onClick={() => onNavigate(label)}
+            className={`nav-item ${active === label ? "nav-item--active" : ""}`}
+          >
             <Icon size={20} />
             {!collapsed && <span>{t(label)}</span>}
           </button>
@@ -64,7 +62,9 @@ export function Sidebar({ collapsed, onToggle, active, onNavigate }: Props) {
           <div className="moon">◒</div>
           <div>
             <div>{t(greetingKey, { name: greetingName })}</div>
-            <span className="greeting-subtitle"><b>{settings.sidebarSubtitle || DEFAULT_SIDEBAR_SUBTITLE}</b></span>
+            <span className="greeting-subtitle">
+              <b>{settings.sidebarSubtitle || DEFAULT_SIDEBAR_SUBTITLE}</b>
+            </span>
           </div>
         </div>
       )}

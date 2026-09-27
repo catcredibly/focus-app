@@ -204,24 +204,81 @@ export const DEFAULT_SETTINGS: FocusSettings = {
   allowDirectActiveDeletion: false,
 };
 
-const booleans = new Set<keyof FocusSettings>(["checkForUpdatesOnLaunch", "startMaximized", "launchAtStartup", "showDate", "showWeekday", "showClock", "dailyGoalEnabled", "weeklyGoalEnabled", "completionSound", "completionNotification", "popoutAlwaysOnTop", "popoutRememberPosition", "popoutShowSubject", "popoutShowClock", "popoutHideControls", "popoutAutoOpen", "popoutShowInTaskbar", "popoutDockingEnabled", "popoutDocked", "popoutDockAutoHide", "popoutAutoHideShowAccent", "allowDirectActiveDeletion"]);
-const numbers = new Set<keyof FocusSettings>(["lastTimerDurationSeconds", "fixedTimerDurationSeconds", "dailyGoalSeconds", "weeklyGoalSeconds", "completionSoundVolume", "popoutTransparency", "popoutPositionX", "popoutPositionY", "popoutFloatingWidth", "popoutFloatingHeight", "popoutAutoHideOffset", "popoutAutoHideDelaySeconds"]);
+const booleans = new Set<keyof FocusSettings>([
+  "checkForUpdatesOnLaunch",
+  "startMaximized",
+  "launchAtStartup",
+  "showDate",
+  "showWeekday",
+  "showClock",
+  "dailyGoalEnabled",
+  "weeklyGoalEnabled",
+  "completionSound",
+  "completionNotification",
+  "popoutAlwaysOnTop",
+  "popoutRememberPosition",
+  "popoutShowSubject",
+  "popoutShowClock",
+  "popoutHideControls",
+  "popoutAutoOpen",
+  "popoutShowInTaskbar",
+  "popoutDockingEnabled",
+  "popoutDocked",
+  "popoutDockAutoHide",
+  "popoutAutoHideShowAccent",
+  "allowDirectActiveDeletion",
+]);
+const numbers = new Set<keyof FocusSettings>([
+  "lastTimerDurationSeconds",
+  "fixedTimerDurationSeconds",
+  "dailyGoalSeconds",
+  "weeklyGoalSeconds",
+  "completionSoundVolume",
+  "popoutTransparency",
+  "popoutPositionX",
+  "popoutPositionY",
+  "popoutFloatingWidth",
+  "popoutFloatingHeight",
+  "popoutAutoHideOffset",
+  "popoutAutoHideDelaySeconds",
+]);
 
 export const GOAL_MAX_HOURS = { dailyGoalSeconds: 24, weeklyGoalSeconds: 168 } as const;
-export function normalizeGoalSeconds(value: unknown, fallback = 0, maxHours: number = GOAL_MAX_HOURS.dailyGoalSeconds): number {
-  const parsed = typeof value === "number" || typeof value === "string" && value.trim() !== "" ? Number(value) : NaN;
+export function normalizeGoalSeconds(
+  value: unknown,
+  fallback = 0,
+  maxHours: number = GOAL_MAX_HOURS.dailyGoalSeconds,
+): number {
+  const parsed = typeof value === "number" || (typeof value === "string" && value.trim() !== "") ? Number(value) : NaN;
   return Number.isFinite(parsed) ? Math.min(maxHours * 3600, Math.max(0, Math.floor(parsed))) : fallback;
 }
-export function normalizeGoalPart(part: "hours" | "minutes", value: number, maxHours: number = GOAL_MAX_HOURS.dailyGoalSeconds): number {
+export function normalizeGoalPart(
+  part: "hours" | "minutes",
+  value: number,
+  maxHours: number = GOAL_MAX_HOURS.dailyGoalSeconds,
+): number {
   return Math.min(part === "hours" ? maxHours : 59, Math.max(0, Math.floor(Number.isFinite(value) ? value : 0)));
 }
-export function goalDurationSeconds(hours: number, minutes: number, maxHours: number = GOAL_MAX_HOURS.dailyGoalSeconds): number {
-  return normalizeGoalSeconds(normalizeGoalPart("hours", hours, maxHours) * 3600 + normalizeGoalPart("minutes", minutes) * 60, 0, maxHours);
+export function goalDurationSeconds(
+  hours: number,
+  minutes: number,
+  maxHours: number = GOAL_MAX_HOURS.dailyGoalSeconds,
+): number {
+  return normalizeGoalSeconds(
+    normalizeGoalPart("hours", hours, maxHours) * 3600 + normalizeGoalPart("minutes", minutes) * 60,
+    0,
+    maxHours,
+  );
 }
 
 function decode<K extends keyof FocusSettings>(key: K, raw: string | undefined): FocusSettings[K] {
   if (raw === undefined) return DEFAULT_SETTINGS[key];
-  if (key === "dailyGoalSeconds" || key === "weeklyGoalSeconds") return normalizeGoalSeconds(raw, Number(DEFAULT_SETTINGS[key]), GOAL_MAX_HOURS[key as keyof typeof GOAL_MAX_HOURS]) as FocusSettings[K];
+  if (key === "dailyGoalSeconds" || key === "weeklyGoalSeconds")
+    return normalizeGoalSeconds(
+      raw,
+      Number(DEFAULT_SETTINGS[key]),
+      GOAL_MAX_HOURS[key as keyof typeof GOAL_MAX_HOURS],
+    ) as FocusSettings[K];
   if (booleans.has(key)) return (raw === "true") as FocusSettings[K];
   if (numbers.has(key)) {
     if (raw === "null") return null as FocusSettings[K];
@@ -231,24 +288,42 @@ function decode<K extends keyof FocusSettings>(key: K, raw: string | undefined):
     if (key === "completionSoundVolume") value = Math.min(100, Math.max(0, value));
     if (key === "popoutAutoHideOffset") value = Math.min(1, Math.max(0, value));
     if (key === "popoutAutoHideDelaySeconds") value = Math.max(0, value);
-    if (["lastTimerDurationSeconds", "fixedTimerDurationSeconds", "dailyGoalSeconds", "weeklyGoalSeconds"].includes(key)) value = Math.max(0, Math.floor(value));
+    if (
+      ["lastTimerDurationSeconds", "fixedTimerDurationSeconds", "dailyGoalSeconds", "weeklyGoalSeconds"].includes(key)
+    )
+      value = Math.max(0, Math.floor(value));
     return value as FocusSettings[K];
   }
   if (key === "lastBackupAt") return (raw && raw !== "null" ? raw : null) as FocusSettings[K];
   const allowed: Partial<Record<keyof FocusSettings, readonly string[]>> = {
-    weekdayStyle: ["full", "short"], language: ["en", "zh-CN", "zh-TW", "ja"], theme: ["dark", "light"], timerDurationMode: ["remember", "fixed"], subjectPickerMode: ["remember", "fixed"], dateFormat: ["full", "standard", "compact", "numeric"], clockFormat: ["system", "12-hour", "24-hour"],
-    completionSoundChoice: ["soft-chime", "bell", "digital", "gentle", "bright"], popoutAutoHide: ["500", "1000", "2000", "never"],
-    popoutDockCorner: ["top-left", "top-right", "bottom-left", "bottom-right"], popoutAutoHideEdge: ["top", "right", "bottom", "left"],
+    weekdayStyle: ["full", "short"],
+    language: ["en", "zh-CN", "zh-TW", "ja"],
+    theme: ["dark", "light"],
+    timerDurationMode: ["remember", "fixed"],
+    subjectPickerMode: ["remember", "fixed"],
+    dateFormat: ["full", "standard", "compact", "numeric"],
+    clockFormat: ["system", "12-hour", "24-hour"],
+    completionSoundChoice: ["soft-chime", "bell", "digital", "gentle", "bright"],
+    popoutAutoHide: ["500", "1000", "2000", "never"],
+    popoutDockCorner: ["top-left", "top-right", "bottom-left", "bottom-right"],
+    popoutAutoHideEdge: ["top", "right", "bottom", "left"],
     popoutRevealShortcutIntent: ["default", "custom", "cleared"],
-    popoutLayout: ["regular", "compact"], popoutSize: ["small", "medium", "large"], popoutAutoHideTabSize: ["small", "medium", "large"], accentColour: ["coral", "orange", "pink", "miku", "green", "cappuccino"], uiScale: ["small", "medium", "large", "extra-large"],
+    popoutLayout: ["regular", "compact"],
+    popoutSize: ["small", "medium", "large"],
+    popoutAutoHideTabSize: ["small", "medium", "large"],
+    accentColour: ["coral", "orange", "pink", "miku", "green", "cappuccino"],
+    uiScale: ["small", "medium", "large", "extra-large"],
   };
-  if (key === "popoutDockMonitor") return (/^(current|display:\d+)$/.test(raw) ? raw : DEFAULT_SETTINGS[key]) as FocusSettings[K];
-  return ((allowed[key] && !allowed[key]?.includes(raw)) ? DEFAULT_SETTINGS[key] : raw) as FocusSettings[K];
+  if (key === "popoutDockMonitor")
+    return (/^(current|display:\d+)$/.test(raw) ? raw : DEFAULT_SETTINGS[key]) as FocusSettings[K];
+  return (allowed[key] && !allowed[key]?.includes(raw) ? DEFAULT_SETTINGS[key] : raw) as FocusSettings[K];
 }
 
 /** Compatibility with releases that allowed function-key reveal shortcuts. */
 export function normalizeLegacyRevealShortcut(value: string): string {
-  return /^(?:(?:Ctrl|Alt|Shift)\+)*F(?:[1-9]|1[0-2])$/.test(value) ? DEFAULT_SETTINGS.popoutRevealShortcut : value.replace(/\+`$/, "+Backquote");
+  return /^(?:(?:Ctrl|Alt|Shift)\+)*F(?:[1-9]|1[0-2])$/.test(value)
+    ? DEFAULT_SETTINGS.popoutRevealShortcut
+    : value.replace(/\+`$/, "+Backquote");
 }
 
 /** Defaults are scoped to the current active Academic Year; history is untouched. */
@@ -260,34 +335,58 @@ export async function reconcileDefaultSubject(database: FocusDatabase = db) {
     const subject = await database.subjects.get(configured);
     const year = currentYear ? await database.academicYears.get(currentYear) : undefined;
     if (!subject || subject.archived || subject.academicYearId !== currentYear || !year || year.archived) {
-      await database.settings.bulkPut([{ key: SETTINGS_KEYS.defaultSubjectId, value: "" }, { key: SETTINGS_KEYS.subjectPickerMode, value: "remember" }]);
+      await database.settings.bulkPut([
+        { key: SETTINGS_KEYS.defaultSubjectId, value: "" },
+        { key: SETTINGS_KEYS.subjectPickerMode, value: "remember" },
+      ]);
     }
   });
 }
 
 export async function loadSettings(database: FocusDatabase = db, migrate = true): Promise<FocusSettings> {
   if (migrate) await reconcileDefaultSubject(database);
-  if (migrate) await database.transaction("rw", database.settings, async () => {
-    const row = await database.settings.get(SETTINGS_KEYS.popoutRevealShortcut);
-    const intent = await database.settings.get(SETTINGS_KEYS.popoutRevealShortcutIntent);
-    const normalized = row ? normalizeLegacyRevealShortcut(row.value) : DEFAULT_SETTINGS.popoutRevealShortcut;
-    // Older releases did not record intent. Treat their old default as untouched;
-    // preserve all other supported combinations and deliberately cleared values.
-    const value = !intent && normalized === "Alt+Backquote" ? DEFAULT_SETTINGS.popoutRevealShortcut : normalized;
-    if (row && value !== row.value) await database.settings.put({ ...row, value });
-    if (!intent) await database.settings.put({ key: SETTINGS_KEYS.popoutRevealShortcutIntent, value: value === "" ? "cleared" : !row || value === DEFAULT_SETTINGS.popoutRevealShortcut ? "default" : "custom" });
-  });
+  if (migrate)
+    await database.transaction("rw", database.settings, async () => {
+      const row = await database.settings.get(SETTINGS_KEYS.popoutRevealShortcut);
+      const intent = await database.settings.get(SETTINGS_KEYS.popoutRevealShortcutIntent);
+      const normalized = row ? normalizeLegacyRevealShortcut(row.value) : DEFAULT_SETTINGS.popoutRevealShortcut;
+      // Older releases did not record intent. Treat their old default as untouched;
+      // preserve all other supported combinations and deliberately cleared values.
+      const value = !intent && normalized === "Alt+Backquote" ? DEFAULT_SETTINGS.popoutRevealShortcut : normalized;
+      if (row && value !== row.value) await database.settings.put({ ...row, value });
+      if (!intent)
+        await database.settings.put({
+          key: SETTINGS_KEYS.popoutRevealShortcutIntent,
+          value:
+            value === "" ? "cleared" : !row || value === DEFAULT_SETTINGS.popoutRevealShortcut ? "default" : "custom",
+        });
+    });
   const rows = new Map((await database.settings.toArray()).map((row) => [row.key, row.value]));
-  const settings = Object.fromEntries((Object.keys(DEFAULT_SETTINGS) as (keyof FocusSettings)[]).map((key) => [key, decode(key, rows.get(SETTINGS_KEYS[key]))])) as FocusSettings;
+  const settings = Object.fromEntries(
+    (Object.keys(DEFAULT_SETTINGS) as (keyof FocusSettings)[]).map((key) => [
+      key,
+      decode(key, rows.get(SETTINGS_KEYS[key])),
+    ]),
+  ) as FocusSettings;
   settings.popoutRevealShortcut = normalizeLegacyRevealShortcut(settings.popoutRevealShortcut);
   settings.popoutAutoHideEdge = defaultEdgeForCorner(settings.popoutDockCorner, settings.popoutAutoHideEdge);
   return settings;
 }
 
-export async function saveSetting<K extends keyof FocusSettings>(key: K, value: FocusSettings[K], database: FocusDatabase = db) {
-  const normalized = key === "dailyGoalSeconds" || key === "weeklyGoalSeconds" ? normalizeGoalSeconds(value, Number(DEFAULT_SETTINGS[key]), GOAL_MAX_HOURS[key as keyof typeof GOAL_MAX_HOURS]) : value;
+export async function saveSetting<K extends keyof FocusSettings>(
+  key: K,
+  value: FocusSettings[K],
+  database: FocusDatabase = db,
+) {
+  const normalized =
+    key === "dailyGoalSeconds" || key === "weeklyGoalSeconds"
+      ? normalizeGoalSeconds(value, Number(DEFAULT_SETTINGS[key]), GOAL_MAX_HOURS[key as keyof typeof GOAL_MAX_HOURS])
+      : value;
   if (key === "popoutRevealShortcut") {
-    await database.settings.bulkPut([{ key: SETTINGS_KEYS[key], value: String(normalized) }, { key: SETTINGS_KEYS.popoutRevealShortcutIntent, value: normalized === "" ? "cleared" : "custom" }]);
+    await database.settings.bulkPut([
+      { key: SETTINGS_KEYS[key], value: String(normalized) },
+      { key: SETTINGS_KEYS.popoutRevealShortcutIntent, value: normalized === "" ? "cleared" : "custom" },
+    ]);
   } else await database.settings.put({ key: SETTINGS_KEYS[key], value: String(normalized) });
 }
 
@@ -310,31 +409,61 @@ export function normaliseDuration(hours: number, minutes: number, seconds: numbe
 }
 
 export function timerDefaultDuration(settings: FocusSettings) {
-  return settings.timerDurationMode === "fixed" ? settings.fixedTimerDurationSeconds : settings.lastTimerDurationSeconds;
+  return settings.timerDurationMode === "fixed"
+    ? settings.fixedTimerDurationSeconds
+    : settings.lastTimerDurationSeconds;
 }
 
 export function hasActiveTimer(storage: Pick<Storage, "getItem"> = localStorage) {
   try {
     const timer = JSON.parse(storage.getItem(ACTIVE_TIMER_STORAGE_KEY) ?? "null") as Partial<TimerState> | null;
     return Boolean(timer?.running || timer?.paused || (timer?.sessionId && timer?.startedAt));
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
-export async function clearAllFocusData(database: FocusDatabase = db, storage: Pick<Storage, "getItem" | "removeItem"> = localStorage) {
+export async function clearAllFocusData(
+  database: FocusDatabase = db,
+  storage: Pick<Storage, "getItem" | "removeItem"> = localStorage,
+) {
   if (hasActiveTimer(storage)) throw new Error("Finish or stop the current timer before clearing app data.");
-  await database.transaction("rw", database.sessions, database.subjects, database.academicYears, database.settings, async () => {
-    await Promise.all([database.sessions.clear(), database.subjects.clear(), database.academicYears.clear(), database.settings.clear()]);
-  });
+  await database.transaction(
+    "rw",
+    database.sessions,
+    database.subjects,
+    database.academicYears,
+    database.settings,
+    async () => {
+      await Promise.all([
+        database.sessions.clear(),
+        database.subjects.clear(),
+        database.academicYears.clear(),
+        database.settings.clear(),
+      ]);
+    },
+  );
   storage.removeItem(ACTIVE_TIMER_STORAGE_KEY);
 }
 
 export function formatLastBackup(value: string | null, locale?: string) {
   if (!value) return "Never";
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "Never" : date.toLocaleString(locale, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+  return Number.isNaN(date.getTime())
+    ? "Never"
+    : date.toLocaleString(locale, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
 }
 
 /** Reset preferences only; unknown/runtime keys and backup metadata are retained. */
 export async function resetAllSettings(database: FocusDatabase = db) {
-  await restoreSettingDefaults((Object.keys(DEFAULT_SETTINGS) as (keyof FocusSettings)[]).filter(key => key !== "lastBackupAt"), database);
+  await restoreSettingDefaults(
+    (Object.keys(DEFAULT_SETTINGS) as (keyof FocusSettings)[]).filter((key) => key !== "lastBackupAt"),
+    database,
+  );
 }

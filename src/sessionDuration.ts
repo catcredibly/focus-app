@@ -7,8 +7,13 @@ export function sessionSpanSeconds(startTime: number, endTime: number) {
   return Math.max(0, Math.round((endTime - startTime) / 1000));
 }
 
-export function inferDurationMode(session: Pick<FocusSession, "startTime" | "endTime" | "focusedDurationSeconds" | "durationMode">): DurationMode {
-  return session.durationMode ?? (session.focusedDurationSeconds === sessionSpanSeconds(session.startTime, session.endTime) ? "locked" : "unlocked");
+export function inferDurationMode(
+  session: Pick<FocusSession, "startTime" | "endTime" | "focusedDurationSeconds" | "durationMode">,
+): DurationMode {
+  return (
+    session.durationMode ??
+    (session.focusedDurationSeconds === sessionSpanSeconds(session.startTime, session.endTime) ? "locked" : "unlocked")
+  );
 }
 
 export function durationParts(totalSeconds: number): DurationParts {
@@ -21,7 +26,10 @@ export function durationParts(totalSeconds: number): DurationParts {
 }
 
 export function normalizeDurationParts(hours: number, minutes: number, seconds: number) {
-  const totalSeconds = Math.max(0, Math.trunc(hours || 0) * 3600 + Math.trunc(minutes || 0) * 60 + Math.trunc(seconds || 0));
+  const totalSeconds = Math.max(
+    0,
+    Math.trunc(hours || 0) * 3600 + Math.trunc(minutes || 0) * 60 + Math.trunc(seconds || 0),
+  );
   return { totalSeconds, parts: durationParts(totalSeconds) };
 }
 

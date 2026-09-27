@@ -13,15 +13,23 @@ export async function resetPreferences() {
     const previous = await loadSettings();
     const geometry = await timerGeometry();
     // Windows auto-launch deletes a registry value; deleting an absent value fails.
-    if (wasEnabled !== DEFAULT_SETTINGS.launchAtStartup) await (DEFAULT_SETTINGS.launchAtStartup ? enable() : disable());
+    if (wasEnabled !== DEFAULT_SETTINGS.launchAtStartup)
+      await (DEFAULT_SETTINGS.launchAtStartup ? enable() : disable());
     let persisted = false;
     try {
-      await resetAllSettings(); persisted = true;
+      await resetAllSettings();
+      persisted = true;
       await syncPopoutLayout(true);
       await reconcileAutoHideSetting();
     } catch (error) {
       const rollbackErrors: unknown[] = [];
-      const rollback = async (operation: () => Promise<unknown>) => { try { await operation(); } catch (failure) { rollbackErrors.push(failure); } };
+      const rollback = async (operation: () => Promise<unknown>) => {
+        try {
+          await operation();
+        } catch (failure) {
+          rollbackErrors.push(failure);
+        }
+      };
       if (persisted) {
         await rollback(async () => {
           await db.transaction("rw", db.settings, async () => {
@@ -33,11 +41,16 @@ export async function resetPreferences() {
         await rollback(() => syncPopoutLayout(true));
         if (geometry.tabVisible && previous.popoutDockAutoHide) await rollback(hideTimerAutomatically);
       }
-      if (wasEnabled !== DEFAULT_SETTINGS.launchAtStartup) await rollback(() => wasEnabled ? enable() : disable());
-      if (rollbackErrors.length) throw new AggregateError([error, ...rollbackErrors], "Unable to restore all native settings after reset failure.");
+      if (wasEnabled !== DEFAULT_SETTINGS.launchAtStartup) await rollback(() => (wasEnabled ? enable() : disable()));
+      if (rollbackErrors.length)
+        throw new AggregateError(
+          [error, ...rollbackErrors],
+          "Unable to restore all native settings after reset failure.",
+        );
       throw error;
     }
   };
-  if (await invoke<boolean>("reveal_shortcut_available")) await registerRevealShortcut(DEFAULT_SETTINGS.popoutRevealShortcut, applyDefaults);
+  if (await invoke<boolean>("reveal_shortcut_available"))
+    await registerRevealShortcut(DEFAULT_SETTINGS.popoutRevealShortcut, applyDefaults);
   else await applyDefaults(); // Preserve the configured default on backends without global shortcuts.
 }

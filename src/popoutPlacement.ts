@@ -8,7 +8,8 @@ export const POPOUT_SIZE: Size = { width: 360, height: 170 };
 export const DOCK_MARGIN = 12;
 export const SNAP_THRESHOLD = 52;
 
-const clamp = (value: number, minimum: number, maximum: number) => Math.min(Math.max(value, minimum), Math.max(minimum, maximum));
+const clamp = (value: number, minimum: number, maximum: number) =>
+  Math.min(Math.max(value, minimum), Math.max(minimum, maximum));
 
 export function cornerPosition(workArea: WorkArea, size: Size, corner: DockCorner, margin = DOCK_MARGIN): Point {
   const left = workArea.x + margin;
@@ -18,7 +19,12 @@ export function cornerPosition(workArea: WorkArea, size: Size, corner: DockCorne
   return { x: corner.endsWith("left") ? left : right, y: corner.startsWith("top") ? top : bottom };
 }
 
-export function nearestDockCorner(position: Point, workArea: WorkArea, size: Size, threshold = SNAP_THRESHOLD): DockCorner | null {
+export function nearestDockCorner(
+  position: Point,
+  workArea: WorkArea,
+  size: Size,
+  threshold = SNAP_THRESHOLD,
+): DockCorner | null {
   const corners: DockCorner[] = ["top-left", "top-right", "bottom-left", "bottom-right"];
   let nearest: { corner: DockCorner; distance: number } | null = null;
   for (const corner of corners) {
@@ -46,7 +52,7 @@ export function defaultEdgeForCorner(corner: DockCorner, previous: DockEdge = "r
 }
 
 export function dockEdgeOffset(corner: DockCorner, edge: DockEdge): number {
-  return edge === "top" || edge === "bottom" ? (corner.endsWith("left") ? 0 : 1) : (corner.startsWith("top") ? 0 : 1);
+  return edge === "top" || edge === "bottom" ? (corner.endsWith("left") ? 0 : 1) : corner.startsWith("top") ? 0 : 1;
 }
 
 /** Inputs are physical pixels; only the ambiguity threshold starts in logical px. */
@@ -65,6 +71,9 @@ export function nearestEdge(position: Point, workArea: WorkArea, size: Size, pre
 
 export function edgeOffset(position: Point, workArea: WorkArea, size: Size, edge: DockEdge): number {
   const span = edge === "left" || edge === "right" ? workArea.height : workArea.width;
-  const value = edge === "left" || edge === "right" ? position.y + size.height / 2 - workArea.y : position.x + size.width / 2 - workArea.x;
+  const value =
+    edge === "left" || edge === "right"
+      ? position.y + size.height / 2 - workArea.y
+      : position.x + size.width / 2 - workArea.x;
   return span <= 0 ? 0 : clamp(value / span, 0, 1);
 }
