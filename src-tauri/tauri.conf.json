@@ -14,7 +14,7 @@
       {
         "label": "main",
         "backgroundColor": "#081521",
-        "title": "Focus",
+        "title": "Shihen",
         "width": 1440,
         "height": 900,
         "minWidth": 420,
@@ -26,7 +26,7 @@
       },
       {
         "label": "timer",
-        "title": "Focus Timer",
+        "title": "Shihen Timer",
         "url": "index.html#/popout",
         "width": 360,
         "height": 170,
@@ -41,7 +41,7 @@
       },
       {
         "label": "timer-menu",
-        "title": "Focus Timer Menu",
+        "title": "Shihen Timer Menu",
         "url": "index.html#/popout-menu",
         "width": 320,
         "height": 330,
@@ -56,7 +56,7 @@
       },
       {
         "label": "timer-tab",
-        "title": "Focus Timer Tab",
+        "title": "Shihen Timer Tab",
         "url": "index.html#/auto-hide-tab",
         "width": 18,
         "height": 58,
@@ -81,7 +81,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDEyNzYxODY2QzA0MUE1OQpSV1JaR2dSc2htRW5BZkhWdjc0WWhqMlBiTlE0b2l6cWRua2FJbjcyNm1lbXl3Mm43cGhSbS9TQQo=",
       "endpoints": [
-        "https://github.com/catcredibly/focus-app/releases/latest/download/latest.json"
+        "https://github.com/catcredibly/shihen/releases/latest/download/latest.json"
       ]
     }
   }

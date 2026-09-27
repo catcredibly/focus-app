@@ -42,7 +42,7 @@ export function validateManifest(probe: ManifestProbe, target = "windows-x86_64"
   } catch { throw new UpdateCheckError("signature", "Platform signature data is missing or malformed"); }
 }
 function diagnostic(manual: boolean, probe: ManifestProbe | undefined, category: UpdateCategory, error?: unknown) {
-  if (import.meta.env.DEV) console.info("Focus updater", { check: manual ? "manual" : "automatic", endpoint: probe?.endpoint ? sanitizeUpdateError(probe.endpoint) : "configured endpoint unavailable", status: probe?.status, category, error: error === undefined ? undefined : sanitizeUpdateError(error), manifestFetched: probe?.body !== undefined });
+  if (import.meta.env.DEV) console.info("Shihen updater", { check: manual ? "manual" : "automatic", endpoint: probe?.endpoint ? sanitizeUpdateError(probe.endpoint) : "configured endpoint unavailable", status: probe?.status, category, error: error === undefined ? undefined : sanitizeUpdateError(error), manifestFetched: probe?.body !== undefined });
 }
 export async function checkWithDiagnostics(manual: boolean) {
   let probe: ManifestProbe | undefined;

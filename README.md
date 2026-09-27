@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="src/assets/focus-logo-orange.png" alt="Focus leaf logo" width="112" />
+  <img src="src/assets/focus-logo-orange.png" alt="Shihen leaf logo" width="112" />
 </p>
 
-# Focus
+# Shihen
 
 **Time well spent.**
 
-Focus is a desktop focus timer and study tracker. It combines a clean countdown with Subjects, Academic Years, history, study goals, and long-term analytics without requiring a Focus account or cloud service.
+Shihen is a desktop focus timer and study tracker. It combines a clean countdown with Subjects, Academic Years, history, study goals, and long-term analytics without requiring a Shihen account or cloud service.
 
 ## Features
 
@@ -22,15 +22,15 @@ Focus is a desktop focus timer and study tracker. It combines a clean countdown 
 
 ## Privacy
 
-Focus is local-first. Academic Years, Subjects, Sessions, settings, and notes are stored in IndexedDB on the device where Focus runs.
-The application does not upload study data to a Focus account or bundled cloud service.
+Shihen is local-first. Academic Years, Subjects, Sessions, settings, and notes are stored in IndexedDB on the device where Shihen runs.
+The application does not upload study data to a Shihen account or bundled cloud service.
 
 Export regular backups if the data matters to you.
 Removing the application or its WebView storage may remove local data.
 
 ## Availability
 
-Focus is available for Windows and Linux on x86-64 systems.
+Shihen is available for Windows and Linux on x86-64 systems.
 
 Linux releases are provided as AppImage and Debian (`.deb`) packages and are currently experimental.
 Please note some platform-specific features may behave differently or be unavailable on Linux.
@@ -81,8 +81,8 @@ See [Architecture](docs/ARCHITECTURE.md) for implementation details and [Releasi
 
 ## Security
 
-Never commit personal Focus backups, signing keys, certificates, or credentials. See [SECURITY.md](SECURITY.md) for reporting and handling guidance.
+Never commit personal Shihen backups, signing keys, certificates, or credentials. See [SECURITY.md](SECURITY.md) for reporting and handling guidance.
 
 ## License
 
-Focus is available under the [MIT License](LICENSE).
+Shihen is available under the [MIT License](LICENSE).

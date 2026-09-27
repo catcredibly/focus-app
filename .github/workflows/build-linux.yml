@@ -49,7 +49,7 @@ jobs:
                   cargo check --locked --all-targets --manifest-path src-tauri/Cargo.toml
                   cargo test --locked --lib --manifest-path src-tauri/Cargo.toml
 
-            - name: Build Focus for Linux
+            - name: Build Shihen for Linux
               uses: tauri-apps/tauri-action@v1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

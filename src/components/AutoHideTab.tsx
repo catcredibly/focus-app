@@ -32,6 +32,6 @@ export function AutoHideTab() {
   }, []);
 
   return <main className="auto-hide-tab-window" data-accent={settings.accentColour} data-edge={edge} data-size={settings.popoutAutoHideTabSize}>
-    <button aria-label={t("Open Focus")} onPointerEnter={reveal} onClick={reveal}>{settings.popoutAutoHideShowAccent && <span/>}</button>
+    <button aria-label={t("Open Shihen")} onPointerEnter={reveal} onClick={reveal}>{settings.popoutAutoHideShowAccent && <span/>}</button>
   </main>;
 }

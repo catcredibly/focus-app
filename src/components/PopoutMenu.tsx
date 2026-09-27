@@ -53,7 +53,7 @@ export function PopoutMenu() {
       <button onClick={() => setView("dock")}>{t("Dock to")}<ChevronRight/></button>
       <label className="popout-menu-select">{t("Monitor")}<select title={displays.find((display) => display.id === settings.popoutDockMonitor)?.label} value={settings.popoutDockMonitor} onChange={async (event) => { await setSetting("popoutDockMonitor", event.target.value as FocusSettings["popoutDockMonitor"]); close(); }}><option value="current">{t("Current monitor")}</option>{displays.map((display) => <option value={display.id} key={display.id}>{display.label}</option>)}</select></label>
       <button onClick={async () => { await setSetting("popoutDockAutoHide", !settings.popoutDockAutoHide); close(); }}>{t("Auto-hide")} <span>{t(settings.popoutDockAutoHide ? "On" : "Off")}</span></button>
-      <button onClick={() => { close(); void invoke("focus_main_window"); }}>{t("Open Focus")}</button>
+      <button onClick={() => { close(); void invoke("focus_main_window"); }}>{t("Open Shihen")}</button>
       <button onClick={() => { close(); void closeTimerPopout(); }}>{t("Close popout")}</button>
     </> : <>
       <button onClick={() => setView("more")}><ChevronLeft/>{t("Dock to")}</button>

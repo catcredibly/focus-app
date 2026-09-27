@@ -1,8 +1,8 @@
-# Focus Architecture
+# Shihen Architecture
 
 ## Current runtime guarantees
 
-- Focus is single-instance. A second launch focuses the existing main window.
+- Shihen is single-instance. A second launch focuses the existing main window.
 - The main window and compact popout share one authoritative active Timer through persisted state and cross-window updates.
 - Running, Paused, Finished, recovery, checkpoint, note, and save-failure state is kept in the active Timer record until it is finalized or explicitly discarded.
 - Completed Sessions may include focus intervals so daily and weekly goals allocate focused time correctly across local day and Monday-based week boundaries.
@@ -34,7 +34,7 @@ Application and domain behavior lives in TypeScript. Native Windows behavior is 
 
 ## Persistence
 
-Focus uses one local IndexedDB database through Dexie. Its main stores are:
+Shihen uses one local IndexedDB database through Dexie. Its main stores are:
 
 - `academicYears`
 - `subjects`
@@ -87,7 +87,7 @@ The Analytics UI reads the Dexie stores with live queries, so persisted changes 
 ## Import / Export
 
 - **JSON full backup and restore** includes Academic Years, Subjects, Sessions, and Settings. Restore data is validated and applied transactionally using merge or replace behavior.
-- **CSV Session import and export** supports Focus's CSV format and mapped generic CSV data, including duplicate and invalid-row checks.
+- **CSV Session import and export** supports Shihen's CSV format and mapped generic CSV data, including duplicate and invalid-row checks.
 
 In the desktop app, Tauri file dialogs and filesystem access read and write these files. Browser development mode uses download and file-input fallbacks.
 
@@ -107,7 +107,8 @@ Rust in `src-tauri/src/lib.rs` owns the custom window commands and lifecycle han
 
 ## Release identity
 
-- Product name: `Focus`
+- Visible brand: `Shihen`
+- Internal product name: `Focus` (retained for installation compatibility)
 - Version: `1.2.0`
 - Tauri application identifier: `com.focus.timer`
 - Dexie database name: `focus`
@@ -149,8 +150,8 @@ Use one UTF-8 Markdown notes file for the GitHub Release body and updater manife
 After the existing signed release build, run (with the actual current-version artifact):
 
 ```powershell
-node tools/generate-updater-manifest.mjs --notes RELEASE_NOTES.md --artifact "src-tauri/target/release/bundle/nsis/Focus_<version>_x64-setup.exe" --repository catcredibly/study-app
-gh release create "v<version>" --repo catcredibly/study-app --notes-file RELEASE_NOTES.md <installer> <installer.sig> <latest.json>
+node tools/generate-updater-manifest.mjs --notes RELEASE_NOTES.md --artifact "src-tauri/target/release/bundle/nsis/Focus_<version>_x64-setup.exe" --repository catcredibly/shihen
+gh release create "v<version>" --repo catcredibly/shihen --notes-file RELEASE_NOTES.md <installer> <installer.sig> <latest.json>
 ```
 
 The helper reads the authoritative package version and existing matching `.sig`;
@@ -177,7 +178,7 @@ native desktop parity.
 
 ## Platform architecture
 
-Keep Focus as one shared Tauri/React codebase. Do not create separate Windows and Linux application implementations.
+Keep Shihen as one shared Tauri/React codebase. Do not create separate Windows and Linux application implementations.
 
 For platform differences, use this order of preference:
 

@@ -30,7 +30,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string) => voi
   const { t } = useTranslation();
   const [section, setSection] = useState<Section>("General");
   const { settings, setSetting } = useSettings();
-  return <main className="page settings-page"><header className="page-header"><div><h1>{t("Settings")}</h1><p>{t("Configure Focus for the way you study.")}</p></div></header><div className="settings-layout">
+  return <main className="page settings-page"><header className="page-header"><div><h1>{t("Settings")}</h1><p>{t("Configure Shihen for the way you study.")}</p></div></header><div className="settings-layout">
     <nav className="settings-nav" aria-label={t("Settings sections")}>{sections.map(([name, Icon]) => <button key={name} className={section === name ? "active" : ""} onClick={() => setSection(name)}><Icon />{t(name)}</button>)}</nav>
     <section className="settings-content">{section === "General" && <General settings={settings} setSetting={setSetting}/>} {section === "Timer" && <Timer settings={settings} setSetting={setSetting}/>} {section === "Notifications & Sounds" && <NotificationsAndSounds settings={settings} setSetting={setSetting}/>} {section === "Popout" && <Popout settings={settings} setSetting={setSetting}/>} {section === "Appearance" && <Appearance settings={settings} setSetting={setSetting}/>} {section === "Data" && <Data settings={settings} setSetting={setSetting} onNavigate={onNavigate}/>} {section === "About" && <About/>}</section>
   </div></main>;
@@ -56,8 +56,8 @@ function General({ settings, setSetting }: SettingsProps) {
     <Row label={t("Language")}><select value={settings.language} onChange={(event) => void setSetting("language", event.target.value as FocusSettings["language"])}><option value="en">English</option><option value="zh-CN">简体中文</option><option value="zh-TW">繁體中文</option><option value="ja">日本語</option></select></Row>
     <Row label={t("Your name")} hint={t("Used in the sidebar greeting.")}><input className="settings-input" value={name} maxLength={60} placeholder={t("Your name")} onChange={(event) => setName(event.target.value)} onBlur={() => void setSetting("displayName", name.trim())}/></Row>
     <Row label={t("Greeting subtitle")} hint={t("Leave blank to use the default brand line.")}><input className="settings-input" value={settings.sidebarSubtitle} maxLength={120} placeholder={DEFAULT_SIDEBAR_SUBTITLE} onChange={(event) => void setSetting("sidebarSubtitle", event.target.value)}/></Row>
-    <Row label={t("Start Focus maximized")}><Toggle label={t("Start Focus maximized")} checked={settings.startMaximized} onChange={(value) => void setSetting("startMaximized", value)}/></Row>
-    <Row label={t("Launch Focus at Windows startup")}><Toggle label={t("Launch Focus at Windows startup")} checked={settings.launchAtStartup} onChange={(value) => void startup(value)}/></Row>
+    <Row label={t("Start Shihen maximized")}><Toggle label={t("Start Shihen maximized")} checked={settings.startMaximized} onChange={(value) => void setSetting("startMaximized", value)}/></Row>
+    <Row label={t("Launch Shihen at Windows startup")}><Toggle label={t("Launch Shihen at Windows startup")} checked={settings.launchAtStartup} onChange={(value) => void startup(value)}/></Row>
     <RestoreSection keys={["displayName", "sidebarSubtitle", "language", "startMaximized", "launchAtStartup"]}/>
     <ResetAllSettings/>
   </>;
@@ -78,9 +78,9 @@ function ResetAllSettings() {
     finally { setBusy(false); }
   };
   return <><div className="settings-subheading settings-group-heading"><strong>{t("Reset")}</strong></div>
-    <Row label={t("Reset all settings")} hint={t("Restore every Focus preference to its default without deleting Sessions, Subjects, Academic Years, or study history.")}><button className="secondary-action" onClick={() => { setTyped(""); setError(false); setConfirming(true); }}><RotateCcw/>{t("Reset all settings")}</button></Row>
+    <Row label={t("Reset all settings")} hint={t("Restore every Shihen preference to its default without deleting Sessions, Subjects, Academic Years, or study history.")}><button className="secondary-action" onClick={() => { setTyped(""); setError(false); setConfirming(true); }}><RotateCcw/>{t("Reset all settings")}</button></Row>
     {confirming && <div className="modal-backdrop" onMouseDown={dismiss} onKeyDown={event => { if (event.key === "Escape") dismiss(); if (event.key === "Enter" && typed === "RESET" && !busy) { event.preventDefault(); void reset(); } }}><section className="modal typed-confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="reset-settings-title" onMouseDown={event => event.stopPropagation()}>
-      <h2 id="reset-settings-title">{t("Reset all settings?")}</h2><p>{t("This will restore all Focus preferences to their defaults. Your Sessions, Subjects, Academic Years, and study history will not be deleted.")}</p><p>{t("Type RESET to continue.")}</p>
+      <h2 id="reset-settings-title">{t("Reset all settings?")}</h2><p>{t("This will restore all Shihen preferences to their defaults. Your Sessions, Subjects, Academic Years, and study history will not be deleted.")}</p><p>{t("Type RESET to continue.")}</p>
       <input autoFocus disabled={busy} aria-label={t("Type RESET to continue.")} value={typed} onChange={event => setTyped(event.target.value)}/>
       {error && <p role="alert">{t("Unable to reset settings. Please try again.")}</p>}
       <div className="modal-actions"><button disabled={busy} onClick={dismiss}>{t("Cancel")}</button><button className="secondary-action" disabled={busy || typed !== "RESET"} onClick={() => void reset()}>{t("Reset all settings")}</button></div>
@@ -158,7 +158,7 @@ function NotificationsAndSounds({ settings, setSetting }: SettingsProps) {
   };
   const preview = () => { setMessage(""); try { previewCompletionSound(settings); } catch { setMessage(t("The completion sound could not be played.")); } };
   const test = async () => { setMessage(""); try { await testCompletionNotification(); setMessage(t("Test notification sent.")); } catch (error) { setMessage(t(error instanceof Error ? error.message : "The notification could not be sent.")); } };
-  return <><SettingsHeader title={t("Notifications & Sounds")}>{t("Choose how Focus tells you that a Session has finished.")}</SettingsHeader>
+  return <><SettingsHeader title={t("Notifications & Sounds")}>{t("Choose how Shihen tells you that a Session has finished.")}</SettingsHeader>
     <Row label={t("Show notification when timer finishes")}><Toggle label={t("Show notification when timer finishes")} checked={settings.completionNotification} onChange={(value) => void notification(value)}/></Row>
     <Row label={t("Test notification")}><button className="secondary-action" disabled={!settings.completionNotification} onClick={() => void test()}><Bell/> {t("Send test")}</button></Row>
     <Row label={t("Play sound when timer finishes")}><Toggle label={t("Play sound when timer finishes")} checked={settings.completionSound} onChange={(value) => void setSetting("completionSound", value)}/></Row>
@@ -224,7 +224,7 @@ function Popout({ settings, setSetting }: SettingsProps) {
 const accents: { name: string; value: AccentColour }[] = [{ name:"Coral Red",value:"coral"},{name:"Orange",value:"orange"},{name:"Cherry Blossom Pink",value:"pink"},{name:"Muted Miku Blue",value:"miku"},{name:"Green",value:"green"},{name:"Cappuccino",value:"cappuccino"}];
 function Appearance({ settings, setSetting }: SettingsProps) {
   const { t } = useTranslation();
-  return <><SettingsHeader title={t("Appearance")}>{t("Customize the Focus interface.")}</SettingsHeader>
+  return <><SettingsHeader title={t("Appearance")}>{t("Customize the Shihen interface.")}</SettingsHeader>
     <Row label={t("Theme")}><select value={settings.theme} onChange={(event) => void setSetting("theme", event.target.value as FocusSettings["theme"])}><option value="dark">{t("Dark")}</option><option value="light">{t("Light")}</option></select></Row>
     <Row label={t("Accent color")}><div className="accent-options">{accents.map((accent) => <button key={accent.value} title={t(accent.name)} aria-label={t(accent.name)} className={settings.accentColour === accent.value ? "active" : ""} data-accent={accent.value} onClick={() => void setSetting("accentColour", accent.value)}><span/></button>)}</div></Row>
     <Row label={t("UI scale")}><select value={settings.uiScale} onChange={(event) => void setSetting("uiScale", event.target.value as FocusSettings["uiScale"])}><option value="small">{t("Small")}</option><option value="medium">{t("Medium")}</option><option value="large">{t("Large")}</option><option value="extra-large">{t("Extra large")}</option></select></Row>
@@ -235,18 +235,18 @@ function Appearance({ settings, setSetting }: SettingsProps) {
 function Data({ settings, setSetting, onNavigate }: SettingsProps & { onNavigate: (page: string) => void }) {
   const { t } = useTranslation();
   const [confirming, setConfirming] = useState(false); const [typed, setTyped] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
-  const clear = async () => { setBusy(true); setError(""); try { await clearAllFocusData(); window.location.reload(); } catch (reason) { setError(t(reason instanceof Error ? reason.message : "Focus data could not be cleared.")); setBusy(false); } };
+  const clear = async () => { setBusy(true); setError(""); try { await clearAllFocusData(); window.location.reload(); } catch (reason) { setError(t(reason instanceof Error ? reason.message : "Shihen data could not be cleared.")); setBusy(false); } };
   const startClear = () => { setError(""); if (hasActiveTimer()) { setError(t("Finish or stop the current timer before clearing app data.")); return; } setConfirming(true); };
   return <><SettingsHeader title={t("Data")}>{t("Storage and data management.")}</SettingsHeader>
-    <Row label={t("Storage")} hint={t("Your Focus data is stored locally on this device.")}><span className="storage-value">{t("On this device")}</span></Row>
+    <Row label={t("Storage")} hint={t("Your Shihen data is stored locally on this device.")}><span className="storage-value">{t("On this device")}</span></Row>
     <Row label={t("Last full backup")} hint={settings.lastBackupAt ? formatLastBackup(settings.lastBackupAt, settings.language) : t("Never")}><button className="secondary-action" onClick={() => void exportFullBackup()}><Download/> {t("Back up now")}</button></Row>
     <Row label={t("Import / Export")} hint={t("Move data between devices or restore a backup.")}><button className="secondary-action" onClick={() => onNavigate("Import / Export")}>{t("Open Import / Export")}</button></Row>
     <div className="settings-subheading"><strong>{t("Deletion safety")}</strong><span>{t("Archive-first protection for Subjects and Academic Years.")}</span></div>
     <Row label={t("Allow deleting active Academic Years and Subjects")} hint={t("Permanent deletion still requires confirmation and removes related study data.")}><Toggle label={t("Allow deleting active Academic Years and Subjects")} checked={settings.allowDirectActiveDeletion} onChange={(value) => void setSetting("allowDirectActiveDeletion", value)}/></Row>
     <RestoreSection keys={["allowDirectActiveDeletion"]}/>
-    <Row label={t("Clear all data")} hint={t("Permanently remove all local Focus data.")}><button className="danger-outline" onClick={startClear}><Trash2/> {t("Clear all data")}</button></Row>
+    <Row label={t("Clear all data")} hint={t("Permanently remove all local Shihen data.")}><button className="danger-outline" onClick={startClear}><Trash2/> {t("Clear all data")}</button></Row>
     {error && <div className="notice notice--error">{error}</div>}
-    {confirming && <div className="modal-backdrop" onMouseDown={() => setConfirming(false)}><section className="modal clear-data-modal typed-confirmation-modal" onMouseDown={(event) => event.stopPropagation()}><h2>{t("Clear all Focus data?")}</h2><p>{t("This permanently deletes all study history, Subjects, Academic Years, and Settings stored on this device.")}</p><p>{t("This cannot be undone without a backup. Type DELETE to continue.")}</p><input autoFocus value={typed} onChange={(event) => setTyped(event.target.value)} aria-label={t("Type DELETE to confirm")}/><div className="modal-actions"><button onClick={() => setConfirming(false)}>{t("Cancel")}</button><button className="danger-action" disabled={typed !== "DELETE" || busy} onClick={() => void clear()}>{busy ? t("Clearing...") : t("Clear all data")}</button></div></section></div>}
+    {confirming && <div className="modal-backdrop" onMouseDown={() => setConfirming(false)}><section className="modal clear-data-modal typed-confirmation-modal" onMouseDown={(event) => event.stopPropagation()}><h2>{t("Clear all Shihen data?")}</h2><p>{t("This permanently deletes all study history, Subjects, Academic Years, and Settings stored on this device.")}</p><p>{t("This cannot be undone without a backup. Type DELETE to continue.")}</p><input autoFocus value={typed} onChange={(event) => setTyped(event.target.value)} aria-label={t("Type DELETE to confirm")}/><div className="modal-actions"><button onClick={() => setConfirming(false)}>{t("Cancel")}</button><button className="danger-action" disabled={typed !== "DELETE" || busy} onClick={() => void clear()}>{busy ? t("Clearing...") : t("Clear all data")}</button></div></section></div>}
   </>;
 }
 
@@ -256,12 +256,12 @@ function About() {
   const [version, setVersion] = useState(packageMetadata.version);
   useEffect(() => { if (isTauri()) void getVersion().then(setVersion).catch(() => undefined); }, []);
   return <div className="about-settings"><SettingsHeader title={t("About")}>{t("Application information.")}</SettingsHeader><div className="about-body">
-    <div className="about-identity"><FocusLeaf className="about-leaf"/><div><h3>Focus</h3><p>{t("Time well spent.")}</p><span>V{version}</span></div></div>
-    <section><h3>{t("About Focus")}</h3><p>{t("Focus is a local-first study timer and analytics app designed for long-term study tracking.")}</p></section>
-    <section><h3>{t("Your data")}</h3><p>{t("Focus stores your study data locally on this device. Your data is not uploaded to a Focus account or cloud service.")}</p></section>
+    <div className="about-identity"><FocusLeaf className="about-leaf"/><div><h3>Shihen</h3><p>{t("Time well spent.")}</p><span>V{version}</span></div></div>
+    <section><h3>{t("About Shihen")}</h3><p>{t("Shihen is a local-first study timer and analytics app designed for long-term study tracking.")}</p></section>
+    <section><h3>{t("Your data")}</h3><p>{t("Shihen stores your study data locally on this device. Your data is not uploaded to a Shihen account or cloud service.")}</p></section>
     <section><h3>{t("Application")}</h3><dl><div><dt>{t("Version")}</dt><dd>{version}</dd></div><div><dt>{t("Platform")}</dt><dd>Windows</dd></div><div><dt>{t("Data storage")}</dt><dd>{t("Local device")}</dd></div></dl></section>
     <section><h3>{t("Built with")}</h3><p>Tauri / React / TypeScript</p></section>
     <UpdateControls/>
-    {import.meta.env.DEV && isTauri() && <section><h3>{t("Developer tools")}</h3><p>{t("Development-only tools for previewing Focus UI states.")}</p><Row label={t("Preview update dialog")}><button className="secondary-action" onClick={() => updatePreview.open(version)}>{t("Preview update dialog")}</button></Row></section>}
+    {import.meta.env.DEV && isTauri() && <section><h3>{t("Developer tools")}</h3><p>{t("Development-only tools for previewing Shihen UI states.")}</p><Row label={t("Preview update dialog")}><button className="secondary-action" onClick={() => updatePreview.open(version)}>{t("Preview update dialog")}</button></Row></section>}
   </div></div>;
 }

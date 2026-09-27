@@ -26,8 +26,8 @@ export async function createBackup(database: FocusDatabase = db): Promise<FocusB
 }
 
 export function validateBackup(value: unknown): FocusBackup {
-  if (!isObject(value) || value.format !== BACKUP_FORMAT) throw new Error("This is not a Focus backup.");
-  if (value.formatVersion !== BACKUP_VERSION) throw new Error(`Unsupported Focus backup version: ${String(value.formatVersion)}.`);
+  if (!isObject(value) || value.format !== BACKUP_FORMAT) throw new Error("This is not a Shihen backup.");
+  if (value.formatVersion !== BACKUP_VERSION) throw new Error(`Unsupported Shihen backup version: ${String(value.formatVersion)}.`);
   if (typeof value.exportedAt !== "string" || typeof value.appVersion !== "string" || !isObject(value.data)) throw new Error("The backup header is incomplete.");
   const { academicYears, subjects, sessions, settings } = value.data;
   if (![academicYears, subjects, sessions, settings].every(Array.isArray)) throw new Error("The backup data structure is incomplete.");

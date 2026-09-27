@@ -24,7 +24,7 @@ pub async fn probe_update_manifest(window: tauri::WebviewWindow) -> Result<Manif
         .and_then(|value| value.get(0)).and_then(|value| value.as_str())
         .ok_or("Updater endpoint is not configured")?.to_string();
     let mut result = ManifestProbe { endpoint: endpoint.clone(), status: None, repository_status: None, body: None, error: None, category: None };
-    let client = reqwest::Client::builder().timeout(Duration::from_secs(10)).user_agent("Focus-Updater").build().map_err(|e| e.to_string())?;
+    let client = reqwest::Client::builder().timeout(Duration::from_secs(10)).user_agent("Shihen-Updater").build().map_err(|e| e.to_string())?;
     match client.get(&endpoint).header("Accept", "application/json").send().await {
         Ok(response) => {
             result.status = Some(response.status().as_u16());

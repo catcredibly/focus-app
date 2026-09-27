@@ -12,7 +12,7 @@ it("uses the same notes file verbatim and preserves only matching-version platfo
   const notes='# Fixes\n\n- Quotes "work" and paths C:\\notes\n- 日本語';
   writeFileSync(artifact,"test fixture, not an installer");writeFileSync(`${artifact}.sig`,"matching-signature");writeFileSync(notesFile,notes);
   writeFileSync(output,JSON.stringify({version:metadata.version,platforms:{"linux-x86_64":{signature:"linux-signature",url:"https://example.com/app"}}}));
-  execFileSync(process.execPath,[resolve("tools/generate-updater-manifest.mjs"),"--notes",notesFile,"--artifact",artifact,"--repository","catcredibly/study-app"],{stdio:"pipe"});
+  execFileSync(process.execPath,[resolve("tools/generate-updater-manifest.mjs"),"--notes",notesFile,"--artifact",artifact,"--repository","catcredibly/shihen"],{stdio:"pipe"});
   const manifest=JSON.parse(readFileSync(output,"utf8"));
   expect(manifest.notes).toBe(notes);expect(manifest.version).toBe(metadata.version);
   expect(manifest.platforms["windows-x86_64"].signature).toBe("matching-signature");expect(manifest.platforms["linux-x86_64"].signature).toBe("linux-signature");

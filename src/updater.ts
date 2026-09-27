@@ -89,7 +89,7 @@ export function createUpdateController(deps: Dependencies) {
         });
         await restart();
       } catch (error) {
-        if (import.meta.env.DEV) console.info("Focus updater install", { category: classifyUpdateError(error), error: sanitizeUpdateError(error) });
+        if (import.meta.env.DEV) console.info("Shihen updater install", { category: classifyUpdateError(error), error: sanitizeUpdateError(error) });
         set({ phase: "error", error: "install" });
       }
     },

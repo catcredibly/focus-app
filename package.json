@@ -6,9 +6,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/catcredibly/focus-app.git"
+    "url": "git+https://github.com/catcredibly/shihen.git"
   },
-  "homepage": "https://github.com/catcredibly/focus-app#readme",
+  "homepage": "https://github.com/catcredibly/shihen#readme",
   "type": "module",
   "scripts": {
     "dev": "vite",

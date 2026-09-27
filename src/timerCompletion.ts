@@ -33,7 +33,7 @@ export function playCompletionSound(choice: CompletionSound, volume: number) {
 }
 
 export async function sendFocusNotification(title: string, body: string) {
-  if (!isTauri()) throw new Error("Notifications are available in the Focus desktop app.");
+  if (!isTauri()) throw new Error("Notifications are available in the Shihen desktop app.");
   let granted = await isPermissionGranted();
   if (!granted) granted = await requestPermission() === "granted";
   if (!granted) throw new Error("Notification permission was not granted.");
@@ -41,7 +41,7 @@ export async function sendFocusNotification(title: string, body: string) {
 }
 
 export async function testCompletionNotification() {
-  await sendFocusNotification(i18n.t("Focus notifications are working"), i18n.t("You will be notified when a focus Session finishes."));
+  await sendFocusNotification(i18n.t("Shihen notifications are working"), i18n.t("You will be notified when a focus Session finishes."));
 }
 
 export function previewCompletionSound(settings: Pick<FocusSettings, "completionSoundChoice" | "completionSoundVolume">) {
@@ -53,7 +53,7 @@ export async function handleTimerCompletion(state: TimerState) {
   if (settings.completionSound) try { playCompletionSound(settings.completionSoundChoice, settings.completionSoundVolume); } catch { /* Feedback must not block Session persistence. */ }
   if (settings.completionNotification && isTauri()) {
     try {
-      await sendFocusNotification(i18n.t("Focus session complete"), i18n.t("{{subject}} - {{duration}}", { subject: state.subject, duration: formatDuration(state.plannedDurationSeconds) }));
+      await sendFocusNotification(i18n.t("Shihen session complete"), i18n.t("{{subject}} - {{duration}}", { subject: state.subject, duration: formatDuration(state.plannedDurationSeconds) }));
     } catch { /* Notification denial must not interrupt Session persistence. */ }
   }
   // Popout closure follows active-session lifecycle, independently of feedback preferences.
