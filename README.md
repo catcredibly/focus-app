@@ -67,6 +67,8 @@ cargo check --manifest-path src-tauri/Cargo.toml
 npm run tauri build
 ```
 
+Set release metadata with `npm run version:set -- <version>`. The root package version drives Tauri and is checked before production builds. See [installer compatibility](src-tauri/windows/README.md) for the Focus-to-Shihen upgrade verification.
+
 Generated installers and executables belong outside source control.
 
 ## Technology
@@ -77,7 +79,7 @@ Generated installers and executables belong outside source control.
 - Dexie and IndexedDB
 - Recharts
 
-See [Architecture](docs/ARCHITECTURE.md) for implementation details and [Releasing](docs/RELEASING.md) for the release workflow.
+See [Architecture](docs/ARCHITECTURE.md) for implementation details and [release packaging](docs/ARCHITECTURE.md#release-notes-and-updater-metadata) for the release workflow.
 
 ## Security
 

@@ -545,10 +545,10 @@ pub fn run() {
             window_constraints::install(app.handle())?;
             display_geometry::install(app.handle())?;
             #[cfg(desktop)]
-            app.handle().plugin(tauri_plugin_autostart::init(
-                tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-                None,
-            ))?;
+            app.handle().plugin(tauri_plugin_autostart::Builder::new()
+                // Preserve the existing Run key / autostart file across the display rename.
+                .app_name("Focus")
+                .build())?;
             #[cfg(desktop)]
             {
                 // Signature verification uses only the public key embedded in tauri.conf.json.

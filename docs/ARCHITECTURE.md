@@ -108,8 +108,8 @@ Rust in `src-tauri/src/lib.rs` owns the custom window commands and lifecycle han
 ## Release identity
 
 - Visible brand: `Shihen`
-- Internal product name: `Focus` (retained for installation compatibility)
-- Version: `1.2.0`
+- Bundle/display product name: `Shihen`; legacy installation identifiers are retained (see [Windows installer compatibility](../src-tauri/windows/README.md)).
+- Version: root `package.json` (canonical source)
 - Tauri application identifier: `com.focus.timer`
 - Dexie database name: `focus`
 - Windows installer: NSIS
@@ -149,7 +149,7 @@ Use one UTF-8 Markdown notes file for the GitHub Release body and updater manife
 After the existing signed release build, run (with the actual current-version artifact):
 
 ```powershell
-node tools/generate-updater-manifest.mjs --notes RELEASE_NOTES.md --artifact "src-tauri/target/release/bundle/nsis/Focus_<version>_x64-setup.exe" --repository catcredibly/shihen
+node tools/generate-updater-manifest.mjs --notes RELEASE_NOTES.md --artifact "src-tauri/target/release/bundle/nsis/Shihen_<version>_x64-setup.exe" --repository catcredibly/shihen
 gh release create "v<version>" --repo catcredibly/shihen --notes-file RELEASE_NOTES.md <installer> <installer.sig> <latest.json>
 ```
 
@@ -205,3 +205,21 @@ The goal is:
 - small `#[cfg]` branches for small differences
 - platform modules/adapters for substantial native differences
 - graceful capability-based fallbacks where exact parity is impossible
+
+## Release metadata and branding compatibility
+
+The root `package.json` is the canonical application version. Run `npm run version:set -- <version>` to update npm and Cargo metadata together. Tauri reads `../package.json`; About, backups, and the updater manifest use that same package metadata. `npm run version:check` detects drift and runs before production frontend builds. This does not change the backup schema version.
+
+The NSIS installer displays Shihen while retaining the original installation directory, uninstall/location registry keys, binary and autostart identity. See [the installer notes](../src-tauri/windows/README.md) before updating the Tauri CLI or publishing a renamed installer. Debian packages are named `shihen` and declare replacement/conflict/provision of the old `focus` package so both packages do not compete for the same executable. AppImage and Debian desktop entries display Shihen; the Linux workflow verifies the desktop entry's actual icon name instead of assuming a filename. Linux package generation and real desktop upgrades still require the maintainer's Linux run.
+
+Remaining Focus/focus references are intentional categories:
+
+- Study terminology such as **Focus time**, focused duration, and focus timer.
+- Browser/CSS focus states, focus handling, and internal symbol names such as `FocusSettings`, `FocusDatabase`, `focusedDurationSeconds`, and `sendFocusNotification`.
+- Persisted identities: `com.focus.timer`, the `focus` database, storage/event/lock names, and the `focus-backup` format. Existing backup fixtures and schema identifiers remain compatible; newly suggested export filenames use Shihen.
+- Build and asset identifiers: the npm/Cargo `focus` package, `focus.exe`, and existing logo/mask filenames. Renaming these adds no user-facing benefit and can break installed-app continuity.
+- Installer, autostart, and Debian replacement identities for the earlier Focus application, plus documentation describing that upgrade path.
+- Historical release-note parsing/tests and legacy ignored export filenames. The parser deliberately accepts both Focus and Shihen headings.
+- The former `catcredibly/focus-app` URL is mentioned only to document the redirect needed by older installed clients. Current source links and the embedded updater endpoint use `catcredibly/shihen`. Do not recreate the old repository and break GitHub's redirect.
+
+No data-directory/database migration, updater key change, or backup schema change accompanies the rename. Compiling packages and testing source logic do not establish the signed Focus-to-Shihen upgrade path; verify it in a disposable environment before release.

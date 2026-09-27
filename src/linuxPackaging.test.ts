@@ -14,7 +14,8 @@ it("supplies existing square PNGs for both Linux package formats", () => {
 });
 it("keeps the platform override limited to Linux packaging", () => {
   expect(Object.keys(linux).sort()).toEqual(["$schema", "bundle"]);
-  expect(Object.keys(linux.bundle).sort()).toEqual(["icon", "targets"]);
+  expect(Object.keys(linux.bundle).sort()).toEqual(["icon", "linux", "targets"]);
+  expect(linux.bundle.linux.deb).toEqual({ replaces: ["focus"], conflicts: ["focus"], provides: ["focus"] });
   expect(shared.bundle.targets).toEqual(["nsis"]);
   expect(shared.bundle.createUpdaterArtifacts).toBe(true);
 });

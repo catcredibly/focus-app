@@ -75,8 +75,8 @@ export function ImportExportPage({ onNavigate }: { onNavigate: (page: string) =>
     setError("");
     try {
       const sessions = await db.sessions.orderBy("startTime").toArray();
-      const date = backupFilename().replace("focus-backup-", "").replace(".json", "");
-      if (await saveTextFile(`focus-sessions-${date}.csv`, exportSessionsCsv(sessions), "csv"))
+      const date = backupFilename().replace("shihen-backup-", "").replace(".json", "");
+      if (await saveTextFile(`shihen-sessions-${date}.csv`, exportSessionsCsv(sessions), "csv"))
         showToast("CSV exported successfully");
     } catch (reason) {
       setError(translateError(reason, "CSV export failed."));

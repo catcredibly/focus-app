@@ -1,7 +1,7 @@
 {
   "name": "focus",
   "private": true,
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "A local-first Windows focus timer and study analytics app.",
   "license": "MIT",
   "repository": {
@@ -18,7 +18,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "version:set": "node tools/set-version.mjs",
+    "version:check": "node tools/set-version.mjs --check",
+    "prebuild": "npm run version:check"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",

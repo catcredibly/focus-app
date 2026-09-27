@@ -72,3 +72,7 @@ tmp/
 
 AGENTS.md
 RELEASE_NOTES.md
+
+# Shihen exports (legacy Focus patterns remain above).
+shihen-backup*.json
+shihen-sessions*.csv

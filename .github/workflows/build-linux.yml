@@ -63,19 +63,25 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          appimages=(src-tauri/target/release/bundle/appimage/*.AppImage)
-          debs=(src-tauri/target/release/bundle/deb/*.deb)
+          appimages=(src-tauri/target/release/bundle/appimage/[Ss]hihen_*.AppImage)
+          debs=(src-tauri/target/release/bundle/deb/[Ss]hihen_*.deb)
           test "${#appimages[@]}" -gt 0
           test "${#debs[@]}" -gt 0
           for package in "${debs[@]}"; do
             test "$(dpkg-deb -f "$package" Architecture)" = amd64
-            dpkg-deb -c "$package" > /tmp/focus-deb-contents.txt
-            grep 'usr/share/icons/hicolor/.*focus.*png' /tmp/focus-deb-contents.txt
+            test "$(dpkg-deb -f "$package" Package)" = shihen
+            dpkg-deb -x "$package" /tmp/shihen-deb
+            grep -R '^Name=Shihen$' /tmp/shihen-deb/usr/share/applications
+            desktop=$(find /tmp/shihen-deb/usr/share/applications -name "*.desktop" -print -quit)
+            icon=$(sed -n 's/^Icon=//p' "$desktop")
+            test -n "$icon"
+            find /tmp/shihen-deb/usr/share/icons/hicolor -name "$icon.png" -print -quit | grep .
           done
           for package in "${appimages[@]}"; do
             file "$package" | grep 'x86-64'
             chmod +x "$package"
             "$package" --appimage-extract >/dev/null
             test -e squashfs-root/AppRun
+            grep -R '^Name=Shihen$' squashfs-root/usr/share/applications
             find squashfs-root/usr/share/icons -name '*.png' -print -quit | grep .
           done

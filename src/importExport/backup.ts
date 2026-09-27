@@ -210,5 +210,5 @@ export function parseBackupText(text: string) {
 }
 export function backupFilename(now = new Date()) {
   const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  return `focus-backup-${local}.json`;
+  return `shihen-backup-${local}.json`;
 }

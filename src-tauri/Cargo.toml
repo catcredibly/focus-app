@@ -1,6 +1,6 @@
 [package]
 name = "focus"
-version = "2.2.0"
+version = "2.2.1"
 description = "Shihen study timer"
 authors = ["Shihen"]
 edition = "2021"

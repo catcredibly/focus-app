@@ -1,3 +1,4 @@
+import metadata from "../../package.json";
 import "fake-indexeddb/auto";
 import Dexie from "dexie";
 import { afterEach, describe, expect, it } from "vitest";
@@ -198,7 +199,7 @@ it("uses the release version without changing schema or rejecting older backup p
   await source.settings.put({ key: "dateFormat", value: "standard" });
   await source.settings.put({ key: "language", value: "ja" });
   const backup = await createBackup(source);
-  expect(backup.appVersion).toBe("2.2.0");
+  expect(backup.appVersion).toBe(metadata.version);
   expect(backup.formatVersion).toBe(1);
   for (const mode of ["replace", "merge"] as const) {
     const target = database();
