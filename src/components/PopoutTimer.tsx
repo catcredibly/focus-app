@@ -287,6 +287,7 @@ export function PopoutTimer() {
           "--timer-characters": time.join(":").length,
           "--controls-hide-delay": controlsDelay,
           "--popout-surface-alpha": settings.popoutTransparency / 100,
+          "--popout-border-alpha": settings.popoutBorderOpacity / 100,
         } as CSSProperties
       }
       onPointerDownCapture={() => void invoke("interact_with_shortcut_reveal", { inside: true })}
@@ -370,6 +371,7 @@ export function PopoutTimer() {
               className="tooltip-button"
               aria-label={timer.state.finished ? t("Finish") : timer.state.paused ? t("Resume") : t("Pause")}
               data-tooltip={timer.state.finished ? t("Finish") : timer.state.paused ? t("Resume") : t("Pause")}
+              disabled={timer.state.finished && !timer.noteValid}
               onClick={timer.state.finished ? timer.finish : timer.pause}
             >
               {timer.state.finished ? (
@@ -444,6 +446,7 @@ export function PopoutTimer() {
               {t("Void Session")}
             </button>
             <button
+              disabled={!timer.noteValid}
               className="primary-action"
               onClick={() =>
                 void report(

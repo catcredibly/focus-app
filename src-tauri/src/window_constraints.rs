@@ -70,8 +70,8 @@ pub fn set_main_minimum_width(window: tauri::WebviewWindow, width: u32) -> Resul
     window.set_min_size(Some(tauri::LogicalSize::new(width, 300))).map_err(|e| e.to_string())?;
     if !window.is_maximized().map_err(|e| e.to_string())? && !window.is_fullscreen().map_err(|e| e.to_string())? {
         let size = window.inner_size().map_err(|e| e.to_string())?.to_logical::<f64>(window.scale_factor().map_err(|e| e.to_string())?);
-        if size.width < width as f64 {
-            window.set_size(tauri::LogicalSize::new(width as f64, size.height)).map_err(|e| e.to_string())?;
+        if size.width < width as f64 || size.height < 300.0 {
+            window.set_size(tauri::LogicalSize::new(size.width.max(width as f64), size.height.max(300.0))).map_err(|e| e.to_string())?;
         }
     }
     Ok(())

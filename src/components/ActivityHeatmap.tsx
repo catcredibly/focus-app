@@ -8,18 +8,24 @@ type HeatmapDay = { key: string; date: Date; seconds: number; count: number };
 export function ActivityHeatmap({
   sessions,
   explainScale = false,
+  start: calendarStart,
+  end: calendarEnd,
+  futureStart,
 }: {
   sessions: FocusSession[];
   explainScale?: boolean;
+  start?: number;
+  end?: number;
+  futureStart?: number;
 }) {
   const { t } = useTranslation();
   const points = dailyTotals(sessions),
     scale = heatmapScale(sessions),
     scrollRef = useRef<HTMLDivElement>(null),
     [selected, setSelected] = useState<HeatmapDay>();
-  const trackingStart = points[0]?.start ?? Date.now();
+  const trackingStart = calendarStart ?? points[0]?.start ?? Date.now();
   const start = new Date(trackingStart),
-    end = new Date();
+    end = new Date(calendarEnd ?? Date.now());
   start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
   end.setDate(end.getDate() + ((7 - end.getDay()) % 7));
   const totals = new Map(points.map((point) => [point.key, point])),
@@ -43,7 +49,14 @@ export function ActivityHeatmap({
     const node = scrollRef.current;
     if (node) node.scrollLeft = node.scrollWidth;
   }, [weeks.length]);
-  if (!points.length) return null;
+  useEffect(() => setSelected(undefined), [sessions, calendarStart, calendarEnd]);
+  if (futureStart !== undefined)
+    return (
+      <p>
+        {t("This academic year starts on {{date}}.", { date: new Date(futureStart).toLocaleDateString(localeCode()) })}
+      </p>
+    );
+  if (!points.length && calendarStart === undefined) return null;
   const markers = weeks
     .map((days, index) => {
       const date = days[0].date,
@@ -93,7 +106,7 @@ export function ActivityHeatmap({
             {weeks.map((days, index) => (
               <div className="heatmap-week" key={index}>
                 {days.map((day) =>
-                  day.date.getTime() < trackingStart || day.date.getTime() > Date.now() ? (
+                  day.date.getTime() < trackingStart || day.date.getTime() > (calendarEnd ?? Date.now()) ? (
                     <span key={day.key} aria-hidden="true" />
                   ) : (
                     <button

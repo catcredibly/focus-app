@@ -64,7 +64,7 @@ beforeEach(async () => {
   });
   native.invoke.mockReset().mockImplementation(async (command: string, args: Record<string, unknown> = {}) => {
     if (command === "arm_shortcut_reveal") {
-      if (native.ticket) vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      if (native.ticket) vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
       return native.ticket;
     }
     if (command === "hide_timer_popout" || command === "expire_shortcut_reveal")

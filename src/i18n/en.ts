@@ -626,6 +626,20 @@ const en = {
   "What's new": "What's new",
   "A new version of Shihen is ready to install.": "A new version of Shihen is ready to install.",
   "Reveal shortcut is unavailable on this device.": "Reveal shortcut is unavailable on this device.",
+  "Seconds before hiding after shortcut reveal.": "Seconds before hiding after shortcut reveal.",
+  "Border opacity": "Border opacity",
+  "Rows per page": "Rows per page",
+  "Showing {{start}}–{{end}} of {{total}} sessions": "Showing {{start}}–{{end}} of {{total}} sessions",
+  Page: "Page",
+  "of {{pages}}": "of {{pages}}",
+  "No results found": "No results found",
+  "Search notes": "Search notes",
+  "Clear note search": "Clear note search",
+  "View note": "View note",
+  "Maximum 40 lines.": "Maximum 40 lines.",
+  "This academic year starts on {{date}}.": "This academic year starts on {{date}}.",
+  "View release notes on GitHub": "View release notes on GitHub",
+  "Note exceeds the allowed limits.": "Note exceeds the allowed limits.",
 } as const;
 
 export default en;

@@ -297,10 +297,25 @@ export function revealTimerFromShortcut(): Promise<void> {
       const ticket = await invoke<{ generation: number; sequence: number } | null>("arm_shortcut_reveal");
       if (ticket) {
         shortcutSequence = ticket.sequence;
-        shortcutTimer = setTimeout(() => {
-          shortcutTimer = undefined;
-          void invoke("expire_shortcut_reveal", ticket).catch(console.error);
-        }, settings.popoutRevealTimeoutSeconds * 1000);
+        let remaining = settings.popoutRevealTimeoutSeconds;
+        let previous = Date.now();
+        const schedule = () => {
+          shortcutTimer = setTimeout(
+            () => {
+              const now = Date.now();
+              remaining -= Math.max(0, now - previous) / 1000;
+              previous = now;
+              if (remaining > 0) {
+                schedule();
+                return;
+              }
+              shortcutTimer = undefined;
+              void invoke("expire_shortcut_reveal", ticket).catch(console.error);
+            },
+            Math.min(remaining, 2147483) * 1000,
+          );
+        };
+        schedule();
       }
     });
   shortcutOperation = operation;

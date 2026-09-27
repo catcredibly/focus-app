@@ -609,6 +609,20 @@ const zhCN: Record<keyof typeof en, string> = {
   "What's new": "更新内容",
   "A new version of Shihen is ready to install.": "Shihen 新版本已准备好安装。",
   "Reveal shortcut is unavailable on this device.": "此设备无法使用显示悬浮窗快捷键。",
+  "Seconds before hiding after shortcut reveal.": "快捷键显示浮窗后隐藏前的秒数。",
+  "Border opacity": "边框不透明度",
+  "Rows per page": "每页行数",
+  "Showing {{start}}–{{end}} of {{total}} sessions": "显示第 {{start}}–{{end}} 条，共 {{total}} 条学习记录",
+  Page: "页码",
+  "of {{pages}}": "共 {{pages}} 页",
+  "No results found": "未找到结果",
+  "Search notes": "搜索笔记",
+  "Clear note search": "清除笔记搜索",
+  "View note": "查看笔记",
+  "Maximum 40 lines.": "最多 40 行。",
+  "This academic year starts on {{date}}.": "此学年将于 {{date}} 开始。",
+  "View release notes on GitHub": "在 GitHub 上查看更新说明",
+  "Note exceeds the allowed limits.": "笔记超出允许的限制。",
 };
 
 export default zhCN;

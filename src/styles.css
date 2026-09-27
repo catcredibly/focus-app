@@ -642,7 +642,7 @@ button {
   width: 100vw;
   height: 100vh;
   background: rgba(7, 18, 29, var(--popout-surface-alpha, 1));
-  border: 1px solid rgba(34, 61, 82, var(--popout-surface-alpha, 1));
+  border: 1px solid rgba(34, 61, 82, var(--popout-border-alpha, 1));
   border-radius: 10px;
   position: relative;
   font-size: var(--ui-font-size, 14px);
@@ -3274,7 +3274,7 @@ input {
 }
 [data-theme="light"].popout-root {
   color: #172431;
-  border-color: rgba(189, 203, 212, var(--popout-surface-alpha, 1));
+  border-color: rgba(189, 203, 212, var(--popout-border-alpha, 1));
   background: rgba(248, 250, 251, var(--popout-surface-alpha, 1));
 }
 [data-theme="light"].popout-root .popout-time {
@@ -4613,4 +4613,279 @@ fieldset.setting-control {
   .timer-setup {
     padding: 16px 0;
   }
+}
+
+/* Shared lightweight Markdown note editor and History controls. */
+.session-note-editor {
+  width: 100%;
+  max-width: 470px;
+  margin-top: 30px;
+  min-width: 0;
+}
+.session-note-editor .note-field {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  line-height: 24px;
+  min-height: 48px;
+  padding: 11px 16px;
+  background: var(--surface-control);
+  color: var(--text);
+  border-color: var(--border);
+}
+.session-note-editor textarea {
+  display: block;
+  resize: none;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.session-note-editor .note-preview {
+  display: block;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.note-preview > span {
+  color: var(--text-muted);
+}
+.note-limits {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.note-limits > span {
+  white-space: nowrap;
+}
+.note-limits .field-error {
+  margin: 0;
+}
+.session-editor .session-note-editor {
+  margin-top: 0;
+  max-width: none;
+}
+.modal:has(.session-editor) {
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+.session-editor .modal-actions {
+  position: sticky;
+  bottom: 0;
+  background: var(--surface-control);
+  padding-block: 10px;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+.control-button:disabled {
+  opacity: 0.45;
+}
+.history-filters {
+  grid-template-columns: repeat(3, minmax(150px, 260px)) minmax(36px, 1fr);
+  align-items: end;
+}
+.history-note-search {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.history-note-search > div {
+  display: flex;
+  align-items: center;
+  width: min(100%, 250px);
+  height: 40px;
+  border: 1px solid var(--border);
+  background: var(--surface-control);
+  border-radius: 6px;
+  padding: 0 8px;
+  gap: 6px;
+}
+.history-note-search input {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  color: var(--text);
+  border: 0;
+  padding: 0;
+  outline-offset: 2px;
+}
+.history-note-search button,
+.history-note-viewer header button {
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+}
+.history-note-search > button {
+  height: 40px;
+}
+.history-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.history-pagination-controls,
+.history-pagination label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.history-pagination-controls {
+  margin-left: auto;
+}
+.history-pagination input,
+.history-pagination select {
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--surface-control);
+  padding: 4px 6px;
+}
+.history-pagination input {
+  width: 54px;
+  text-align: center;
+}
+.row-actions .note-indicator {
+  color: var(--text-muted);
+}
+.row-actions .note-indicator:hover {
+  color: var(--text);
+}
+.history-note-snippet {
+  grid-column: 1 / -1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.history-note-snippet mark {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.history-note-viewer {
+  position: fixed;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-control);
+  color: var(--text);
+  box-shadow: 0 6px 24px #0004;
+}
+.history-note-viewer header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.history-note-body {
+  padding: 12px;
+  overflow-y: auto;
+  min-height: 0;
+  overflow-wrap: anywhere;
+}
+.history-note-body p,
+.history-note-body li,
+.update-notes p,
+.update-notes li {
+  white-space: pre-wrap;
+}
+.history-note-body > :first-child {
+  margin-top: 0;
+}
+.history-note-body a,
+.update-release-link,
+.update-notes a {
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+.update-release-link {
+  display: block;
+  margin-top: 10px;
+}
+.analytics-filter-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 190px;
+  width: 190px;
+  height: 40px;
+  padding: 0 11px;
+  gap: 8px;
+  color: var(--text);
+  background: var(--surface-control);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.analytics-filter-select > span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.analytics-filter-select > svg {
+  flex: none;
+}
+.analytics-filter-select:disabled {
+  opacity: 0.5;
+}
+.analytics-filter-menu {
+  position: fixed;
+  z-index: 1100;
+  max-height: min(320px, 45vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-control);
+  color: var(--text);
+  box-shadow: 0 6px 24px #0004;
+}
+.analytics-filter-menu [role="option"] {
+  padding: 9px 12px;
+  min-height: 38px;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.analytics-filter-menu [role="option"].active {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-control));
+}
+.analytics-filter-menu [aria-selected="true"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+@media (max-width: 1100px) {
+  .history-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(36px, 200px);
+  }
+}
+
+.note-limits .field-error {
+  color: var(--negative);
+}
+
+/* Notes must remain reachable even in the compact Timer layout. */
+.timer-card .session-note-editor .note-field,
+.running-stage .session-note-editor .note-field {
+  display: block;
+}
+.running-stage .session-note-editor {
+  margin-top: 52px;
 }

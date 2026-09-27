@@ -1,3 +1,4 @@
+import { normalizeNote } from "../notes";
 import packageMetadata from "../../package.json";
 import { db, type FocusDatabase } from "../db";
 import { loadSettings, normalizeLegacyRevealShortcut, SETTINGS_KEYS, type FocusSettings } from "../settings";
@@ -181,7 +182,14 @@ export async function restoreBackup(
       };
       await apply(database.academicYears, backup.data.academicYears, "academicYearsCreated");
       await apply(database.subjects, backup.data.subjects, "subjectsCreated");
-      await apply(database.sessions, backup.data.sessions, "sessionsImported");
+      await apply(
+        database.sessions,
+        backup.data.sessions.map((session) => ({
+          ...session,
+          note: typeof session.note === "string" ? normalizeNote(session.note) : undefined,
+        })),
+        "sessionsImported",
+      );
       for (const setting of backup.data.settings) {
         if (setting.key === "popoutCloseOnCompletion") continue;
         const existing = await database.settings.get(setting.key);

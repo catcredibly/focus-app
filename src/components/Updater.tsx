@@ -1,3 +1,4 @@
+import { openExternalUrl } from "../externalLinks";
 import { Row, Toggle } from "./SettingsControls";
 import { useSettings } from "../hooks/useSettings";
 import { meaningfulReleaseNotes } from "../releaseNotes";
@@ -109,6 +110,18 @@ export function UpdatePrompt({ ready = true }: { ready?: boolean }) {
         </section>
       ) : (
         <p>{t("A new version of Shihen is ready to install.")}</p>
+      )}
+      {state.availableVersion && (
+        <a
+          className="update-release-link"
+          href={`https://github.com/catcredibly/shihen/releases/tag/v${encodeURIComponent(state.availableVersion.replace(/^v/, ""))}`}
+          onClick={(event) => {
+            event.preventDefault();
+            void openExternalUrl(event.currentTarget.href).catch(console.error);
+          }}
+        >
+          {t("View release notes on GitHub")}
+        </a>
       )}
       <p role="status">{state.phase === "available" ? "" : t(statusKey(state))}</p>
       {state.phase === "downloading" && (

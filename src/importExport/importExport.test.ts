@@ -228,3 +228,35 @@ it.each(["replace", "merge"] as const)(
     expect((await target.settings.get("popoutRevealShortcut"))?.value).toBe("Ctrl+KeyF");
   },
 );
+
+it("normalizes incoming legacy notes without modifying the backup", async () => {
+  const source = await seeded();
+  const backup = await createBackup(source);
+  backup.data.sessions[0].note = "😀".repeat(1201);
+  const target = database();
+  await restoreBackup(backup, "replace", "use-imported", target);
+  expect(Array.from((await target.sessions.get("session"))!.note!)).toHaveLength(1200);
+  expect(Array.from(backup.data.sessions[0].note)).toHaveLength(1201);
+});
+it("normalizes oversized notes once when upgrading an older database", async () => {
+  const name = `note-migration-${crypto.randomUUID()}`;
+  const old = new Dexie(name);
+  old.version(2).stores({ academicYears: "id", subjects: "id", sessions: "id", settings: "key" });
+  await old.table("sessions").put({ id: "legacy", note: "line\n".repeat(45) });
+  await old.table("sessions").put({ id: "valid", note: "\n**Keep**\n" });
+  old.close();
+  const migrated = new FocusDatabase(name);
+  opened.push(migrated);
+  expect((await migrated.sessions.get("legacy"))!.note!.split("\n")).toHaveLength(40);
+  expect((await migrated.sessions.get("valid"))!.note).toBe("\n**Keep**\n");
+});
+
+it("normalizes oversized CSV notes without rejecting their Sessions", async () => {
+  const source = await seeded();
+  const rows = await source.sessions.toArray();
+  rows[0].note = "text\n".repeat(45);
+  const target = database();
+  const preview = await previewCsv(exportSessionsCsv(rows), undefined, undefined, target);
+  await importCsvPreview(preview, target);
+  expect((await target.sessions.get("session"))!.note!.split("\n")).toHaveLength(40);
+});

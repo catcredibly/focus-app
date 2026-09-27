@@ -1,9 +1,11 @@
+import { noteMetrics } from "../notes";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { db } from "../db";
 import type { AcademicYear, Subject } from "../types";
 import {
   ACTIVE_TIMER_STORAGE_KEY,
+  timerStateAt as stateAt,
   closeRunningInterval,
   completedSession,
   extendTimerState,
@@ -32,12 +34,6 @@ function readStored(): TimerState {
   } catch {
     return initialTimerState;
   }
-}
-
-function stateAt(state: TimerState, now = Date.now()) {
-  if (state.mode === "stopwatch") return { ...state, remainingSeconds: focusedSecondsAt(state, now) };
-  if (!state.running || state.paused || state.finished || !state.targetEnd) return state;
-  return { ...state, remainingSeconds: Math.max(0, Math.ceil((state.targetEnd - now) / 1000)) };
 }
 
 export type TimerRecovery = "checking" | "running" | "relationship" | "save-failed" | null;
@@ -71,7 +67,7 @@ export function useTimer() {
   const commit = useCallback(
     (next: TimerState, shouldPersist = true) => {
       stateRef.current = next;
-      setState(next);
+      setState(stateAt(next));
       if (shouldPersist) persist(next);
       channelRef.current?.postMessage(next);
     },
@@ -89,6 +85,7 @@ export function useTimer() {
 
   const saveAndClear = useCallback(
     async (snapshot: TimerState, endTime: number, live = false) => {
+      if (!noteMetrics(snapshot.note).valid) return false;
       const session = completedSession(snapshot, endTime);
       try {
         const notifications = session ? await saveFocusSession(session, live) : [];
@@ -129,7 +126,7 @@ export function useTimer() {
     channel.onmessage = (event) => {
       const next = normalizeTimerState(event.data as TimerState);
       stateRef.current = next;
-      setState(next);
+      setState(stateAt(next));
     };
     channelRef.current = channel;
     return () => channel.close();
@@ -251,13 +248,16 @@ export function useTimer() {
 
   const start = useCallback(
     (seconds: number, subject: Subject, year: AcademicYear) => {
-      if (seconds > 0 && Number.isFinite(seconds)) commit(startTimerState(stateRef.current, seconds, subject, year));
+      if (noteMetrics(stateRef.current.note).valid && seconds > 0 && Number.isFinite(seconds))
+        commit(startTimerState(stateRef.current, seconds, subject, year));
     },
     [commit],
   );
 
   const startStopwatch = useCallback(
-    (subject: Subject, year: AcademicYear) => commit(startStopwatchState(stateRef.current, subject, year)),
+    (subject: Subject, year: AcademicYear) => {
+      if (noteMetrics(stateRef.current.note).valid) commit(startStopwatchState(stateRef.current, subject, year));
+    },
     [commit],
   );
   const dismissExpiredNotice = useCallback(
@@ -308,9 +308,9 @@ export function useTimer() {
   );
   const setNote = useCallback(
     (note: string) => {
-      const next = { ...stateRef.current, note };
+      const next = stateAt({ ...stateRef.current, note });
       stateRef.current = next;
-      setState(next);
+      setState(stateAt(next));
       channelRef.current?.postMessage(next);
       window.clearTimeout(noteTimerRef.current);
       noteTimerRef.current = window.setTimeout(() => persist(stateRef.current), 350);
@@ -370,6 +370,7 @@ export function useTimer() {
   return {
     state,
     display,
+    noteValid: noteMetrics(state.note).valid,
     start,
     startStopwatch,
     dismissExpiredNotice,

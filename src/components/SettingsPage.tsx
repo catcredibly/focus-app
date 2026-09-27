@@ -414,13 +414,23 @@ function GoalDurationEditor({
   );
 }
 
-function AutoHideDelayEditor({ value, onChange }: { value: number; onChange: (seconds: number) => void }) {
+function AutoHideDelayEditor({
+  value,
+  onChange,
+  minimum = 0,
+  label = "Auto-hide delay in seconds",
+}: {
+  value: number;
+  onChange: (seconds: number) => void;
+  minimum?: number;
+  label?: string;
+}) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState(String(value));
   useEffect(() => setDraft(String(value)), [value]);
   const commit = () => {
     const parsed = Number(draft);
-    const next = Number.isFinite(parsed) ? Math.max(0, parsed) : value;
+    const next = draft.trim() && Number.isFinite(parsed) ? Math.max(minimum, parsed) : value;
     setDraft(String(next));
     onChange(next);
   };
@@ -428,9 +438,9 @@ function AutoHideDelayEditor({ value, onChange }: { value: number; onChange: (se
     <label className="seconds-editor">
       <input
         className="settings-value-input"
-        aria-label={t("Auto-hide delay in seconds")}
+        aria-label={t(label)}
         type="number"
-        min="0"
+        min={minimum}
         step="0.1"
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
@@ -860,22 +870,13 @@ function Popout({ settings, setSetting }: SettingsProps) {
       <Row label={t("Reveal shortcut")}>
         <ShortcutRecorder value={settings.popoutRevealShortcut} />
       </Row>
-      <Row label={t("Reveal timeout")}>
-        <select
+      <Row label={t("Reveal timeout")} hint={t("Seconds before hiding after shortcut reveal.")}>
+        <AutoHideDelayEditor
           value={settings.popoutRevealTimeoutSeconds}
-          onChange={(event) =>
-            void setSetting(
-              "popoutRevealTimeoutSeconds",
-              Number(event.target.value) as FocusSettings["popoutRevealTimeoutSeconds"],
-            )
-          }
-        >
-          {[3, 5, 10, 15].map((seconds) => (
-            <option key={seconds} value={seconds}>
-              {t("{{count}} seconds", { count: seconds })}
-            </option>
-          ))}
-        </select>
+          minimum={0.2}
+          label="Reveal timeout"
+          onChange={(value) => void setSetting("popoutRevealTimeoutSeconds", value)}
+        />
       </Row>
       <Row disabled={!autoHideEnabled} label={t("Show accent dot on reveal tab")}>
         <Toggle
@@ -964,6 +965,17 @@ function Popout({ settings, setSetting }: SettingsProps) {
           onChange={(event) => void setSetting("popoutTransparency", Number(event.target.value))}
         />
       </Row>
+      <Row label={t("Border opacity")} hint={`${settings.popoutBorderOpacity}%`}>
+        <input
+          aria-label={t("Border opacity")}
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          value={settings.popoutBorderOpacity}
+          onChange={(event) => void setSetting("popoutBorderOpacity", Number(event.target.value))}
+        />
+      </Row>
       <Row label={t("Hide controls until hovered")}>
         <Toggle
           label={t("Hide controls until hovered")}
@@ -996,6 +1008,7 @@ function Popout({ settings, setSetting }: SettingsProps) {
           "popoutAutoOpen",
           "popoutShowInTaskbar",
           "popoutTransparency",
+          "popoutBorderOpacity",
           "popoutPositionX",
           "popoutPositionY",
           "popoutFloatingWidth",

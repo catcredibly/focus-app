@@ -45,7 +45,9 @@ export default function App() {
   useEffect(() => {
     if (!isTauri() || isPopout) return;
     // Analytics needs room for five metrics and its fixed weekday/time grid.
-    void invoke("set_main_minimum_width", { width: page === "Analytics" ? 1040 : 420 }).catch(console.error);
+    void invoke("set_main_minimum_width", { width: ["Analytics", "History"].includes(page) ? 1040 : 420 }).catch(
+      console.error,
+    );
   }, [page, isPopout]);
 
   useEffect(() => {

@@ -302,10 +302,14 @@ it("clears invalid defaults without changing history or a valid disabled selecti
 it("defaults and validates the independent Reveal timeout", async () => {
   const testDb = database();
   expect((await loadSettings(testDb)).popoutRevealTimeoutSeconds).toBe(5);
-  for (const value of ["never", "0", "4", "bad"]) {
+  for (const value of ["never", "", "bad", "Infinity"]) {
     await testDb.settings.put({ key: "popoutRevealTimeoutSeconds", value });
     expect((await loadSettings(testDb)).popoutRevealTimeoutSeconds).toBe(5);
   }
+  await saveSetting("popoutRevealTimeoutSeconds", 0.1, testDb);
+  expect((await loadSettings(testDb)).popoutRevealTimeoutSeconds).toBe(0.2);
+  await saveSetting("popoutRevealTimeoutSeconds", 4.5, testDb);
+  expect((await loadSettings(testDb)).popoutRevealTimeoutSeconds).toBe(4.5);
   await saveSetting("popoutRevealTimeoutSeconds", 15, testDb);
   expect((await loadSettings(testDb)).popoutRevealTimeoutSeconds).toBe(15);
 });

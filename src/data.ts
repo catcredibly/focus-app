@@ -1,3 +1,4 @@
+import { noteMetrics } from "./notes";
 import { db } from "./db";
 import type { AcademicYear, FocusSession, Subject } from "./types";
 import { localeCode } from "./i18n";
@@ -68,6 +69,7 @@ export async function createSession(input: {
   focusedDurationSeconds?: number;
   durationMode?: "locked" | "unlocked";
 }) {
+  if (!noteMetrics(input.note ?? "").valid) throw new Error("Note exceeds the allowed limits.");
   if (!Number.isFinite(input.startTime) || !Number.isFinite(input.endTime) || input.endTime <= input.startTime) {
     throw new Error("End time must be after start time.");
   }
@@ -89,7 +91,7 @@ export async function createSession(input: {
     endTime: input.endTime,
     focusedDurationSeconds,
     durationMode,
-    note: input.note?.trim() || undefined,
+    note: input.note?.trim() ? input.note : undefined,
     archived: false,
   };
   await db.sessions.add(session);

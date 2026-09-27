@@ -4,6 +4,14 @@ use tauri::{Emitter, Manager};
 mod linux_desktop;
 
 #[tauri::command]
+fn open_external_url(app: tauri::AppHandle, url: String) -> Result<(), String> {
+    use tauri_plugin_opener::OpenerExt;
+    let parsed = tauri::Url::parse(&url).map_err(|e| e.to_string())?;
+    if !matches!(parsed.scheme(), "http" | "https") { return Err("Unsupported link protocol".into()); }
+    app.opener().open_url(parsed.as_str(), None::<&str>).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn supports_window_positioning() -> bool {
     #[cfg(target_os = "linux")]
     { linux_desktop::supports_positioning() }
@@ -539,6 +547,7 @@ pub fn run() {
             }
         }))
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             #[cfg(target_os = "linux")]
             linux_desktop::install(app.handle())?;
@@ -574,6 +583,7 @@ pub fn run() {
             get_timer_geometry,
             restore_timer_bounds,
             update_probe::probe_update_manifest,
+            open_external_url,
             popout_lifecycle::sync_popout_session,
             popout_lifecycle::prepare_timer_popout,
             popout_lifecycle::arm_shortcut_reveal,

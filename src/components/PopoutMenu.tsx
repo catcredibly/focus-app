@@ -86,6 +86,7 @@ export function PopoutMenu() {
           </button>
           {view === "stop" && (
             <button
+              disabled={!timer.noteValid}
               onClick={async () => {
                 await timer.stop();
                 close();

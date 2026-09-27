@@ -70,7 +70,9 @@ export type FocusSettings = {
   popoutDocked: boolean;
   popoutDockAutoHide: boolean;
   popoutRevealShortcut: string;
-  popoutRevealTimeoutSeconds: 3 | 5 | 10 | 15;
+  popoutRevealTimeoutSeconds: number;
+  popoutBorderOpacity: number;
+  historyPageSize: 10 | 25 | 50;
   popoutRevealShortcutIntent: "default" | "custom" | "cleared";
   popoutAutoHideDelaySeconds: number;
   popoutAutoHideTabSize: AutoHideTabSize;
@@ -133,6 +135,8 @@ export const SETTINGS_KEYS: { [K in keyof FocusSettings]: string } = {
   popoutDockAutoHide: "popoutDockAutoHide",
   popoutRevealShortcut: "popoutRevealShortcut",
   popoutRevealTimeoutSeconds: "popoutRevealTimeoutSeconds",
+  popoutBorderOpacity: "popoutBorderOpacity",
+  historyPageSize: "historyPageSize",
   popoutRevealShortcutIntent: "popoutRevealShortcutIntent",
   popoutAutoHideDelaySeconds: "popoutAutoHideDelaySeconds",
   popoutAutoHideTabSize: "popoutAutoHideTabSize",
@@ -195,6 +199,8 @@ export const DEFAULT_SETTINGS: FocusSettings = {
   popoutDockAutoHide: false,
   popoutRevealShortcut: "Ctrl+Alt+KeyF",
   popoutRevealTimeoutSeconds: 5,
+  popoutBorderOpacity: 100,
+  historyPageSize: 25,
   popoutRevealShortcutIntent: "default",
   popoutAutoHideDelaySeconds: 0.4,
   popoutAutoHideTabSize: "medium",
@@ -276,7 +282,12 @@ export function goalDurationSeconds(
 
 function decode<K extends keyof FocusSettings>(key: K, raw: string | undefined): FocusSettings[K] {
   if (key === "popoutRevealTimeoutSeconds")
-    return ([3, 5, 10, 15].includes(Number(raw)) ? Number(raw) : 5) as FocusSettings[K];
+    return (raw?.trim() && Number.isFinite(Number(raw)) ? Math.max(0.2, Number(raw)) : 5) as FocusSettings[K];
+  if (key === "historyPageSize") return ([10, 25, 50].includes(Number(raw)) ? Number(raw) : 25) as FocusSettings[K];
+  if (key === "popoutBorderOpacity")
+    return (
+      raw?.trim() && Number.isFinite(Number(raw)) ? Math.min(100, Math.max(0, Number(raw))) : 100
+    ) as FocusSettings[K];
   if (raw === undefined) return DEFAULT_SETTINGS[key];
   if (key === "dailyGoalSeconds" || key === "weeklyGoalSeconds")
     return normalizeGoalSeconds(
@@ -384,9 +395,11 @@ export async function saveSetting<K extends keyof FocusSettings>(
   database: FocusDatabase = db,
 ) {
   const normalized =
-    key === "dailyGoalSeconds" || key === "weeklyGoalSeconds"
-      ? normalizeGoalSeconds(value, Number(DEFAULT_SETTINGS[key]), GOAL_MAX_HOURS[key as keyof typeof GOAL_MAX_HOURS])
-      : value;
+    key === "popoutRevealTimeoutSeconds" || key === "popoutBorderOpacity" || key === "historyPageSize"
+      ? decode(key, String(value))
+      : key === "dailyGoalSeconds" || key === "weeklyGoalSeconds"
+        ? normalizeGoalSeconds(value, Number(DEFAULT_SETTINGS[key]), GOAL_MAX_HOURS[key as keyof typeof GOAL_MAX_HOURS])
+        : value;
   if (key === "popoutRevealShortcut") {
     await database.settings.bulkPut([
       { key: SETTINGS_KEYS[key], value: String(normalized) },

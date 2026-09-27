@@ -1,3 +1,5 @@
+import { FilterSelect } from "./FilterSelect";
+import { dailyActivityScope } from "../analytics/dailyActivity";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
@@ -165,36 +167,35 @@ export function AnalyticsPage() {
           <p>{t("Explore your study habits across subjects, Academic Years, and self-study.")}</p>
         </div>
         <div className="analytics-filters">
-          <select
-            aria-label={t("Academic Year")}
+          <FilterSelect
+            label={t("Academic Year")}
             disabled={yearDisabled}
             value={yearDisabled ? "" : yearId}
-            onChange={(e) => setYearId(e.target.value)}
-          >
-            <option value="">{t("All Years")}</option>
-            {years
-              .filter((y) => !y.archived)
-              .map((y) => (
-                <option key={y.id} value={y.id}>
-                  {y.name}
-                </option>
-              ))}
-          </select>
-          <select
-            aria-label={t("Subject")}
+            onChange={(id) => {
+              setYearId(id);
+              if (
+                subjectId &&
+                !subjects.some((subject) => subject.id === subjectId && (!id || subject.academicYearId === id))
+              )
+                setSubjectId("");
+            }}
+            options={[
+              { value: "", label: t("All Years") },
+              ...years.filter((year) => !year.archived).map((year) => ({ value: year.id, label: year.name })),
+            ]}
+          />
+          <FilterSelect
+            label={t("Subject")}
             disabled={subjectDisabled}
             value={subjectDisabled ? "" : subjectId}
-            onChange={(e) => setSubjectId(e.target.value)}
-          >
-            <option value="">{t("All Subjects")}</option>
-            {subjects
-              .filter((s) => !s.archived && (!yearId || s.academicYearId === yearId))
-              .map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-          </select>
+            onChange={setSubjectId}
+            options={[
+              { value: "", label: t("All Subjects") },
+              ...subjects
+                .filter((subject) => !subject.archived && (!yearId || subject.academicYearId === yearId))
+                .map((subject) => ({ value: subject.id, label: subject.name })),
+            ]}
+          />
           <div className="custom-range-wrap">
             <div className="range-control" aria-label={t("Date range")}>
               {analyticsRanges.map((r) => (
@@ -286,7 +287,11 @@ export function AnalyticsPage() {
         ))}
       </nav>
       {tab === "Overview" ? (
-        <Overview {...timeline} allSessions={effectiveSessions} />
+        <Overview
+          {...timeline}
+          allSessions={effectiveSessions}
+          activity={dailyActivityScope(effectiveSessions, years, subjects, yearId, subjectId, now)}
+        />
       ) : tab === "Study Patterns" ? (
         <StudyPatterns {...timeline} />
       ) : tab === "Subjects" ? (
@@ -330,7 +335,14 @@ function GoalSummary({
   );
 }
 
-function Overview({ sessions, history, period, range, allSessions }: TimelineProps & { allSessions: FocusSession[] }) {
+function Overview({
+  sessions,
+  history,
+  period,
+  range,
+  allSessions,
+  activity,
+}: TimelineProps & { allSessions: FocusSession[]; activity: ReturnType<typeof dailyActivityScope> }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const goals = goalProgress(allSessions),
@@ -413,7 +425,7 @@ function Overview({ sessions, history, period, range, allSessions }: TimelinePro
         <RollingChart history={history} period={period} bars />
       </Panel>
       <Panel title={t("Daily activity")}>
-        <ActivityHeatmap sessions={allSessions} />
+        <ActivityHeatmap {...activity} />
       </Panel>
     </div>
   );

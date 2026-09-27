@@ -626,6 +626,20 @@ const ja: Record<keyof typeof en, string> = {
   "What's new": "更新内容",
   "A new version of Shihen is ready to install.": "Shihen の新しいバージョンをインストールできます。",
   "Reveal shortcut is unavailable on this device.": "このデバイスでは表示ショートカットを使用できません。",
+  "Seconds before hiding after shortcut reveal.": "ショートカットで表示してから隠すまでの秒数。",
+  "Border opacity": "枠線の不透明度",
+  "Rows per page": "1ページの行数",
+  "Showing {{start}}–{{end}} of {{total}} sessions": "全 {{total}} セッション中 {{start}}–{{end}} 件を表示",
+  Page: "ページ",
+  "of {{pages}}": "/ {{pages}}",
+  "No results found": "該当する結果はありません",
+  "Search notes": "メモを検索",
+  "Clear note search": "メモ検索をクリア",
+  "View note": "メモを表示",
+  "Maximum 40 lines.": "最大40行です。",
+  "This academic year starts on {{date}}.": "この学年は {{date}} に始まります。",
+  "View release notes on GitHub": "GitHubでリリースノートを見る",
+  "Note exceeds the allowed limits.": "メモが上限を超えています。",
 };
 
 export default ja;

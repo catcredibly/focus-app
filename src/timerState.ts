@@ -200,7 +200,7 @@ export function completedSession(state: TimerState, endTime: number): FocusSessi
     endTime,
     focusedDurationSeconds,
     durationMode: focusedDurationSeconds === Math.round((endTime - state.startedAt) / 1000) ? "locked" : "unlocked",
-    note: state.note.trim() || undefined,
+    note: state.note.trim() ? state.note : undefined,
     archived: false,
     focusIntervals: closed.focusIntervals,
   };
@@ -263,4 +263,10 @@ export function currentStreak(sessions: FocusSession[], now = Date.now()) {
     cursor.setDate(cursor.getDate() - 1);
   }
   return streak;
+}
+
+export function timerStateAt(state: TimerState, now = Date.now()) {
+  if (state.mode === "stopwatch") return { ...state, remainingSeconds: focusedSecondsAt(state, now) };
+  if (!state.running || state.paused || state.finished || !state.targetEnd) return state;
+  return { ...state, remainingSeconds: Math.max(0, Math.ceil((state.targetEnd - now) / 1000)) };
 }

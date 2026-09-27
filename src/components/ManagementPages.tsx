@@ -1,7 +1,24 @@
+import { historyPagination, enteredHistoryPage } from "../historyPagination";
+import { NoteViewer, NoteSnippet } from "./HistoryNotes";
+import { NoteEditor } from "./NoteEditor";
+import { readableNote, noteSearchTerms, noteMetrics } from "../notes";
 import { nextSubjectColor } from "../subjectColors";
 import { useEffect, useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Archive, CalendarDays, Check, Lock, LockOpen, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
+import {
+  FileText,
+  Search,
+  X,
+  Archive,
+  CalendarDays,
+  Check,
+  Lock,
+  LockOpen,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Trash2,
+} from "lucide-react";
 import { db } from "../db";
 import { createSession, CURRENT_YEAR_KEY, formatDuration, makeId, setCurrentAcademicYear } from "../data";
 import type { AcademicYear, FocusSession, Subject } from "../types";
@@ -608,7 +625,7 @@ function SessionEditor({
       setSaveError(t("End time must be after start time."));
       return;
     }
-    if (durationError) return;
+    if (durationError || !noteMetrics(note).valid) return;
     try {
       if (session)
         await updateSessionDetails(session.id, {
@@ -739,18 +756,17 @@ function SessionEditor({
         </div>
         <label>
           {t("Note")}
-          <input
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-            placeholder={t("Add a note (optional)...")}
-          />
+          <NoteEditor value={note} onChange={setNote} />
         </label>
         {saveError && <p className="field-error">{saveError}</p>}
         <div className="modal-actions">
-          <button type="button" onClick={onClose}>
+          <button type="button" data-note-exit onClick={onClose}>
             {t("Cancel")}
           </button>
-          <button className="primary-action" disabled={!relationshipValid || !validSpan || Boolean(durationError)}>
+          <button
+            className="primary-action"
+            disabled={!noteMetrics(note).valid || !relationshipValid || !validSpan || Boolean(durationError)}
+          >
             {t("Save")}
           </button>
         </div>
@@ -789,6 +805,7 @@ function SessionEditor({
 export function HistoryPage() {
   const currentId = useLiveQuery(async () => (await db.settings.get(CURRENT_YEAR_KEY))?.value ?? "", []) ?? "";
   const { t } = useTranslation();
+  const { settings, setSetting } = useSettings();
   const years = useLiveQuery(() => db.academicYears.toArray(), []) ?? [];
   const subjects = useLiveQuery(() => db.subjects.toArray(), []) ?? [];
   const sessions = useLiveQuery(() => db.sessions.orderBy("startTime").reverse().toArray(), []) ?? [];
@@ -809,17 +826,46 @@ export function HistoryPage() {
   const activeYears = years.filter((year) => !year.archived);
   const [moveYearId, setMoveYearId] = useState("");
   const [moveSubjectId, setMoveSubjectId] = useState("");
-  const pageSize = 20;
+  const pageSize = settings.historyPageSize;
+  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [viewingNote, setViewingNote] = useState<{ note: string; anchor: HTMLElement }>();
+  useEffect(() => {
+    if (!query.trim()) {
+      setSearch("");
+      return;
+    }
+    const timeout = window.setTimeout(() => setSearch(query), 200);
+    return () => window.clearTimeout(timeout);
+  }, [query]);
+  const terms = useMemo(() => noteSearchTerms(search), [search]);
+  const readable = useMemo(
+    () => new Map(sessions.map((session) => [session.id, readableNote(session.note ?? "").toLocaleLowerCase()])),
+    [sessions],
+  );
   const filtered = useMemo(
     () =>
       sessions.filter(
         (session) =>
           (status === "all" || isSessionEffectivelyArchived(session, subjects, years) === (status === "archived")) &&
           (!yearId || session.academicYearId === yearId) &&
-          (!subjectId || session.subjectId === subjectId),
+          (!subjectId || session.subjectId === subjectId) &&
+          terms.every((term) => readable.get(session.id)?.includes(term)),
       ),
-    [sessions, status, yearId, subjectId, subjects, years],
+    [sessions, status, yearId, subjectId, subjects, years, terms, readable],
   );
+  const pagination = historyPagination(filtered.length, pageSize, page);
+  const [pageDraft, setPageDraft] = useState("1");
+  useEffect(() => {
+    setPage(pagination.page);
+    setPageDraft(String(pagination.page + 1));
+  }, [pagination.page, pageSize, yearId, subjectId, status, search]);
+  const commitPage = () => {
+    const next = enteredHistoryPage(pageDraft, pagination.page, pagination.pages);
+    setPage(next);
+    setPageDraft(String(next + 1));
+  };
   return (
     <main className="page">
       <PageHeader
@@ -893,6 +939,43 @@ export function HistoryPage() {
             <option value="all">{t("All")}</option>
           </select>
         </label>
+        <div className="history-note-search">
+          {searchOpen ? (
+            <div>
+              <Search size={16} />
+              <input
+                autoFocus
+                aria-label={t("Search notes")}
+                placeholder={t("Search notes")}
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setPage(0);
+                }}
+                onBlur={() => {
+                  if (!query.trim()) setSearchOpen(false);
+                }}
+              />
+              {query && (
+                <button
+                  aria-label={t("Clear note search")}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    setQuery("");
+                    setSearch("");
+                    setPage(0);
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          ) : (
+            <button aria-label={t("Search notes")} title={t("Search notes")} onClick={() => setSearchOpen(true)}>
+              <Search size={18} />
+            </button>
+          )}
+        </div>
       </div>
       {selecting && (
         <div className="selection-toolbar">
@@ -932,7 +1015,7 @@ export function HistoryPage() {
           <span>{t("Status")}</span>
           <span />
         </div>
-        {filtered.slice(page * pageSize, (page + 1) * pageSize).map((s) => (
+        {filtered.slice(pagination.page * pageSize, (pagination.page + 1) * pageSize).map((s) => (
           <div className="history-row" key={s.id}>
             <span>
               {selecting && (
@@ -975,6 +1058,16 @@ export function HistoryPage() {
               {t(isSessionEffectivelyArchived(s, subjects, years) ? "Archived" : "Active")}
             </span>
             <div className="row-actions">
+              {s.note?.trim() && (
+                <button
+                  className="note-indicator"
+                  aria-label={t("View note")}
+                  title={t("View note")}
+                  onClick={(event) => setViewingNote({ note: s.note!, anchor: event.currentTarget })}
+                >
+                  <FileText />
+                </button>
+              )}
               <button title={t("Edit")} onClick={() => setEditing(s)}>
                 <Pencil />
               </button>
@@ -982,28 +1075,71 @@ export function HistoryPage() {
                 <Trash2 />
               </button>
             </div>
+            {terms.length > 0 && <NoteSnippet note={s.note ?? ""} terms={terms} />}
           </div>
         ))}
       </div>
       {!filtered.length && (
         <div className="empty-state">
-          <h2>{t(status === "archived" ? "No archived sessions" : "Completed focus sessions will appear here")}</h2>
+          <h2>
+            {t(
+              yearId || subjectId || terms.length || sessions.length
+                ? "No results found"
+                : status === "archived"
+                  ? "No archived sessions"
+                  : "Completed focus sessions will appear here",
+            )}
+          </h2>
         </div>
       )}
-      <div className="pagination">
-        <button disabled={!page} onClick={() => setPage(page - 1)}>
-          {t("Previous")}
-        </button>
+      <div className="pagination history-pagination">
         <span>
-          {t("Page {{page}} of {{pages}}", {
-            page: page + 1,
-            pages: Math.max(1, Math.ceil(filtered.length / pageSize)),
+          {t("Showing {{start}}–{{end}} of {{total}} sessions", {
+            start: pagination.start,
+            end: pagination.end,
+            total: filtered.length,
           })}
         </span>
-        <button disabled={(page + 1) * pageSize >= filtered.length} onClick={() => setPage(page + 1)}>
-          {t("Next")}
-        </button>
+        <div className="history-pagination-controls">
+          <label>
+            {t("Rows per page")}
+            <select
+              value={pageSize}
+              onChange={(event) => void setSetting("historyPageSize", Number(event.target.value) as 10 | 25 | 50)}
+            >
+              {[10, 25, 50].map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button disabled={!pagination.page} onClick={() => setPage(pagination.page - 1)}>
+            {t("Previous")}
+          </button>
+          <label>
+            {t("Page")}
+            <input
+              aria-label={t("Page")}
+              inputMode="numeric"
+              value={pageDraft}
+              onChange={(event) => setPageDraft(event.target.value)}
+              onBlur={commitPage}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  commitPage();
+                  event.currentTarget.blur();
+                }
+              }}
+            />
+            {t("of {{pages}}", { pages: pagination.pages })}
+          </label>
+          <button disabled={pagination.page === pagination.pages - 1} onClick={() => setPage(pagination.page + 1)}>
+            {t("Next")}
+          </button>
+        </div>
       </div>
+      {viewingNote && <NoteViewer {...viewingNote} onClose={() => setViewingNote(undefined)} />}
       {editing !== undefined && (
         <Modal title={t(editing ? "Edit Session" : "Add Session")} onClose={() => setEditing(undefined)}>
           <SessionEditor

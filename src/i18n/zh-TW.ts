@@ -610,6 +610,20 @@ const zhTW: Record<keyof typeof en, string> = {
   "What's new": "更新內容",
   "A new version of Shihen is ready to install.": "Shihen 新版本已準備好安裝。",
   "Reveal shortcut is unavailable on this device.": "此裝置無法使用顯示浮動視窗快捷鍵。",
+  "Seconds before hiding after shortcut reveal.": "快捷鍵顯示浮窗後隱藏前的秒數。",
+  "Border opacity": "邊框不透明度",
+  "Rows per page": "每頁列數",
+  "Showing {{start}}–{{end}} of {{total}} sessions": "顯示第 {{start}}–{{end}} 筆，共 {{total}} 筆學習紀錄",
+  Page: "頁碼",
+  "of {{pages}}": "共 {{pages}} 頁",
+  "No results found": "找不到結果",
+  "Search notes": "搜尋筆記",
+  "Clear note search": "清除筆記搜尋",
+  "View note": "檢視筆記",
+  "Maximum 40 lines.": "最多 40 行。",
+  "This academic year starts on {{date}}.": "此學年將於 {{date}} 開始。",
+  "View release notes on GitHub": "在 GitHub 上檢視更新說明",
+  "Note exceeds the allowed limits.": "筆記超出允許的限制。",
 };
 
 export default zhTW;

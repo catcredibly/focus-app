@@ -6,6 +6,8 @@ import { filterSessions } from "./analytics/analytics";
 import { createDevelopmentAnalyticsDataset } from "./analytics/developmentDataset";
 import {
   closeRunningInterval,
+  timerStateAt,
+  finishTimerState,
   focusedSecondsAt,
   idleTimerState,
   normalizeTimerState,
@@ -214,4 +216,24 @@ it("shares Stopwatch persistence and completion while excluding paused time", ()
     sessionId: null,
     remainingSeconds: initialTimerState.plannedDurationSeconds,
   });
+});
+
+it("note updates derive current running, paused, extended and Stopwatch display values", () => {
+  const started = startTimerState(initialTimerState, 100, subject, year, 1000);
+  expect(timerStateAt({ ...started, note: "typing" }, 11000).remainingSeconds).toBe(90);
+  const paused = { ...timerStateAt(started, 11000), paused: true, targetEnd: null };
+  expect(timerStateAt({ ...paused, note: "more" }, 21000).remainingSeconds).toBe(90);
+  const extended = extendTimerState(started, 50, 11000);
+  expect(timerStateAt({ ...extended, note: "extended" }, 21000).remainingSeconds).toBe(130);
+  const stopwatch = startStopwatchState(initialTimerState, subject, year, 1000);
+  expect(timerStateAt({ ...stopwatch, note: "count up" }, 11000).remainingSeconds).toBe(10);
+});
+it("preserves an invalid completed draft and original timing across recovery", () => {
+  const started = startTimerState(initialTimerState, 60, subject, year, 1000);
+  const finished = finishTimerState({ ...started, note: "a".repeat(1300) }, 61000);
+  const restored = normalizeTimerState(JSON.parse(JSON.stringify(finished)));
+  expect(restored.note).toHaveLength(1300);
+  expect(restored.finishedAt).toBe(61000);
+  const session = completedSession({ ...restored, note: "repaired" }, restored.finishedAt!);
+  expect(session).toMatchObject({ endTime: 61000, focusedDurationSeconds: 60, note: "repaired" });
 });

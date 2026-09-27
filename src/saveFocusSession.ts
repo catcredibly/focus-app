@@ -1,3 +1,4 @@
+import { noteMetrics } from "./notes";
 import { db, type FocusDatabase } from "./db";
 import { goalProgress, localDayBounds, localWeekBounds } from "./goals";
 import { loadSettings } from "./settings";
@@ -12,6 +13,7 @@ export async function saveFocusSession(
   database: FocusDatabase = db,
   now = Date.now(),
 ) {
+  if (!noteMetrics(session.note ?? "").valid) throw new Error("Note exceeds the allowed limits.");
   return database.transaction("rw", database.sessions, database.settings, async () => {
     const messages: { message: ToastMessage; kind: "daily" | "weekly" }[] = [];
     if (await database.sessions.get(session.id)) return messages;

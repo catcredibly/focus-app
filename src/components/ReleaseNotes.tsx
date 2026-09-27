@@ -1,19 +1,34 @@
 import { Fragment, type ReactNode } from "react";
 
-/** Deliberately small Markdown subset. React escapes text; raw HTML is never used. */
+import { noteTokens } from "../notes";
+import { openExternalUrl } from "../externalLinks";
+/** React escapes text; raw HTML is never interpreted. */
 function inline(text: string): ReactNode[] {
-  return text.split(/(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^\s)]+\))/g).map((part, index) => {
-    if (part.startsWith("**") && part.endsWith("**")) return <strong key={index}>{part.slice(2, -2)}</strong>;
-    if (part.startsWith("`") && part.endsWith("`")) return <code key={index}>{part.slice(1, -1)}</code>;
-    const link = /^\[([^\]]+)\]\(([^\s)]+)\)$/.exec(part);
-    if (link && /^https?:\/\//i.test(link[2]))
-      return (
-        <a key={index} href={link[2]} target="_blank" rel="noopener noreferrer">
-          {link[1]}
-        </a>
-      );
-    return <Fragment key={index}>{part}</Fragment>;
-  });
+  return noteTokens(text).map((token, index) =>
+    token.url ? (
+      <a
+        key={index}
+        href={token.url}
+        onClick={(event) => {
+          event.preventDefault();
+          void openExternalUrl(token.url!).catch(console.error);
+        }}
+      >
+        {inline(token.label!)}
+      </a>
+    ) : (
+      <Fragment key={index}>
+        {token.raw.split(/(\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\*[^*\n]+\*|_[^_\n]+_)/g).map((part, key) => {
+          if ((part.startsWith("**") && part.endsWith("**")) || (part.startsWith("__") && part.endsWith("__")))
+            return <strong key={key}>{part.slice(2, -2)}</strong>;
+          if (part.startsWith("`") && part.endsWith("`")) return <code key={key}>{part.slice(1, -1)}</code>;
+          if ((part.startsWith("*") && part.endsWith("*")) || (part.startsWith("_") && part.endsWith("_")))
+            return <em key={key}>{part.slice(1, -1)}</em>;
+          return <Fragment key={key}>{part}</Fragment>;
+        })}
+      </Fragment>
+    ),
+  );
 }
 export function ReleaseNotes({ notes }: { notes: string }) {
   const blocks: ReactNode[] = [],

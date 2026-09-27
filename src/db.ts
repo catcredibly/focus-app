@@ -1,3 +1,4 @@
+import { normalizeNote } from "./notes";
 import Dexie, { type Table } from "dexie";
 import type { AcademicYear, AppSetting, FocusSession, Subject } from "./types";
 
@@ -34,6 +35,18 @@ export class FocusDatabase extends Dexie {
             session.academicYearId ??= "";
             session.academicYearName ??= "Unknown academic year";
             session.archived ??= false;
+          });
+      });
+    this.version(3)
+      .stores({})
+      .upgrade(async (tx) => {
+        await tx
+          .table("sessions")
+          .toCollection()
+          .modify((session: FocusSession) => {
+            if (typeof session.note !== "string") return;
+            const normalized = normalizeNote(session.note);
+            if (normalized !== session.note) session.note = normalized;
           });
       });
   }

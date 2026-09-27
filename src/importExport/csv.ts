@@ -1,3 +1,4 @@
+import { normalizeNote } from "../notes";
 import { db, type FocusDatabase } from "../db";
 import { makeId } from "../data";
 import type { AcademicYear, FocusSession, Subject } from "../types";
@@ -200,7 +201,7 @@ export async function previewCsv(
         endTime,
         focusedDurationSeconds: Math.round((endTime - startTime) / 1000),
         archived: mapping.archived ? bool(record[mapping.archived]) : false,
-        note: mapping.note ? record[mapping.note]?.trim() || undefined : undefined,
+        note: mapping.note ? normalizeNote(record[mapping.note] ?? "") || undefined : undefined,
       };
       const existing = existingIds.get(id);
       duplicate = existing
@@ -250,7 +251,10 @@ export async function importCsvPreview(preview: CsvPreview, database: FocusDatab
         });
         summary.subjectsCreated++;
       }
-      await database.sessions.add(row.session);
+      await database.sessions.add({
+        ...row.session,
+        note: row.session.note === undefined ? undefined : normalizeNote(row.session.note),
+      });
       summary.sessionsImported++;
     }
   });

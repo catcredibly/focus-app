@@ -1,3 +1,4 @@
+import { NoteEditor } from "./NoteEditor";
 import { TimerSetup } from "./TimerSetup";
 import { timerSetupStep } from "../subjectDefaults";
 import { defaultSessionSubject } from "../subjectDefaults";
@@ -190,22 +191,27 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
       </span>
     </div>
   );
-  const dateControl = todayAvailable ? (
-    <span className="tooltip-host date-toggle-host">
-      <button
-        className={`date date-toggle ${todayOpen ? "active" : ""}`}
-        aria-pressed={todayOpen}
-        onClick={() => setTodayOpen((value) => !value)}
-      >
-        {dateTime || t("Today")}
-      </button>
-      <span className="focus-tooltip" role="tooltip">
-        {t(todayOpen ? "Hide Today pane" : "Show Today pane")}
+  const setupActive = !timer.state.running && Boolean(setupStep);
+  useEffect(() => {
+    if (setupActive) setTodayOpen(false);
+  }, [setupActive]);
+  const dateControl =
+    todayAvailable && !setupActive ? (
+      <span className="tooltip-host date-toggle-host">
+        <button
+          className={`date date-toggle ${todayOpen ? "active" : ""}`}
+          aria-pressed={todayOpen}
+          onClick={() => setTodayOpen((value) => !value)}
+        >
+          {dateTime || t("Today")}
+        </button>
+        <span className="focus-tooltip" role="tooltip">
+          {t(todayOpen ? "Hide Today pane" : "Show Today pane")}
+        </span>
       </span>
-    </span>
-  ) : (
-    <span className="date">{dateTime}</span>
-  );
+    ) : (
+      <span className="date">{dateTime}</span>
+    );
 
   const recoveryDialogs = (
     <>
@@ -244,7 +250,7 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
         <Dialog title={t("Couldn't save this session")}>
           <p>{t("Shihen couldn't save this study session. Your session data has been preserved.")}</p>
           <div className="modal-actions">
-            <button className="primary-action" onClick={() => void timer.retrySave()}>
+            <button className="primary-action" disabled={!timer.noteValid} onClick={() => void timer.retrySave()}>
               {t("Retry")}
             </button>
           </div>
@@ -304,6 +310,7 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
             </button>
             <button
               className="primary-action"
+              disabled={!timer.noteValid}
               onClick={async () => {
                 setStopping(false);
                 await timer.stop();
@@ -385,7 +392,11 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
             {timer.state.finished ? t("Finished") : timer.state.paused ? t("Paused") : ""}
           </div>
           <div className="running-controls">
-            <button className="control-button" onClick={timer.state.finished ? timer.finish : timer.pause}>
+            <button
+              className="control-button"
+              disabled={timer.state.finished && !timer.noteValid}
+              onClick={timer.state.finished ? timer.finish : timer.pause}
+            >
               {timer.state.finished ? (
                 <Check size={25} />
               ) : timer.state.paused ? (
@@ -395,7 +406,7 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
               )}
               <span>{timer.state.finished ? t("Finish") : timer.state.paused ? t("Resume") : t("Pause")}</span>
             </button>
-            <button className="control-button" onClick={() => setStopping(true)}>
+            <button className="control-button" data-note-exit onClick={() => setStopping(true)}>
               <Square size={22} fill="currentColor" />
               <span>{t("Stop")}</span>
             </button>
@@ -424,13 +435,7 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
               <span>{t("Pop out")}</span>
             </button>
           </div>
-          <input
-            className="note-field"
-            aria-label={t("Session note")}
-            placeholder={t("Add a note (optional)...")}
-            value={timer.state.note}
-            onChange={(event) => timer.setNote(event.target.value)}
-          />
+          <NoteEditor value={timer.state.note} onChange={timer.setNote} />
         </section>
         {todayAvailable && todayOpen && (
           <TodayPanel
@@ -516,15 +521,9 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
             </option>
           ))}
         </select>
-        <input
-          className="note-field"
-          aria-label={t("Session note")}
-          placeholder={t("Add a note (optional)...")}
-          value={timer.state.note}
-          onChange={(event) => timer.setNote(event.target.value)}
-        />
+        <NoteEditor value={timer.state.note} onChange={timer.setNote} />
         <StartSessionButton
-          disabled={!selectedSubject || !currentYear || Boolean(currentYear.archived)}
+          disabled={!timer.noteValid || !selectedSubject || !currentYear || Boolean(currentYear.archived)}
           timerDisabled={duration <= 0}
           onTimer={() => void startSession(false)}
           onStopwatch={() => void startSession(true)}

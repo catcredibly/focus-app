@@ -1,3 +1,4 @@
+import { noteMetrics } from "./notes";
 import { db, type FocusDatabase } from "./db";
 import { CURRENT_YEAR_KEY } from "./data";
 import type { AcademicYear, FocusSession, Subject } from "./types";
@@ -83,6 +84,7 @@ export async function updateSessionDetails(
     const session = await database.sessions.get(id);
     const subject = await database.subjects.get(input.subjectId);
     const academicYear = await database.academicYears.get(input.academicYearId);
+    if (!noteMetrics(input.note ?? "").valid) throw new Error("Note exceeds the allowed limits.");
     if (!session) throw new Error("Session not found.");
     if (!subject || !academicYear || subject.academicYearId !== academicYear.id)
       throw new Error("Choose a Subject from the selected Academic Year.");
@@ -110,7 +112,7 @@ export async function updateSessionDetails(
         session.focusedDurationSeconds === focusedDurationSeconds
           ? session.focusIntervals
           : undefined,
-      note: input.note?.trim() || undefined,
+      note: input.note?.trim() ? input.note : undefined,
     });
   });
 }
