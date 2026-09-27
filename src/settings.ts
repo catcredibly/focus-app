@@ -70,6 +70,7 @@ export type FocusSettings = {
   popoutDocked: boolean;
   popoutDockAutoHide: boolean;
   popoutRevealShortcut: string;
+  popoutRevealTimeoutSeconds: 3 | 5 | 10 | 15;
   popoutRevealShortcutIntent: "default" | "custom" | "cleared";
   popoutAutoHideDelaySeconds: number;
   popoutAutoHideTabSize: AutoHideTabSize;
@@ -131,6 +132,7 @@ export const SETTINGS_KEYS: { [K in keyof FocusSettings]: string } = {
   popoutDocked: "popoutDocked",
   popoutDockAutoHide: "popoutDockAutoHide",
   popoutRevealShortcut: "popoutRevealShortcut",
+  popoutRevealTimeoutSeconds: "popoutRevealTimeoutSeconds",
   popoutRevealShortcutIntent: "popoutRevealShortcutIntent",
   popoutAutoHideDelaySeconds: "popoutAutoHideDelaySeconds",
   popoutAutoHideTabSize: "popoutAutoHideTabSize",
@@ -192,6 +194,7 @@ export const DEFAULT_SETTINGS: FocusSettings = {
   popoutDocked: false,
   popoutDockAutoHide: false,
   popoutRevealShortcut: "Ctrl+Alt+KeyF",
+  popoutRevealTimeoutSeconds: 5,
   popoutRevealShortcutIntent: "default",
   popoutAutoHideDelaySeconds: 0.4,
   popoutAutoHideTabSize: "medium",
@@ -272,6 +275,8 @@ export function goalDurationSeconds(
 }
 
 function decode<K extends keyof FocusSettings>(key: K, raw: string | undefined): FocusSettings[K] {
+  if (key === "popoutRevealTimeoutSeconds")
+    return ([3, 5, 10, 15].includes(Number(raw)) ? Number(raw) : 5) as FocusSettings[K];
   if (raw === undefined) return DEFAULT_SETTINGS[key];
   if (key === "dailyGoalSeconds" || key === "weeklyGoalSeconds")
     return normalizeGoalSeconds(

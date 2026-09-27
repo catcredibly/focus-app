@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { defaultSessionSubject } from "./subjectDefaults";
+import { timerSetupStep, defaultSessionSubject } from "./subjectDefaults";
 import { nextSubjectColor, SUBJECT_COLORS } from "./subjectColors";
 const subjects = ["one", "two", "three"].map((id, index) => ({
   id,
@@ -46,4 +46,24 @@ it("chooses the least-used palette color within the destination year, ignoring a
       "year",
     ),
   ).toBe(SUBJECT_COLORS[0]);
+});
+
+it("derives setup from current active entities and reacts to removal/restoration", () => {
+  const year = { id: "year", name: "Year", archived: false };
+  expect(timerSetupStep(undefined, subjects)).toBe(1);
+  expect(timerSetupStep({ ...year, archived: true }, subjects)).toBe(1);
+  expect(timerSetupStep(year, [])).toBe(2);
+  expect(
+    timerSetupStep(
+      year,
+      subjects.map((subject) => ({ ...subject, archived: true })),
+    ),
+  ).toBe(2);
+  expect(
+    timerSetupStep(
+      year,
+      subjects.map((subject) => ({ ...subject, academicYearId: "other" })),
+    ),
+  ).toBe(2);
+  expect(timerSetupStep(year, subjects)).toBeNull();
 });

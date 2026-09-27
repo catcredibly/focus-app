@@ -363,8 +363,8 @@ function GoalDurationEditor({
 }) {
   const { t } = useTranslation();
   const format = (seconds: number) => ({
-    hours: String(Math.floor(seconds / 3600)).padStart(2, "0"),
-    minutes: String(Math.floor((seconds % 3600) / 60)).padStart(2, "0"),
+    hours: String(Math.floor(seconds / 3600)),
+    minutes: String(Math.floor((seconds % 3600) / 60)),
   });
   const [draft, setDraft] = useState(() => format(value));
   useEffect(() => setDraft(format(value)), [value]);
@@ -406,7 +406,7 @@ function GoalDurationEditor({
                 }
               }}
             />
-            <small>{t(part === "hours" ? "HH" : "MM")}</small>
+            <small>{t(part === "hours" ? "Hours" : "Minutes")}</small>
           </label>
         </span>
       ))}
@@ -474,14 +474,12 @@ function Timer({ settings, setSetting }: SettingsProps) {
           <option value="fixed">{t("Fixed default")}</option>
         </select>
       </Row>
-      {settings.timerDurationMode === "fixed" && (
-        <Row label={t("Fixed default duration")} hint={t("Values are normalized when you leave a field.")}>
-          <DurationEditor
-            value={settings.fixedTimerDurationSeconds}
-            onChange={(value) => void setSetting("fixedTimerDurationSeconds", value)}
-          />
-        </Row>
-      )}
+      <Row label={t("Fixed default duration")} disabled={settings.timerDurationMode !== "fixed"}>
+        <DurationEditor
+          value={settings.fixedTimerDurationSeconds}
+          onChange={(value) => void setSetting("fixedTimerDurationSeconds", value)}
+        />
+      </Row>
       <Row label={t("Default Subject behavior")}>
         <select
           value={settings.subjectPickerMode}
@@ -577,15 +575,13 @@ function Timer({ settings, setSetting }: SettingsProps) {
           onChange={(value) => void setSetting("dailyGoalEnabled", value)}
         />
       </Row>
-      {settings.dailyGoalEnabled && (
-        <Row label={t("Daily goal duration")}>
-          <GoalDurationEditor
-            maxHours={GOAL_MAX_HOURS.dailyGoalSeconds}
-            value={settings.dailyGoalSeconds}
-            onChange={(value) => void setSetting("dailyGoalSeconds", value)}
-          />
-        </Row>
-      )}
+      <Row label={t("Daily goal duration")} disabled={!settings.dailyGoalEnabled}>
+        <GoalDurationEditor
+          maxHours={GOAL_MAX_HOURS.dailyGoalSeconds}
+          value={settings.dailyGoalSeconds}
+          onChange={(value) => void setSetting("dailyGoalSeconds", value)}
+        />
+      </Row>
       <Row label={t("Weekly goal")}>
         <Toggle
           label={t("Weekly goal")}
@@ -593,15 +589,13 @@ function Timer({ settings, setSetting }: SettingsProps) {
           onChange={(value) => void setSetting("weeklyGoalEnabled", value)}
         />
       </Row>
-      {settings.weeklyGoalEnabled && (
-        <Row label={t("Weekly goal duration")}>
-          <GoalDurationEditor
-            maxHours={GOAL_MAX_HOURS.weeklyGoalSeconds}
-            value={settings.weeklyGoalSeconds}
-            onChange={(value) => void setSetting("weeklyGoalSeconds", value)}
-          />
-        </Row>
-      )}
+      <Row label={t("Weekly goal duration")} disabled={!settings.weeklyGoalEnabled}>
+        <GoalDurationEditor
+          maxHours={GOAL_MAX_HOURS.weeklyGoalSeconds}
+          value={settings.weeklyGoalSeconds}
+          onChange={(value) => void setSetting("weeklyGoalSeconds", value)}
+        />
+      </Row>
       <RestoreSection
         keys={[
           "timerDurationMode",
@@ -866,6 +860,23 @@ function Popout({ settings, setSetting }: SettingsProps) {
       <Row label={t("Reveal shortcut")}>
         <ShortcutRecorder value={settings.popoutRevealShortcut} />
       </Row>
+      <Row label={t("Reveal timeout")}>
+        <select
+          value={settings.popoutRevealTimeoutSeconds}
+          onChange={(event) =>
+            void setSetting(
+              "popoutRevealTimeoutSeconds",
+              Number(event.target.value) as FocusSettings["popoutRevealTimeoutSeconds"],
+            )
+          }
+        >
+          {[3, 5, 10, 15].map((seconds) => (
+            <option key={seconds} value={seconds}>
+              {t("{{count}} seconds", { count: seconds })}
+            </option>
+          ))}
+        </select>
+      </Row>
       <Row disabled={!autoHideEnabled} label={t("Show accent dot on reveal tab")}>
         <Toggle
           label={t("Show accent dot on reveal tab")}
@@ -990,6 +1001,7 @@ function Popout({ settings, setSetting }: SettingsProps) {
           "popoutFloatingWidth",
           "popoutFloatingHeight",
           "popoutRevealShortcut",
+          "popoutRevealTimeoutSeconds",
           "popoutDockingEnabled",
           "popoutDockCorner",
           "popoutDockMonitor",

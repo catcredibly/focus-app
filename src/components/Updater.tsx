@@ -33,19 +33,14 @@ export function UpdateControls() {
   const state = useUpdater();
   return (
     <section className="update-controls">
-      <div className="update-controls-heading">
-        <div>
-          <h3>{t("Updates")}</h3>
-          <p>
-            {t("Current version")}: {state.currentVersion}
-          </p>
-        </div>
+      <h3>{t("Updates")}</h3>
+      <Row label={t("Check for updates")} hint={t("Check manually for a newer version of Shihen.")}>
         <button className="secondary-action" disabled={busy(state)} onClick={() => void updater.check(true)}>
           {t(state.phase === "checking" ? "Checking for updates…" : "Check for updates")}
         </button>
-      </div>
-      <p role="status">{statusKey(state) ? t(statusKey(state)) : "\u00a0"}</p>
-      <Row label={t("Check for updates on launch")}>
+      </Row>
+      {statusKey(state) && <p role="status">{t(statusKey(state))}</p>}
+      <Row label={t("Check for updates on launch")} hint={t("Automatically check for updates when Shihen starts.")}>
         <Toggle
           label={t("Check for updates on launch")}
           checked={settings.checkForUpdatesOnLaunch}

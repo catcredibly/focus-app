@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "./db";
 import { loadSettings, saveSetting } from "./settings";
 import {
@@ -11,6 +11,7 @@ import {
   rememberFloatingPosition,
   reconcileAutoHideSetting,
   revealTimerFromShortcut,
+  cancelShortcutRevealTimer,
 } from "./native";
 
 const native = vi.hoisted(() => ({
@@ -29,11 +30,13 @@ const native = vi.hoisted(() => ({
     workArea: { x: 0, y: 0, width: 1920, height: 1040 },
   },
   failPosition: false,
+  ticket: null as { generation: number; sequence: number } | null,
 }));
 vi.mock("@tauri-apps/api/core", () => ({ isTauri: () => true, invoke: native.invoke }));
 beforeEach(async () => {
   await db.settings.clear();
   native.failPosition = false;
+  native.ticket = null;
   vi.stubGlobal("localStorage", {
     getItem: () =>
       JSON.stringify({ running: true, paused: false, sessionId: "live-session", targetEnd: Date.now() + 3600000 }),
@@ -60,6 +63,12 @@ beforeEach(async () => {
     },
   });
   native.invoke.mockReset().mockImplementation(async (command: string, args: Record<string, unknown> = {}) => {
+    if (command === "arm_shortcut_reveal") {
+      if (native.ticket) vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      return native.ticket;
+    }
+    if (command === "hide_timer_popout" || command === "expire_shortcut_reveal")
+      Object.assign(native.geometry, { visible: false, tabVisible: false, requested: false });
     if (command === "get_timer_geometry") return structuredClone(native.geometry);
     if (command === "set_timer_position" && native.failPosition) throw new Error("move failed");
     if (
@@ -213,12 +222,37 @@ it("disabled Auto-hide reconciliation never opens an explicitly closed popout", 
   await reconcileAutoHideSetting();
   expect(native.invoke.mock.calls.some(([command]) => command === "cancel_timer_auto_hide")).toBe(false);
 });
-it.each([true, false])("shortcut reveals idempotently regardless of Auto-hide=%s", async (enabled) => {
+it.each([true, false])("shortcut toggles visibility regardless of Auto-hide=%s", async (enabled) => {
   await saveSetting("popoutDockAutoHide", enabled);
   Object.assign(native.geometry, { visible: false, tabVisible: true });
   await revealTimerFromShortcut();
-  await revealTimerFromShortcut();
   expect(native.geometry).toMatchObject({ visible: true, tabVisible: false });
+  await revealTimerFromShortcut();
+  expect(native.geometry).toMatchObject({ visible: false, tabVisible: false, requested: false });
   expect(native.invoke.mock.calls.filter(([command]) => command === "cancel_timer_auto_hide")).toHaveLength(1);
   expect(native.invoke.mock.calls.some(([command]) => command === "show_timer_auto_hide_tab")).toBe(false);
+});
+
+afterEach(() => {
+  cancelShortcutRevealTimer();
+  vi.useRealTimers();
+});
+it("uses the configured shortcut timeout and ignores older cancellation events", async () => {
+  await saveSetting("popoutRevealTimeoutSeconds", 3);
+  Object.assign(native.geometry, { visible: false, tabVisible: true });
+  native.ticket = { generation: 0, sequence: 10 };
+  await revealTimerFromShortcut();
+  cancelShortcutRevealTimer(9);
+  await vi.advanceTimersByTimeAsync(2999);
+  expect(native.invoke.mock.calls.some(([command]) => command === "expire_shortcut_reveal")).toBe(false);
+  await vi.advanceTimersByTimeAsync(1);
+  expect(native.invoke).toHaveBeenCalledWith("expire_shortcut_reveal", native.ticket);
+});
+it("pointer cancellation removes the pending shortcut timeout", async () => {
+  Object.assign(native.geometry, { visible: false, tabVisible: true });
+  native.ticket = { generation: 0, sequence: 20 };
+  await revealTimerFromShortcut();
+  cancelShortcutRevealTimer(21);
+  await vi.advanceTimersByTimeAsync(15000);
+  expect(native.invoke.mock.calls.some(([command]) => command === "expire_shortcut_reveal")).toBe(false);
 });

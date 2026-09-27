@@ -1,3 +1,5 @@
+import { TimerSetup } from "./TimerSetup";
+import { timerSetupStep } from "../subjectDefaults";
 import { defaultSessionSubject } from "../subjectDefaults";
 import { Check, ExternalLink, Maximize2, Minimize2, Pause, Play, Plus, Square } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -22,10 +24,16 @@ import { TimerExtendMenu } from "./TimerExtendMenu";
 
 const pad = (value: number | string) => String(value || 0).padStart(2, "0");
 
-export function TimerPage() {
+export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }) {
   const { t } = useTranslation();
   const timer = useTimer();
   const { settings } = useSettings();
+  const setupStep = useLiveQuery(async () => {
+    const id = (await db.settings.get(CURRENT_YEAR_KEY))?.value ?? "";
+    const year = id ? await db.academicYears.get(id) : undefined;
+    const subjects = id ? await db.subjects.where("academicYearId").equals(id).toArray() : [];
+    return timerSetupStep(year, subjects);
+  }, []);
   const [hours, setHours] = useState("01");
   const [minutes, setMinutes] = useState("15");
   const [seconds, setSeconds] = useState("00");
@@ -435,6 +443,16 @@ export function TimerPage() {
           />
         )}{" "}
         {recoveryDialogs}
+      </main>
+    );
+
+  if (setupStep)
+    return (
+      <main ref={shellRef} className="timer-shell timer-shell--idle">
+        <section className="timer-card timer-card--setup">
+          {dateControl}
+          <TimerSetup step={setupStep} onNavigate={onNavigate} />
+        </section>
       </main>
     );
 

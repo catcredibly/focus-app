@@ -1,6 +1,22 @@
 import en from "./en";
 
 const zhCN: Record<keyof typeof en, string> = {
+  "Check manually for a newer version of Shihen.": "手动检查是否有更新版本的 Shihen。",
+  "Automatically check for updates when Shihen starts.": "启动 Shihen 时自动检查更新。",
+  "Reveal timeout": "快捷显示时限",
+  "{{count}} seconds": "{{count}} 秒",
+  "Set up Shihen": "设置 Shihen",
+  "Create an Academic Year and a Subject before starting your first Session.":
+    "先创建学年和科目，再开始你的第一次学习。",
+  "Create an Academic Year": "创建学年",
+  "Add a Subject": "添加科目",
+  "Start your first Session": "开始第一次学习",
+  "Example names: 2026–27 · First Year · Self-study": "名称示例：2026–27 · 大一 · 自学",
+  "Example names: Linear Algebra · Organic Chemistry · Guitar Practice": "名称示例：线性代数 · 有机化学 · 吉他练习",
+  "Set up Academic Year": "设置学年",
+  "Switch to light mode": "切换到浅色模式",
+  "Switch to dark mode": "切换到深色模式",
+
   "Development-only tools for previewing Shihen UI states.": "仅限开发版本的工具，用于预览 Shihen 界面状态。",
   "<30 min": "<30 分钟",
   "30–59 min": "30–59 分钟",
@@ -94,7 +110,7 @@ const zhCN: Record<keyof typeof en, string> = {
   "{{count}} days": "{{count}} 天",
   "Recent Sessions": "最近记录",
   "No completed Sessions yet.": "暂无已完成的专注记录。",
-  "Shihen session complete": "专注计时已完成",
+  "Shihen session complete": "Shihen 学习时段已完成",
   "{{subject}} - {{duration}}": "{{subject}} - {{duration}}",
   "Configure Shihen for the way you study.": "按照你的学习方式配置 Shihen。",
   "Settings sections": "设置分区",
@@ -286,7 +302,7 @@ const zhCN: Record<keyof typeof en, string> = {
   "Close Shihen while a timer is active?": "在计时器处于活动状态时关闭Shihen？",
   "The timer will be recovered the next time Shihen opens. No Session will be finalized by closing the app.":
     "计时器将在下次 Shihen 打开时恢复。关闭应用程序不会完成任何专注时段。",
-  "The existing Shihen window has been brought to the front.": "现有的焦点窗口已置于最前面。",
+  "The existing Shihen window has been brought to the front.": "现有的 Shihen 窗口已置于最前面。",
   "Academic Year": "学年",
   Subject: "科目",
   "{{duration}} left": "还剩 {{duration}}",

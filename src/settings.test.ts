@@ -298,3 +298,14 @@ it("clears invalid defaults without changing history or a valid disabled selecti
   ]);
   expect(await loadSettings(testDb)).toMatchObject({ subjectPickerMode: "remember", defaultSubjectId: "" });
 });
+
+it("defaults and validates the independent Reveal timeout", async () => {
+  const testDb = database();
+  expect((await loadSettings(testDb)).popoutRevealTimeoutSeconds).toBe(5);
+  for (const value of ["never", "0", "4", "bad"]) {
+    await testDb.settings.put({ key: "popoutRevealTimeoutSeconds", value });
+    expect((await loadSettings(testDb)).popoutRevealTimeoutSeconds).toBe(5);
+  }
+  await saveSetting("popoutRevealTimeoutSeconds", 15, testDb);
+  expect((await loadSettings(testDb)).popoutRevealTimeoutSeconds).toBe(15);
+});

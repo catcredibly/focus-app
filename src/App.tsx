@@ -1,5 +1,5 @@
 import { TimerProvider } from "./hooks/TimerContext";
-import { reconcileAutoHideSetting, revealTimerFromShortcut } from "./native";
+import { cancelShortcutRevealTimer, reconcileAutoHideSetting, revealTimerFromShortcut } from "./native";
 import { registerRevealShortcut } from "./shortcuts";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -58,10 +58,15 @@ export default function App() {
   }, [isPopout, loaded, settings.popoutDockAutoHide]);
   useEffect(() => {
     if (!isTauri() || isPopout) return;
+    const cancellation = listen<number>("focus://cancel-shortcut-reveal", ({ payload }) =>
+      cancelShortcutRevealTimer(payload),
+    );
     const subscription = listen("focus://reveal-shortcut", () => {
       void revealTimerFromShortcut().catch(console.error);
     });
     return () => {
+      cancelShortcutRevealTimer();
+      void cancellation.then((stop) => stop());
       void subscription.then((stop) => stop());
     };
   }, [isPopout]);
@@ -123,7 +128,7 @@ export default function App() {
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} active={page} onNavigate={setPage} />
         <UpdatePrompt ready={loaded} />
         <ToastHost />
-        {page === "Timer" && <TimerPage />}
+        {page === "Timer" && <TimerPage onNavigate={setPage} />}
         {page === "Analytics" && (
           <Suspense
             fallback={

@@ -198,6 +198,7 @@ fn open_timer_popout(app: tauri::AppHandle, session_id: String, generation: u64)
         ensure_timer_on_screen(&window)?;
         if let Some(tab) = app.get_webview_window("timer-tab") { tab.hide().map_err(|e| e.to_string())?; }
         show_without_focus(&window)?;
+        lifecycle.cancel_shortcut_reveal();
         lifecycle.requested = true;
         return Ok(());
     }
@@ -575,6 +576,9 @@ pub fn run() {
             update_probe::probe_update_manifest,
             popout_lifecycle::sync_popout_session,
             popout_lifecycle::prepare_timer_popout,
+            popout_lifecycle::arm_shortcut_reveal,
+            popout_lifecycle::interact_with_shortcut_reveal,
+            popout_lifecycle::expire_shortcut_reveal,
             open_timer_popout,
             open_timer_menu,
             hide_timer_menu,

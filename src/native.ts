@@ -264,16 +264,45 @@ export async function reconcileAutoHideSetting() {
   });
 }
 
-/** Explicit user shortcut: reveal idempotently, or open for an active session. */
-export async function revealTimerFromShortcut() {
-  if (!isTauri() || !activePopoutSession()) return;
-  const shouldOpen = await withPopoutGeometry(async () => {
-    await synchronizePopoutSession();
-    const geometry = await timerGeometry();
-    if (!geometry.requested) return true;
-    if (geometry.tabVisible || !geometry.visible)
-      await invoke("cancel_timer_auto_hide", { generation: geometry.generation });
-    return false;
-  });
-  if (shouldOpen) await openTimerPopout();
+let shortcutTimer: ReturnType<typeof setTimeout> | undefined;
+let shortcutOperation = Promise.resolve();
+let shortcutSequence: number | undefined;
+export function cancelShortcutRevealTimer(sequence?: number) {
+  if (sequence !== undefined && shortcutSequence !== undefined && sequence < shortcutSequence) return;
+  clearTimeout(shortcutTimer);
+  shortcutTimer = undefined;
+}
+
+/** Native generation/ticket checks also protect against callbacks already in flight. */
+export function revealTimerFromShortcut(): Promise<void> {
+  const operation = shortcutOperation
+    .catch(() => undefined)
+    .then(async () => {
+      cancelShortcutRevealTimer();
+      if (!isTauri() || !activePopoutSession()) return;
+      const action = await withPopoutGeometry(async () => {
+        await synchronizePopoutSession();
+        const geometry = await timerGeometry();
+        if (geometry.visible) {
+          await invoke("hide_timer_popout");
+          return "hidden";
+        }
+        if (!geometry.requested) return "open";
+        await invoke("cancel_timer_auto_hide", { generation: geometry.generation });
+        return "revealed";
+      });
+      if (action === "hidden") return;
+      if (action === "open") await openTimerPopout();
+      const settings = await loadSettings();
+      const ticket = await invoke<{ generation: number; sequence: number } | null>("arm_shortcut_reveal");
+      if (ticket) {
+        shortcutSequence = ticket.sequence;
+        shortcutTimer = setTimeout(() => {
+          shortcutTimer = undefined;
+          void invoke("expire_shortcut_reveal", ticket).catch(console.error);
+        }, settings.popoutRevealTimeoutSeconds * 1000);
+      }
+    });
+  shortcutOperation = operation;
+  return operation;
 }

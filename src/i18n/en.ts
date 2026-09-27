@@ -1,4 +1,21 @@
 const en = {
+  "Check manually for a newer version of Shihen.": "Check manually for a newer version of Shihen.",
+  "Automatically check for updates when Shihen starts.": "Automatically check for updates when Shihen starts.",
+  "Reveal timeout": "Reveal timeout",
+  "{{count}} seconds": "{{count}} seconds",
+  "Set up Shihen": "Set up Shihen",
+  "Create an Academic Year and a Subject before starting your first Session.":
+    "Create an Academic Year and a Subject before starting your first Session.",
+  "Create an Academic Year": "Create an Academic Year",
+  "Add a Subject": "Add a Subject",
+  "Start your first Session": "Start your first Session",
+  "Example names: 2026–27 · First Year · Self-study": "Example names: 2026–27 · First Year · Self-study",
+  "Example names: Linear Algebra · Organic Chemistry · Guitar Practice":
+    "Example names: Linear Algebra · Organic Chemistry · Guitar Practice",
+  "Set up Academic Year": "Set up Academic Year",
+  "Switch to light mode": "Switch to light mode",
+  "Switch to dark mode": "Switch to dark mode",
+
   "Development-only tools for previewing Shihen UI states.": "Development-only tools for previewing Shihen UI states.",
   "<30 min": "<30 min",
   "30–59 min": "30–59 min",

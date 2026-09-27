@@ -1,6 +1,22 @@
 import en from "./en";
 
 const ja: Record<keyof typeof en, string> = {
+  "Check manually for a newer version of Shihen.": "Shihen の新しいバージョンを手動で確認します。",
+  "Automatically check for updates when Shihen starts.": "Shihen の起動時に更新を自動で確認します。",
+  "Reveal timeout": "ショートカット表示の制限時間",
+  "{{count}} seconds": "{{count}} 秒間",
+  "Set up Shihen": "Shihen の準備",
+  "Create an Academic Year and a Subject before starting your first Session.":
+    "最初の学習セッションを始める前に、学年と科目を作成しましょう。",
+  "Create an Academic Year": "学年を作成",
+  "Add a Subject": "科目を追加",
+  "Start your first Session": "最初のセッションを開始",
+  "Example names: 2026–27 · First Year · Self-study": "名前の例：2026～27年度・1年生・自主学習",
+  "Example names: Linear Algebra · Organic Chemistry · Guitar Practice": "名前の例：線形代数・有機化学・ギター練習",
+  "Set up Academic Year": "学年を設定",
+  "Switch to light mode": "ライトモードに切り替え",
+  "Switch to dark mode": "ダークモードに切り替え",
+
   "Development-only tools for previewing Shihen UI states.": "Shihen の画面状態をプレビューする開発専用ツールです。",
   "<30 min": "30分未満",
   "30–59 min": "30～59分",
@@ -95,7 +111,7 @@ const ja: Record<keyof typeof en, string> = {
   "{{count}} days": "{{count}} 日",
   "Recent Sessions": "最近のセッション",
   "No completed Sessions yet.": "完了したセッションはまだありません。",
-  "Shihen session complete": "集中 セッションが完了しました",
+  "Shihen session complete": "Shihen のセッションが完了しました",
   "{{subject}} - {{duration}}": "{{subject}} - {{duration}}",
   "Configure Shihen for the way you study.": "勉強方法に合わせてShihenを設定します。",
   "Settings sections": "設定セクション",
@@ -129,7 +145,7 @@ const ja: Record<keyof typeof en, string> = {
   "Enable corner docking": "コーナードッキングを有効にする",
   "Default corner": "デフォルトのコーナー",
   "Auto-hide when docked": "ドッキング時に自動非表示",
-  "Customize the Shihen interface.": "集中 インターフェイスをカスタマイズします。",
+  "Customize the Shihen interface.": "Shihen のインターフェイスをカスタマイズします。",
   Theme: "テーマ",
   Dark: "ダーク",
   "Accent colour": "アクセントカラー",
@@ -156,8 +172,8 @@ const ja: Record<keyof typeof en, string> = {
   "Permanent deletion still requires confirmation and removes related study data.":
     "永久削除には依然として確認が必要であり、関連する研究データが削除されます。",
   "Clear all data": "すべてのデータをクリアします",
-  "Permanently remove all local Shihen data.": "すべてのローカル 集中 データを永久に削除します。",
-  "Clear all Shihen data?": "すべての集中 データをクリアしますか?",
+  "Permanently remove all local Shihen data.": "このデバイスの Shihen データをすべて完全に削除します。",
+  "Clear all Shihen data?": "Shihen のデータをすべて削除しますか？",
   "This permanently deletes all study history, Subjects, Academic Years, and Settings stored on this device.":
     "これにより、このデバイスに保存されているすべての学習履歴、科目、学年、設定が完全​​に削除されます。",
   "This cannot be undone without a backup. Type DELETE to continue.":
@@ -290,7 +306,7 @@ const ja: Record<keyof typeof en, string> = {
   "Close Shihen while a timer is active?": "タイマーがアクティブなときにShihenを閉じますか?",
   "The timer will be recovered the next time Shihen opens. No Session will be finalized by closing the app.":
     "タイマーは、次回Shihenが開いたときに回復されます。アプリを閉じてもセッションは終了しません。",
-  "The existing Shihen window has been brought to the front.": "既存の集中 ウィンドウが前面に表示されました。",
+  "The existing Shihen window has been brought to the front.": "既存の Shihen ウィンドウを前面に表示しました。",
   "Academic Year": "学年",
   Subject: "科目",
   "{{duration}} left": "残り {{duration}}",

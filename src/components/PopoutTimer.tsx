@@ -289,14 +289,18 @@ export function PopoutTimer() {
           "--popout-surface-alpha": settings.popoutTransparency / 100,
         } as CSSProperties
       }
+      onPointerDownCapture={() => void invoke("interact_with_shortcut_reveal", { inside: true })}
+      onKeyDownCapture={() => void invoke("interact_with_shortcut_reveal", { inside: true })}
       onPointerDown={startDrag}
       onMouseEnter={() => {
         closedRef.current = false;
         pointerInsideRef.current = true;
+        void invoke("interact_with_shortcut_reveal", { inside: true });
         clearHideTimer();
       }}
       onMouseLeave={() => {
         pointerInsideRef.current = false;
+        void invoke("interact_with_shortcut_reveal", { inside: false });
         scheduleHide();
       }}
     >

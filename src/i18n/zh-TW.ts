@@ -1,6 +1,22 @@
 import en from "./en";
 
 const zhTW: Record<keyof typeof en, string> = {
+  "Check manually for a newer version of Shihen.": "手動檢查是否有更新版本的 Shihen。",
+  "Automatically check for updates when Shihen starts.": "啟動 Shihen 時自動檢查更新。",
+  "Reveal timeout": "快捷顯示時限",
+  "{{count}} seconds": "{{count}} 秒",
+  "Set up Shihen": "設定 Shihen",
+  "Create an Academic Year and a Subject before starting your first Session.":
+    "先建立學年和科目，再開始你的第一次學習。",
+  "Create an Academic Year": "建立學年",
+  "Add a Subject": "新增科目",
+  "Start your first Session": "開始第一次學習",
+  "Example names: 2026–27 · First Year · Self-study": "名稱範例：2026–27 · 大一 · 自學",
+  "Example names: Linear Algebra · Organic Chemistry · Guitar Practice": "名稱範例：線性代數 · 有機化學 · 吉他練習",
+  "Set up Academic Year": "設定學年",
+  "Switch to light mode": "切換到淺色模式",
+  "Switch to dark mode": "切換到深色模式",
+
   "Development-only tools for previewing Shihen UI states.": "僅限開發版本的工具，用於預覽 Shihen 介面狀態。",
   "<30 min": "<30 分鐘",
   "30–59 min": "30–59 分鐘",
@@ -94,7 +110,7 @@ const zhTW: Record<keyof typeof en, string> = {
   "{{count}} days": "{{count}} 天",
   "Recent Sessions": "最近的專注時段",
   "No completed Sessions yet.": "尚未完成任何專注時段。",
-  "Shihen session complete": "焦點專注時段完成",
+  "Shihen session complete": "Shihen 學習時段已完成",
   "{{subject}} - {{duration}}": "{{subject}} - {{duration}}",
   "Configure Shihen for the way you study.": "根據您的學習方式配置Shihen。",
   "Settings sections": "設定部分",
@@ -155,8 +171,8 @@ const zhTW: Record<keyof typeof en, string> = {
   "Permanent deletion still requires confirmation and removes related study data.":
     "永久刪除仍需確認並刪除相關研究資料。",
   "Clear all data": "清除所有數據",
-  "Permanently remove all local Shihen data.": "永久刪除所有本地焦點資料。",
-  "Clear all Shihen data?": "清除所有焦點資料嗎？",
+  "Permanently remove all local Shihen data.": "永久刪除所有本機 Shihen 資料。",
+  "Clear all Shihen data?": "清除所有 Shihen 資料嗎？",
   "This permanently deletes all study history, Subjects, Academic Years, and Settings stored on this device.":
     "這將永久刪除儲存在該裝置上的所有學習歷史、科目、學年和設定。",
   "This cannot be undone without a backup. Type DELETE to continue.":
@@ -288,7 +304,7 @@ const zhTW: Record<keyof typeof en, string> = {
   "Close Shihen while a timer is active?": "當計時器處於作用中狀態時關閉Shihen？",
   "The timer will be recovered the next time Shihen opens. No Session will be finalized by closing the app.":
     "計時器將在下次 Shihen 開啟時恢復。關閉應用程式不會完成任何專注時段。",
-  "The existing Shihen window has been brought to the front.": "現有的焦點視窗已置於最前面。",
+  "The existing Shihen window has been brought to the front.": "現有的 Shihen 視窗已置於最前面。",
   "Academic Year": "學年",
   Subject: "科目",
   "{{duration}} left": "剩下 {{duration}}",
