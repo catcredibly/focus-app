@@ -11,7 +11,7 @@ export async function saveFocusSession(session: FocusSession, live = false, data
     const messages: { message: ToastMessage; kind: "daily" | "weekly" }[] = [];
     if (await database.sessions.get(session.id)) return messages;
     if (live) {
-      const settings = await loadSettings(database);
+      const settings = await loadSettings(database, false);
       const sessions = await database.sessions.toArray();
       const before = goalProgress(sessions, now), after = goalProgress([...sessions, session], now);
       for (const kind of ["daily", "weekly"] as const) {

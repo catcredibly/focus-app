@@ -23,3 +23,4 @@
 - Removed the obsolete **Close popout when timer finishes** setting in favor of consistent Session-based Popout behavior.
 - Added a development-only updater preview tool for testing the real update dialog without publishing or installing an update.
 - Improved Windows/Linux separation for window sizing behavior while preserving the existing Linux minimum-size path.
+- Renamed the app from **Focus** to **Shihen** across user-facing branding.
