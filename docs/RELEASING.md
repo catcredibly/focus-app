@@ -7,7 +7,7 @@ Use this process for Windows production releases of Shihen.
 The current release version used by this guide is:
 
 ```text
-2.2.2
+2.2.3
 ```
 
 When preparing the next release, use **Ctrl+H** in this file and replace every occurrence of the current release version with the new version.
@@ -17,11 +17,11 @@ This updates the version-specific examples in this guide, such as expected insta
 Then update the actual application version from the repository root:
 
 ```powershell
-npm run version:set -- 2.2.2
+npm run version:set -- 2.2.3
 npm run version:check
 ```
 
-Replace `2.2.2` with the new release version before running the command. `package.json` is authoritative; `version:set` synchronizes the required npm/Cargo metadata and Tauri reads the package version.
+Replace `2.2.3` with the new release version before running the command. `package.json` is authoritative; `version:set` synchronizes the required npm/Cargo metadata and Tauri reads the package version.
 
 Run all commands from the **repository root** unless stated otherwise.
 
@@ -104,11 +104,11 @@ The NSIS release files are created under:
 src-tauri\target\release\bundle\nsis\
 ```
 
-For Shihen 2.2.2, expect:
+For Shihen 2.2.3, expect:
 
 ```text
-Shihen_2.2.2_x64-setup.exe
-Shihen_2.2.2_x64-setup.exe.sig
+Shihen_2.2.3_x64-setup.exe
+Shihen_2.2.3_x64-setup.exe.sig
 ```
 
 The `.sig` belongs to that exact build.
@@ -156,7 +156,7 @@ $manifest.notes
 For this release it should report:
 
 ```text
-2.2.2
+2.2.3
 
 Release Notes:
 ```
