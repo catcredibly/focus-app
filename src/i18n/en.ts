@@ -15,7 +15,8 @@ const en = {
   "Switch to light mode": "Switch to light mode",
   "Switch to dark mode": "Switch to dark mode",
 
-  "Development-only tools for previewing Shunhen UI states.": "Development-only tools for previewing Shunhen UI states.",
+  "Development-only tools for previewing Shunhen UI states.":
+    "Development-only tools for previewing Shunhen UI states.",
   "<30 min": "<30 min",
   "30–59 min": "30–59 min",
   "60–89 min": "60–89 min",

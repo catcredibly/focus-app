@@ -11,9 +11,7 @@ export async function saveTextFile(defaultName: string, contents: string, kind: 
   }
   const picker = (
     window as Window & {
-      showSaveFilePicker?: (options: {
-        suggestedName: string;
-      }) => Promise<{
+      showSaveFilePicker?: (options: { suggestedName: string }) => Promise<{
         createWritable: () => Promise<{ write: (text: string) => Promise<void>; close: () => Promise<void> }>;
       }>;
     }

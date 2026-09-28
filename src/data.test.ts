@@ -81,13 +81,11 @@ describe("V0.2 data management", () => {
     const name = `focus-migration-${crypto.randomUUID()}`;
     const legacy = new Dexie(name);
     opened.push(legacy);
-    legacy
-      .version(1)
-      .stores({
-        academicYears: "id, name, startDate, endDate, archived",
-        subjects: "id, academicYearId, name, archived",
-        sessions: "id, subjectId, startTime, endTime, archived",
-      });
+    legacy.version(1).stores({
+      academicYears: "id, name, startDate, endDate, archived",
+      subjects: "id, academicYearId, name, archived",
+      sessions: "id, subjectId, startTime, endTime, archived",
+    });
     await legacy
       .table("sessions")
       .add({ id: "legacy", subjectId: "physics", startTime: 1_000, endTime: 61_000, archived: false });
