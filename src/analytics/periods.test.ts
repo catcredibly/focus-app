@@ -82,7 +82,7 @@ describe("calendar periods", () => {
       3600,
     );
     expect(buckets.map((b) => [b.days, b.goalPercent, b.goalMetDays])).toEqual([
-      [1, 200, 1],
+      [1, 100, 1],
       [2, 50, 1],
     ]);
     expect(buckets.map((b) => b.sessionCount)).toEqual([1, 1]);
@@ -95,7 +95,7 @@ describe("calendar periods", () => {
   it("uses pre-range history for rolling averages but never later sessions", () => {
     const points = rollingTimeline([row(1, 700), row(8, 70), row(9, 9999)], { start: at(9, 7), end: at(9, 9) });
     expect(points.map((p) => p.avg7)).toEqual([100, 10]);
-    expect(points[0].avg30).toBeCloseTo(700 / 30);
+    expect(points[0].avg30).toBeCloseTo(700 / 7);
     expect(points.map((p) => p.seconds)).toEqual([0, 70]);
   });
   it("keeps zero-baseline comparisons finite and explicit", () => {

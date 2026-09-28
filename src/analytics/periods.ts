@@ -1,3 +1,4 @@
+import type { AcademicYear } from "../types";
 import type { FocusSession } from "../types";
 import {
   calendarDailySeries,
@@ -41,14 +42,26 @@ export function calendarDays({ start, end }: Period) {
   return Math.max(0, Math.round((ordinal(end) - ordinal(start)) / 86_400_000));
 }
 
-export function analyticsPeriod(range: AnalyticsRange, sessions: FocusSession[], now: number, custom?: Period): Period {
-  const today = startOfLocalDay(now),
-    end = addDays(today, 1);
+export function analyticsPeriod(
+  range: AnalyticsRange,
+  sessions: FocusSession[],
+  now: number,
+  custom?: Period,
+  year?: AcademicYear,
+): Period {
+  const today = startOfLocalDay(now);
   if (range === "Custom" && custom) return custom;
+  const yearStart = year?.startDate ? new Date(`${year.startDate}T00:00:00`).getTime() : undefined;
+  const yearEnd = year?.endDate ? new Date(`${year.endDate}T00:00:00`).getTime() : undefined;
+  if (yearStart !== undefined && yearStart > today) return { start: today, end: today };
+  const end = addDays(yearEnd !== undefined ? Math.min(yearEnd, today) : today, 1);
   if (range === "All")
-    return { start: sessions.reduce((first, s) => Math.min(first, startOfLocalDay(s.startTime)), today), end };
+    return {
+      start: yearStart ?? sessions.reduce((first, s) => Math.min(first, startOfLocalDay(s.startTime)), today),
+      end: yearEnd !== undefined ? addDays(yearEnd, 1) : addDays(today, 1),
+    };
   const days = range === "7D" ? 7 : range === "30D" ? 30 : range === "90D" ? 90 : 365;
-  return { start: addDays(end, -days), end };
+  return { start: Math.max(addDays(end, -days), yearStart ?? -Infinity), end };
 }
 
 export function previousPeriod(period: Period): Period {
@@ -82,6 +95,15 @@ export function calendarBuckets(
   dailyGoal = 0,
 ): CalendarBucket[] {
   const result: CalendarBucket[] = [];
+  const startedTotals = new Map<string, { seconds: number; count: number }>();
+  for (const session of sessions) {
+    const key = localDayKey(session.startTime),
+      value = startedTotals.get(key) ?? { seconds: 0, count: 0 };
+    value.seconds += session.focusedDurationSeconds;
+    value.count++;
+    startedTotals.set(key, value);
+  }
+  let bucketSessionSeconds = 0;
   for (const day of calendarDailySeries(sessions, period.start, period.end)) {
     const date = new Date(day.start);
     const key = localDayKey(
@@ -105,36 +127,52 @@ export function calendarBuckets(
         goalPercent: 0,
       };
       result.push(bucket);
+      bucketSessionSeconds = 0;
     }
     bucket.end = addDays(day.start, 1);
     bucket.days++;
     bucket.seconds += day.seconds;
     bucket.sessionCount += day.sessionCount;
     if (Number.isFinite(dailyGoal) && dailyGoal > 0 && day.seconds >= dailyGoal) bucket.goalMetDays++;
-    bucket.averageSeconds = bucket.sessionCount ? bucket.seconds / bucket.sessionCount : 0;
-    bucket.goalPercent =
-      Number.isFinite(dailyGoal) && dailyGoal > 0 ? (bucket.seconds / bucket.days / dailyGoal) * 100 : 0;
+    bucketSessionSeconds += startedTotals.get(day.key)?.seconds ?? 0;
+    bucket.averageSeconds = bucket.sessionCount ? bucketSessionSeconds / bucket.sessionCount : 0;
+    bucket.goalPercent = Number.isFinite(dailyGoal) && dailyGoal > 0 ? (bucket.goalMetDays / bucket.days) * 100 : 0;
   }
   return result;
 }
 
-/** Trailing windows always use full calendar-day denominators and never future or visible-range-only data. */
+/** Trailing windows include zero days after the first Session, never artificial pre-history days. */
 export function rollingTimeline(history: FocusSession[], period: Period) {
+  const first = history.reduce((value, session) => Math.min(value, startOfLocalDay(session.startTime)), Infinity);
   const points = calendarDailySeries(history, addDays(period.start, -364), period.end);
   const prefix = [0];
   for (const point of points) prefix.push(prefix.at(-1)! + point.seconds);
   return points.flatMap((point, index) => {
-    const average = (days: number) => (prefix[index + 1] - prefix[Math.max(0, index + 1 - days)]) / days;
+    const average = (days: number) =>
+      point.start < first
+        ? null
+        : (prefix[index + 1] - prefix[Math.max(0, index + 1 - days)]) /
+          Math.min(days, calendarDays({ start: first, end: addDays(point.start, 1) }));
     return point.start < period.start
       ? []
       : [{ ...point, avg7: average(7), avg30: average(30), avg90: average(90), avg365: average(365) }];
   });
 }
 
-export function summaryMetrics(sessions: FocusSession[]) {
-  const seconds = totalFocusedSeconds(sessions),
-    days = dailyTotals(sessions).length;
-  return [seconds, sessions.length, sessions.length ? seconds / sessions.length : 0, days ? seconds / days : 0, days];
+export function summaryMetrics(sessions: FocusSession[], period?: Period) {
+  const started = period ? filterSessions(sessions, period) : sessions;
+  const daily = dailyTotals(sessions).filter(
+    (day) => day.seconds > 0 && (!period || (day.start >= period.start && day.start < period.end)),
+  );
+  const seconds = daily.reduce((sum, day) => sum + day.seconds, 0),
+    days = daily.length;
+  return [
+    seconds,
+    started.length,
+    started.length ? totalFocusedSeconds(started) / started.length : 0,
+    days ? seconds / days : 0,
+    days,
+  ];
 }
 
 export function percentageChange(current: number, previous: number): number | undefined {
@@ -144,7 +182,9 @@ export function percentageChange(current: number, previous: number): number | un
 type RecordRun = { start: number; end: number; days: number; seconds: number };
 export function personalBests(sessions: FocusSession[], period: Period) {
   const rows = filterSessions(sessions, period),
-    days = dailyTotals(rows);
+    days = dailyTotals(sessions).filter(
+      (day) => day.seconds > 0 && day.start >= period.start && day.start < period.end,
+    );
   const bestDay = days.reduce<(typeof days)[number] | undefined>(
     (best, day) => (!best || day.seconds > best.seconds ? day : best),
     undefined,
@@ -162,7 +202,7 @@ export function personalBests(sessions: FocusSession[], period: Period) {
     if (!longest || run.days > longest.days) longest = run;
     if (!consecutive || run.seconds > consecutive.seconds) consecutive = run;
   }
-  const bestWeek = calendarBuckets(rows, period, "weekly").reduce<CalendarBucket | undefined>(
+  const bestWeek = calendarBuckets(sessions, period, "weekly").reduce<CalendarBucket | undefined>(
     (best, week) => (week.seconds > (best?.seconds ?? 0) ? week : best),
     undefined,
   );
@@ -170,7 +210,7 @@ export function personalBests(sessions: FocusSession[], period: Period) {
 }
 
 export function averageStudyPattern(sessions: FocusSession[], period: Period) {
-  const matrix = timeOfDayMatrix(sessions);
+  const matrix = timeOfDayMatrix(sessions, period);
   if (calendarDays(period) <= 7) return matrix;
   const counts = Array<number>(7).fill(0);
   for (let day = period.start; day < period.end; day = addDays(day, 1)) counts[(new Date(day).getDay() + 6) % 7]++;

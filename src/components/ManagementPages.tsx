@@ -1,12 +1,16 @@
+import { removesExactFocusTiming } from "../sessionAllocation";
+import { sessionInvalidReason, invalidReasonText, newlyInvalidCount } from "../sessionValidity";
 import { historyPagination, enteredHistoryPage } from "../historyPagination";
 import { NoteViewer, NoteSnippet } from "./HistoryNotes";
 import { NoteEditor } from "./NoteEditor";
 import { readableNote, noteSearchTerms, noteMetrics } from "../notes";
 import { nextSubjectColor } from "../subjectColors";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
   FileText,
+  TriangleAlert,
+  CaseSensitive,
   Search,
   X,
   Archive,
@@ -79,8 +83,44 @@ function PageHeader({ title, subtitle, action }: { title: string; subtitle: stri
 }
 
 function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    root.current?.querySelector<HTMLElement>("button, input, select, textarea")?.focus();
+    return () => previous?.focus();
+  }, []);
   return (
-    <div className="modal-backdrop" onMouseDown={onClose}>
+    <div
+      ref={root}
+      className="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      onMouseDown={onClose}
+      onKeyDown={(event) => {
+        event.stopPropagation();
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onClose();
+        }
+        if (event.key !== "Tab") return;
+        const controls = Array.from(
+          root.current?.querySelectorAll<HTMLElement>(
+            "button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex='0']",
+          ) ?? [],
+        ).filter((element) => element.getClientRects().length > 0);
+        const first = controls[0],
+          last = controls.at(-1);
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        }
+        if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }}
+    >
       <section className="modal" onMouseDown={(e) => e.stopPropagation()}>
         <h2>{title}</h2>
         {children}
@@ -121,6 +161,31 @@ function DeleteConfirmation({
   );
 }
 
+function InvalidConfirmation({
+  message,
+  onCancel,
+  onConfirm,
+  title = "Session will be invalid",
+}: {
+  title?: string;
+  message: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Modal title={t(title)} onClose={onCancel}>
+      <p className="modal-copy">{message}</p>
+      <div className="modal-actions">
+        <button onClick={onCancel}>{t("Cancel")}</button>
+        <button className="primary-action" onClick={onConfirm}>
+          {t("Save Anyway")}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 export function AcademicYearsPage() {
   const { t } = useTranslation();
   const { settings } = useSettings();
@@ -136,6 +201,7 @@ export function AcademicYearsPage() {
   const [editing, setEditing] = useState<AcademicYear | null | undefined>();
   const [deleting, setDeleting] = useState<AcademicYear>();
   const [warning, setWarning] = useState("");
+  const [pendingYear, setPendingYear] = useState<{ year: AcademicYear; count: number }>();
   const academicYearIsActive = (id: string) => activeTimerRelationship()?.academicYearId === id;
   const save = async (form: FormData) => {
     const name = String(form.get("name") ?? "").trim();
@@ -147,6 +213,11 @@ export function AcademicYearsPage() {
       endDate: String(form.get("endDate") || "") || undefined,
       archived: editing?.archived ?? false,
     };
+    const count = editing ? newlyInvalidCount(sessions, editing, year) : 0;
+    if (count) {
+      setPendingYear({ year, count });
+      return;
+    }
     await db.academicYears.put(year);
     if (!currentId && !year.archived) await setCurrentAcademicYear(year.id);
     setEditing(undefined);
@@ -318,6 +389,23 @@ export function AcademicYearsPage() {
             </button>
           </div>
         </Modal>
+      )}
+      {pendingYear && (
+        <InvalidConfirmation
+          message={t(
+            pendingYear.count === 1
+              ? "1 session will become invalid. It will remain in History but will be excluded from Analytics."
+              : "{{count}} sessions will become invalid. They will remain in History but will be excluded from Analytics.",
+            { count: pendingYear.count },
+          )}
+          onCancel={() => setPendingYear(undefined)}
+          onConfirm={async () => {
+            await db.academicYears.put(pendingYear.year);
+            if (!currentId && !pendingYear.year.archived) await setCurrentAcademicYear(pendingYear.year.id);
+            setPendingYear(undefined);
+            setEditing(undefined);
+          }}
+        />
       )}
     </main>
   );
@@ -560,6 +648,8 @@ function SessionEditor({
   );
   const [preserveStoredDuration, setPreserveStoredDuration] = useState(Boolean(session && initialMode === "unlocked"));
   const [note, setNote] = useState(session?.note ?? "");
+  const [timingPending, setTimingPending] = useState(false);
+  const [invalidPending, setInvalidPending] = useState(false);
   const [relockPending, setRelockPending] = useState(false);
   const [saveError, setSaveError] = useState("");
   const availableSubjects = subjects.filter(
@@ -571,15 +661,29 @@ function SessionEditor({
       setSubjectId("");
     }
   }, [session, academicYearId, currentYearId]);
-  const startTime = new Date(`${date}T${start}`).getTime();
-  const endTime = new Date(`${date}T${end}`).getTime();
+  const startTime =
+    session && date === localDateInputValue(initialStart) && start === timeInputValue(initialStart)
+      ? session.startTime
+      : new Date(`${date}T${start}`).getTime();
+  const endDate = new Date(`${date}T${end}`);
+  if (end < start) endDate.setDate(endDate.getDate() + 1);
+  const endTime =
+    session &&
+    date === localDateInputValue(initialStart) &&
+    end === timeInputValue(initialEnd) &&
+    start === timeInputValue(initialStart)
+      ? session.endTime
+      : endDate.getTime();
   const validSpan = Number.isFinite(startTime) && Number.isFinite(endTime) && endTime > startTime;
   const spanSeconds = validSpan ? sessionSpanSeconds(startTime, endTime) : 0;
   const normalizedDuration = normalizeDurationParts(Number(duration.hours), Number(duration.minutes), 0);
   const focusedDurationSeconds =
     mode === "locked"
       ? spanSeconds
-      : preserveStoredDuration && session
+      : session &&
+          (preserveStoredDuration ||
+            (duration.hours === durationInputFields(session.focusedDurationSeconds).hours &&
+              duration.minutes === durationInputFields(session.focusedDurationSeconds).minutes))
         ? session.focusedDurationSeconds
         : normalizedDuration.totalSeconds;
   const relationshipValid = Boolean(
@@ -610,8 +714,8 @@ function SessionEditor({
     if (focusedDurationSeconds !== spanSeconds) setRelockPending(true);
     else setMode("locked");
   };
-  const save = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const save = async (event?: React.FormEvent<HTMLFormElement>, confirmed = false, timingConfirmed = false) => {
+    event?.preventDefault();
     setSaveError("");
     if (!academicYearId) {
       setSaveError(t("Choose an Academic Year."));
@@ -626,6 +730,31 @@ function SessionEditor({
       return;
     }
     if (durationError || !noteMetrics(note).valid) return;
+    const reason = sessionInvalidReason(
+      { startTime, endTime },
+      years.find((year) => year.id === academicYearId),
+    );
+    const previousReason =
+      session &&
+      sessionInvalidReason(
+        session,
+        years.find((year) => year.id === session.academicYearId),
+      );
+    if (!confirmed && reason && reason !== previousReason) {
+      setInvalidPending(true);
+      return;
+    }
+    if (
+      !timingConfirmed &&
+      session &&
+      removesExactFocusTiming(session, { startTime, endTime, focusedDurationSeconds })
+    ) {
+      setInvalidPending(false);
+      setTimingPending(true);
+      return;
+    }
+    setInvalidPending(false);
+    setTimingPending(false);
     try {
       if (session)
         await updateSessionDetails(session.id, {
@@ -658,6 +787,25 @@ function SessionEditor({
 
   return (
     <>
+      {invalidPending && (
+        <InvalidConfirmation
+          message={t(
+            "This session falls outside its Academic Year's date range. It will remain in History but will not be included in Analytics.",
+          )}
+          onCancel={() => setInvalidPending(false)}
+          onConfirm={() => save(undefined, true)}
+        />
+      )}
+      {timingPending && (
+        <InvalidConfirmation
+          title="Exact focus timing will be removed"
+          message={t(
+            "Changing this Session's start time, end time, or focused duration will remove its recorded pause/resume timing. Analytics will use proportional time allocation instead.",
+          )}
+          onCancel={() => setTimingPending(false)}
+          onConfirm={() => save(undefined, true, true)}
+        />
+      )}
       <form onSubmit={save} className="form session-editor">
         <label>
           {t("Academic Year")}
@@ -708,7 +856,7 @@ function SessionEditor({
             <input type="time" value={start} onChange={(event) => setStart(event.target.value)} required />
           </label>
           <label>
-            {t("End")}
+            {t("End")} {end < start && <small>{t("+1 day")}</small>}
             <input
               className={!validSpan ? "input-error" : ""}
               type="time"
@@ -802,14 +950,16 @@ function SessionEditor({
   );
 }
 
-export function HistoryPage() {
+export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boolean }) {
   const currentId = useLiveQuery(async () => (await db.settings.get(CURRENT_YEAR_KEY))?.value ?? "", []) ?? "";
   const { t } = useTranslation();
   const { settings, setSetting } = useSettings();
-  const years = useLiveQuery(() => db.academicYears.toArray(), []) ?? [];
+  const loadedYears = useLiveQuery(() => db.academicYears.toArray(), []);
+  const years = loadedYears ?? [];
   const subjects = useLiveQuery(() => db.subjects.toArray(), []) ?? [];
-  const sessions = useLiveQuery(() => db.sessions.orderBy("startTime").reverse().toArray(), []) ?? [];
-  const [status, setStatusState] = useState(managementViewState.historyStatus);
+  const loadedSessions = useLiveQuery(() => db.sessions.orderBy("startTime").reverse().toArray(), []);
+  const sessions = loadedSessions ?? [];
+  const [status, setStatusState] = useState(initialInvalid ? "invalid" : managementViewState.historyStatus);
   const setStatus = (value: string) => {
     managementViewState.historyStatus = value;
     setStatusState(value);
@@ -827,6 +977,7 @@ export function HistoryPage() {
   const [moveYearId, setMoveYearId] = useState("");
   const [moveSubjectId, setMoveSubjectId] = useState("");
   const pageSize = settings.historyPageSize;
+  const [matchCase, setMatchCase] = useState(false);
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -839,21 +990,60 @@ export function HistoryPage() {
     const timeout = window.setTimeout(() => setSearch(query), 200);
     return () => window.clearTimeout(timeout);
   }, [query]);
-  const terms = useMemo(() => noteSearchTerms(search), [search]);
+  const terms = useMemo(() => noteSearchTerms(search, matchCase), [search, matchCase]);
   const readable = useMemo(
-    () => new Map(sessions.map((session) => [session.id, readableNote(session.note ?? "").toLocaleLowerCase()])),
-    [sessions],
+    () =>
+      new Map(
+        sessions.map((session) => [
+          session.id,
+          matchCase ? readableNote(session.note ?? "") : readableNote(session.note ?? "").toLocaleLowerCase(),
+        ]),
+      ),
+    [sessions, matchCase],
   );
+  const invalid = useMemo(
+    () =>
+      new Map(
+        sessions.map((session) => [
+          session.id,
+          sessionInvalidReason(
+            session,
+            years.find((year) => year.id === session.academicYearId),
+          ),
+        ]),
+      ),
+    [sessions, years],
+  );
+  const invalidCount = sessions.filter(
+    (session) =>
+      (!yearId || session.academicYearId === yearId) &&
+      (!subjectId || session.subjectId === subjectId) &&
+      invalid.get(session.id),
+  ).length;
+  useEffect(() => {
+    if (!yearId || !subjects.some((subject) => subject.id === subjectId && subject.academicYearId === yearId))
+      setSubjectId("");
+  }, [yearId, subjectId, subjects]);
+  useEffect(() => {
+    if (loadedYears && loadedSessions && status === "invalid" && !invalidCount) {
+      setStatus("all");
+      setPage(0);
+    }
+  }, [status, invalidCount, loadedSessions, loadedYears]);
   const filtered = useMemo(
     () =>
       sessions.filter(
         (session) =>
-          (status === "all" || isSessionEffectivelyArchived(session, subjects, years) === (status === "archived")) &&
+          (status === "all" ||
+            (status === "invalid"
+              ? Boolean(invalid.get(session.id))
+              : !invalid.get(session.id) &&
+                isSessionEffectivelyArchived(session, subjects, years) === (status === "archived"))) &&
           (!yearId || session.academicYearId === yearId) &&
           (!subjectId || session.subjectId === subjectId) &&
           terms.every((term) => readable.get(session.id)?.includes(term)),
       ),
-    [sessions, status, yearId, subjectId, subjects, years, terms, readable],
+    [sessions, status, yearId, subjectId, subjects, years, terms, readable, invalid],
   );
   const pagination = historyPagination(filtered.length, pageSize, page);
   const [pageDraft, setPageDraft] = useState("1");
@@ -910,6 +1100,8 @@ export function HistoryPage() {
           {t("Subject")}
           <select
             value={subjectId}
+            disabled={!yearId}
+            title={!yearId ? t("Select a specific academic year to filter by subject.") : undefined}
             onChange={(e) => {
               setSubjectId(e.target.value);
               setPage(0);
@@ -937,9 +1129,37 @@ export function HistoryPage() {
             <option value="active">{t("Active")}</option>
             <option value="archived">{t("Archived")}</option>
             <option value="all">{t("All")}</option>
+            {invalidCount > 0 && <option value="invalid">{t("Invalid")}</option>}
           </select>
         </label>
+        {invalidCount > 0 && (
+          <button
+            className="invalid-session-indicator"
+            title={t(invalidCount === 1 ? "1 invalid session" : "{{count}} invalid sessions", { count: invalidCount })}
+            aria-label={t(invalidCount === 1 ? "1 invalid session" : "{{count}} invalid sessions", {
+              count: invalidCount,
+            })}
+            onClick={() => {
+              setStatus("invalid");
+              setPage(0);
+            }}
+          >
+            <TriangleAlert size={17} />
+            {invalidCount}
+          </button>
+        )}
         <div className="history-note-search">
+          <button
+            aria-label={t("Match case")}
+            title={t("Match case")}
+            aria-pressed={matchCase}
+            onClick={() => {
+              setMatchCase(!matchCase);
+              setPage(0);
+            }}
+          >
+            <CaseSensitive size={18} />
+          </button>
           {searchOpen ? (
             <div>
               <Search size={16} />
@@ -1050,12 +1270,24 @@ export function HistoryPage() {
                 hour: "2-digit",
                 minute: "2-digit",
               })}
+              {localDateInputValue(s.endTime) !== localDateInputValue(s.startTime) && (
+                <small className="overnight-label"> {t("+1 day")}</small>
+              )}
             </span>
             <strong>{formatDuration(s.focusedDurationSeconds)}</strong>
-            <span>{s.subjectName}</span>
-            <span>{s.academicYearName}</span>
-            <span className={`badge ${isSessionEffectivelyArchived(s, subjects, years) ? "badge--archived" : ""}`}>
-              {t(isSessionEffectivelyArchived(s, subjects, years) ? "Archived" : "Active")}
+            <TruncatedValue value={s.subjectName} />
+            <TruncatedValue value={s.academicYearName} />
+            <span
+              title={invalid.get(s.id) ? t(invalidReasonText[invalid.get(s.id)!]) : undefined}
+              className={`badge ${invalid.get(s.id) ? "badge--invalid" : isSessionEffectivelyArchived(s, subjects, years) ? "badge--archived" : ""}`}
+            >
+              {t(
+                invalid.get(s.id)
+                  ? "Invalid"
+                  : isSessionEffectivelyArchived(s, subjects, years)
+                    ? "Archived"
+                    : "Active",
+              )}
             </span>
             <div className="row-actions history-actions">
               <span className="history-note-slot">
@@ -1077,7 +1309,7 @@ export function HistoryPage() {
                 <Trash2 />
               </button>
             </div>
-            {terms.length > 0 && <NoteSnippet note={s.note ?? ""} terms={terms} />}
+            {terms.length > 0 && <NoteSnippet note={s.note ?? ""} terms={terms} matchCase={matchCase} />}
           </div>
         ))}
       </div>
@@ -1237,5 +1469,29 @@ export function HistoryPage() {
         </Modal>
       )}
     </main>
+  );
+}
+
+function TruncatedValue({ value }: { value: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [truncated, setTruncated] = useState(false);
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const measure = () => setTruncated(element.scrollWidth > element.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [value]);
+  return (
+    <span
+      ref={ref}
+      className="history-truncated"
+      tabIndex={truncated ? 0 : undefined}
+      title={truncated ? value : undefined}
+    >
+      {value}
+    </span>
   );
 }

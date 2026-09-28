@@ -6,6 +6,7 @@ import { filterSessions } from "./analytics/analytics";
 import { createDevelopmentAnalyticsDataset } from "./analytics/developmentDataset";
 import {
   closeRunningInterval,
+  toggleTimerPause,
   timerStateAt,
   finishTimerState,
   focusedSecondsAt,
@@ -236,4 +237,35 @@ it("preserves an invalid completed draft and original timing across recovery", (
   expect(restored.finishedAt).toBe(61000);
   const session = completedSession({ ...restored, note: "repaired" }, restored.finishedAt!);
   expect(session).toMatchObject({ endTime: 61000, focusedDurationSeconds: 60, note: "repaired" });
+});
+
+describe("Pause/Resume interaction guard", () => {
+  it.each(["timer", "stopwatch"] as const)("drops rapid %s inputs and preserves a genuine short pause", (mode) => {
+    const started =
+      mode === "timer"
+        ? startTimerState(initialTimerState, 100, subject, year, 1000)
+        : startStopwatchState(initialTimerState, subject, year, 1000);
+    const paused = toggleTimerPause(started, 6000);
+    expect(paused.paused).toBe(true);
+    expect(toggleTimerPause(paused, 6001)).toBe(paused);
+    expect(toggleTimerPause(paused, 6999)).toBe(paused);
+    const resumed = toggleTimerPause(paused, 8000);
+    expect(resumed.paused).toBe(false);
+    expect(toggleTimerPause(resumed, 8999)).toBe(resumed);
+    const pausedAgain = toggleTimerPause(resumed, 9000);
+    expect(pausedAgain.focusIntervals).toEqual([
+      { startTime: 1000, endTime: 6000 },
+      { startTime: 8000, endTime: 9000 },
+    ]);
+    expect(pausedAgain.accumulatedFocusedSeconds).toBe(6);
+    expect(toggleTimerPause(pausedAgain, 10000).paused).toBe(false);
+  });
+
+  it("does not guard inactive inputs or carry a guard into a new session", () => {
+    expect(toggleTimerPause(initialTimerState, 1000)).toBe(initialTimerState);
+    const started = startTimerState({ ...initialTimerState, pauseResumeAcceptedAt: 1000 }, 100, subject, year, 1100);
+    expect(toggleTimerPause(started, 1200).paused).toBe(true);
+    const finished = finishTimerState(started, 1300);
+    expect(toggleTimerPause(finished, 1400)).toBe(finished);
+  });
 });

@@ -1,4 +1,5 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 
@@ -8,13 +9,16 @@ export function FilterSelect({
   onChange,
   options,
   disabled,
+  title,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; archived?: boolean }[];
   disabled?: boolean;
+  title?: string;
 }) {
+  const { t } = useTranslation();
   const id = useId();
   const button = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLDivElement>(null);
@@ -71,7 +75,7 @@ export function FilterSelect({
         className="analytics-filter-select"
         disabled={disabled}
         aria-label={label}
-        title={selected}
+        title={title ?? selected}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? id : undefined}
@@ -127,17 +131,27 @@ export function FilterSelect({
             }}
           >
             {options.map((option, index) => (
-              <div
-                key={option.value}
-                id={`${id}-${index}`}
-                role="option"
-                aria-selected={option.value === value}
-                className={active === index ? "active" : ""}
-                onMouseMove={() => setActive(index)}
-                onClick={() => choose(index)}
-              >
-                {option.label}
-              </div>
+              <Fragment key={option.value}>
+                {option.archived && !options[index - 1]?.archived && (
+                  <div
+                    className={`filter-archive-heading ${options.slice(0, index).some((item) => item.value && item.value !== "__unselected") ? "has-divider" : ""}`}
+                    role="presentation"
+                  >
+                    {t("Archived")}
+                  </div>
+                )}
+                <div
+                  key={option.value}
+                  id={`${id}-${index}`}
+                  role="option"
+                  aria-selected={option.value === value}
+                  className={active === index ? "active" : ""}
+                  onMouseMove={() => setActive(index)}
+                  onClick={() => choose(index)}
+                >
+                  {option.label}
+                </div>
+              </Fragment>
             ))}
           </div>,
           document.body,

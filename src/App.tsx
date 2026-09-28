@@ -26,12 +26,25 @@ const AnalyticsPage = lazy(() =>
 );
 
 export default function App() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [manualCollapsed, setCollapsed] = useState(false);
+  const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth);
+  useEffect(() => {
+    const resize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+  const sidebarHidden = viewportWidth <= 1200;
+  const sidebarForced = viewportWidth <= 1360;
+  const collapsed = sidebarForced || manualCollapsed;
+  const [invalidHistory, setInvalidHistory] = useState(false);
   const [page, setPage] = useState(() =>
     import.meta.env.DEV && new URLSearchParams(window.location.search).get("analyticsDemo") === "1"
       ? "Analytics"
       : "Timer",
   );
+  useEffect(() => {
+    if (page !== "History") setInvalidHistory(false);
+  }, [page]);
   const isPopoutMenu = window.location.hash.includes("popout-menu");
   const isAutoHideTab = window.location.hash.includes("auto-hide-tab");
   const isPopout = window.location.hash.includes("popout") || isAutoHideTab;
@@ -124,12 +137,14 @@ export default function App() {
   return (
     <TimerProvider>
       <div
-        className={`app-shell ${collapsed ? "app-shell--collapsed" : ""}`}
+        className={`app-shell ${collapsed ? "app-shell--collapsed" : ""} ${sidebarHidden ? "app-shell--no-sidebar" : ""} ${sidebarForced ? "app-shell--responsive" : ""}`}
         data-accent={settings.accentColour}
         data-theme={settings.theme}
         data-scale={settings.uiScale}
       >
-        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} active={page} onNavigate={setPage} />
+        {!sidebarHidden && (
+          <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} active={page} onNavigate={setPage} />
+        )}
         <UpdatePrompt ready={loaded} />
         <ToastHost />
         {page === "Timer" && <TimerPage onNavigate={setPage} />}
@@ -146,8 +161,19 @@ export default function App() {
         )}
         {page === "Academic Years" && <AcademicYearsPage />}
         {page === "Subjects" && <SubjectsPage />}
-        {page === "History" && <HistoryPage />}
-        {page === "Import / Export" && <ImportExportPage onNavigate={setPage} />}
+        {page === "History" && <HistoryPage initialInvalid={invalidHistory} />}
+        {page === "Import / Export" && (
+          <ImportExportPage
+            onNavigate={(next) => {
+              setInvalidHistory(false);
+              setPage(next);
+            }}
+            onViewInvalid={() => {
+              setInvalidHistory(true);
+              setPage("History");
+            }}
+          />
+        )}
         {page === "Settings" && <SettingsPage onNavigate={setPage} />}
         {!["Timer", "Analytics", "Academic Years", "Subjects", "History", "Import / Export", "Settings"].includes(
           page,

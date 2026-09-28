@@ -47,7 +47,13 @@ const activeTimer = () => {
   }
 };
 
-export function ImportExportPage({ onNavigate }: { onNavigate: (page: string) => void }) {
+export function ImportExportPage({
+  onNavigate,
+  onViewInvalid,
+}: {
+  onNavigate: (page: string) => void;
+  onViewInvalid: () => void;
+}) {
   const { t } = useTranslation();
   const years = useLiveQuery(() => db.academicYears.toArray(), []) ?? [];
   const [preview, setPreview] = useState<PreviewState>();
@@ -177,7 +183,22 @@ export function ImportExportPage({ onNavigate }: { onNavigate: (page: string) =>
               <strong>{result.conflicts}</strong>
             </span>
           </div>
+          {!!result.invalidSessionsImported && (
+            <p>
+              {t(
+                result.invalidSessionsImported === 1
+                  ? "Imported 1 invalid session."
+                  : "Imported {{count}} invalid sessions.",
+                { count: result.invalidSessionsImported },
+              )}
+            </p>
+          )}
           <div className="import-actions">
+            {!!result.invalidSessionsImported && (
+              <button className="secondary-action" onClick={onViewInvalid}>
+                {t("View invalid sessions")}
+              </button>
+            )}
             <button className="secondary-action" onClick={() => setResult(undefined)}>
               <ArrowLeft /> {t("Import / Export")}
             </button>

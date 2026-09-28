@@ -20,6 +20,7 @@ export type ImportSummary = {
   academicYearsCreated: number;
   subjectsCreated: number;
   sessionsImported: number;
+  invalidSessionsImported?: number;
   duplicatesSkipped: number;
   conflicts: number;
   invalidRowsSkipped: number;

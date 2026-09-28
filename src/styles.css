@@ -4921,3 +4921,116 @@ html[data-utility-window] body,
 html[data-utility-window] #root {
   background: transparent;
 }
+
+/* Responsive shell preserves the manual sidebar choice above the forced breakpoints. */
+.app-shell.app-shell--no-sidebar {
+  grid-template-columns: minmax(0, 1fr);
+}
+.app-shell--responsive .sidebar-toggle {
+  display: none;
+}
+.filter-archive-heading {
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 8px 12px 4px;
+}
+.filter-archive-heading.has-divider {
+  border-top: 1px solid var(--border-soft);
+  margin-top: 4px;
+}
+.badge--invalid,
+.invalid-session-indicator {
+  color: var(--archived-text);
+  background: var(--archived-soft);
+}
+.invalid-session-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--archived-border);
+  border-radius: 6px;
+  padding: 8px;
+  align-self: end;
+}
+.history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+.history-filters > label {
+  flex: 1 1 150px;
+  min-width: 0;
+}
+.history-note-search {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.history-note-search button[aria-pressed="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.history-table {
+  min-width: 0;
+}
+.history-head,
+.history-row {
+  grid-template-columns: 105px 155px 80px minmax(100px, 1.5fr) minmax(85px, 1fr) 65px 110px;
+  gap: 10px;
+}
+.timer-unavailable {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+  padding: 28px;
+  text-align: center;
+}
+.setting-control .settings-restore {
+  margin: 0;
+}
+.analytics-goals > section:only-child {
+  grid-column: 1 / -1;
+}
+.about-settings .about-body > section:last-child {
+  padding-bottom: 28px;
+}
+
+.history-truncated {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.overnight-label {
+  color: var(--text-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.analytics-page .chart-tooltip {
+  max-height: min(320px, 45vh);
+  overflow-y: auto;
+  pointer-events: auto;
+  overscroll-behavior: contain;
+}
+.metric-value {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+}
+.metric-value .metric-delta {
+  grid-column: 2;
+  text-align: right;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.trend-controls {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+.settings-data {
+  padding-bottom: 24px;
+}

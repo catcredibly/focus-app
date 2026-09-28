@@ -5,10 +5,18 @@ import { useTranslation } from "react-i18next";
 import { ReleaseNotes } from "./ReleaseNotes";
 import { noteSnippet } from "../notes";
 
-export function NoteSnippet({ note, terms }: { note: string; terms: string[] }) {
-  const snippet = noteSnippet(note, terms);
+export function NoteSnippet({
+  note,
+  terms,
+  matchCase = false,
+}: {
+  note: string;
+  terms: string[];
+  matchCase?: boolean;
+}) {
+  const snippet = noteSnippet(note, terms, matchCase);
   const escaped = terms.map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).sort((a, b) => b.length - a.length);
-  const pattern = new RegExp(`(${escaped.join("|")})`, "gi");
+  const pattern = new RegExp(`(${escaped.join("|")})`, matchCase ? "g" : "gi");
   return (
     <div className="history-note-snippet">
       {snippet.split(pattern).map((part, index) => (index % 2 ? <mark key={index}>{part}</mark> : part))}

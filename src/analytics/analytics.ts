@@ -1,3 +1,4 @@
+import { dailyFocusAllocations, allocatedFocusInRange } from "../sessionAllocation";
 import type { AcademicYear, FocusSession, Subject } from "../types";
 
 export type AnalyticsFilters = { academicYearId?: string; subjectId?: string; start?: number; end?: number };
@@ -38,11 +39,22 @@ function aggregate(
 ): TimePoint[] {
   const map = new Map<string, TimePoint>();
   for (const s of sessions) {
-    const k = key(s.startTime),
-      existing = map.get(k) ?? { key: k, label: k, start: start(s.startTime), seconds: 0, sessionCount: 0 };
-    existing.seconds += s.focusedDurationSeconds;
-    existing.sessionCount++;
-    map.set(k, existing);
+    const originalKey = key(s.startTime);
+    const original = map.get(originalKey) ?? {
+      key: originalKey,
+      label: originalKey,
+      start: start(s.startTime),
+      seconds: 0,
+      sessionCount: 0,
+    };
+    original.sessionCount++;
+    map.set(originalKey, original);
+    for (const day of dailyFocusAllocations(s)) {
+      const k = key(day.start),
+        existing = map.get(k) ?? { key: k, label: k, start: start(day.start), seconds: 0, sessionCount: 0 };
+      existing.seconds += day.seconds;
+      map.set(k, existing);
+    }
   }
   return [...map.values()].sort((a, b) => a.start - b.start);
 }
@@ -69,7 +81,8 @@ export function calendarMonthlySeries(sessions: FocusSession[]) {
 }
 export const totalFocusedSeconds = (sessions: FocusSession[]) =>
   sessions.reduce((sum, s) => sum + s.focusedDurationSeconds, 0);
-export const activeDayCount = (sessions: FocusSession[]) => dailyTotals(sessions).length;
+export const activeDayCount = (sessions: FocusSession[]) =>
+  dailyTotals(sessions).filter((day) => day.seconds > 0).length;
 export const averageActiveDaySeconds = (sessions: FocusSession[]) => {
   const days = activeDayCount(sessions);
   return days ? totalFocusedSeconds(sessions) / days : 0;
@@ -145,7 +158,7 @@ export function subjectTotals(sessions: FocusSession[], subjects: Subject[]) {
     };
     item.seconds += s.focusedDurationSeconds;
     item.sessions++;
-    item.activeDays.add(localDayKey(s.startTime));
+    for (const day of dailyFocusAllocations(s)) item.activeDays.add(localDayKey(day.start));
     item.first = Math.min(item.first, s.startTime);
     item.last = Math.max(item.last, s.startTime);
     map.set(s.subjectId, item);
@@ -222,19 +235,26 @@ export function sessionLengthBuckets(sessions: FocusSession[]) {
   }
   return buckets;
 }
-export function weekdayTotals(sessions: FocusSession[]) {
+export function weekdayTotals(sessions: FocusSession[], period?: { start: number; end: number }) {
   const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    values = labels.map((label) => ({ label, seconds: 0 }));
-  for (const s of sessions) values[(new Date(s.startTime).getDay() + 6) % 7].seconds += s.focusedDurationSeconds;
+    values = labels.map((label) => ({ label, seconds: 0, count: 0, sessionSeconds: 0 }));
+  for (const s of sessions) {
+    if (!period || (s.startTime >= period.start && s.startTime < period.end)) {
+      const row = values[(new Date(s.startTime).getDay() + 6) % 7];
+      row.count++;
+      row.sessionSeconds += s.focusedDurationSeconds;
+    }
+    for (const day of dailyFocusAllocations(s))
+      if (!period || (day.start >= period.start && day.start < period.end))
+        values[(new Date(day.start).getDay() + 6) % 7].seconds += day.seconds;
+  }
   return values;
 }
-export function timeOfDayMatrix(sessions: FocusSession[]) {
+export function timeOfDayMatrix(sessions: FocusSession[], period?: { start: number; end: number }) {
   const matrix = Array.from({ length: 7 }, () => Array(8).fill(0) as number[]);
   for (const s of sessions) {
-    const wall = Math.max(1, s.endTime - s.startTime),
-      ratio = s.focusedDurationSeconds / (wall / 1000);
-    let cursor = s.startTime;
-    while (cursor < s.endTime) {
+    let cursor = Math.max(s.startTime, period?.start ?? -Infinity);
+    while (cursor < Math.min(s.endTime, period?.end ?? Infinity)) {
       const d = new Date(cursor),
         bucketEnd = new Date(
           d.getFullYear(),
@@ -242,8 +262,8 @@ export function timeOfDayMatrix(sessions: FocusSession[]) {
           d.getDate(),
           (Math.floor(d.getHours() / 3) + 1) * 3,
         ).getTime(),
-        end = Math.min(bucketEnd, s.endTime);
-      matrix[(d.getDay() + 6) % 7][Math.floor(d.getHours() / 3)] += ((end - cursor) / 1000) * ratio;
+        end = Math.min(bucketEnd, s.endTime, period?.end ?? Infinity);
+      matrix[(d.getDay() + 6) % 7][Math.floor(d.getHours() / 3)] += allocatedFocusInRange(s, cursor, end);
       cursor = end;
     }
   }

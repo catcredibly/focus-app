@@ -1,5 +1,13 @@
 import { expect, it } from "vitest";
-import { matchesNote, normalizeNote, noteMetrics, notePreview, noteSearchTerms, readableNote } from "./notes";
+import {
+  matchesNote,
+  normalizeNote,
+  noteMetrics,
+  notePreview,
+  noteSearchTerms,
+  noteSnippet,
+  readableNote,
+} from "./notes";
 
 it("counts code points and visible Markdown link labels, retaining invalid active drafts", () => {
   expect(noteMetrics("😀[study](https://example.com/long-url)").characters).toBe(6);
@@ -34,4 +42,14 @@ it("searches readable notes with case-insensitive, order-independent AND terms",
   expect(matchesNote(note, ["hidden.example"])).toBe(false);
   expect(readableNote(note)).not.toContain("**");
   expect(matchesNote("Plain https://example.com", ["example.com"])).toBe(true);
+});
+
+it("retains case in case-sensitive terms and locates a matching readable snippet", () => {
+  const note = "prefix ".repeat(40) + "[Algebra](https://hidden.example) Chapter";
+  const terms = noteSearchTerms("Chapter Algebra", true);
+  expect(terms).toEqual(["Chapter", "Algebra"]);
+  expect(terms.every((term) => readableNote(note).includes(term))).toBe(true);
+  expect(noteSearchTerms("chapter", true).every((term) => readableNote(note).includes(term))).toBe(false);
+  expect(noteSnippet(note, terms, true)).toContain("Algebra");
+  expect(noteSnippet(note, terms, true)).not.toContain("hidden.example");
 });

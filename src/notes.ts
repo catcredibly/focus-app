@@ -81,16 +81,18 @@ export function notePreview(note: string): string {
     .filter((line) => line.trim());
   return (lines[0]?.trim() ?? "") + (lines.length > 1 ? "…" : "");
 }
-export function noteSearchTerms(query: string): string[] {
-  return [...new Set(query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean))];
+export function noteSearchTerms(query: string, matchCase = false): string[] {
+  return [...new Set((matchCase ? query : query.toLocaleLowerCase()).trim().split(/\s+/).filter(Boolean))];
 }
 export function matchesNote(note: string | undefined, terms: string[]): boolean {
   const text = readableNote(note ?? "").toLocaleLowerCase();
   return terms.every((term) => text.includes(term));
 }
-export function noteSnippet(note: string, terms: string[]): string {
+export function noteSnippet(note: string, terms: string[], matchCase = false): string {
   const text = readableNote(note).replace(/\s+/g, " ").trim();
-  const positions = terms.map((term) => text.toLocaleLowerCase().indexOf(term)).filter((index) => index >= 0);
+  const positions = terms
+    .map((term) => (matchCase ? text : text.toLocaleLowerCase()).indexOf(term))
+    .filter((index) => index >= 0);
   const start = Math.max(0, (positions.length ? Math.min(...positions) : 0) - 35);
   const end = Math.min(text.length, start + 220);
   return `${start ? "…" : ""}${text.slice(start, end)}${end < text.length ? "…" : ""}`;

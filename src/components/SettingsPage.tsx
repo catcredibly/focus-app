@@ -1132,7 +1132,7 @@ function Data({ settings, setSetting, onNavigate }: SettingsProps & { onNavigate
     setConfirming(true);
   };
   return (
-    <>
+    <div className="settings-data">
       <SettingsHeader title={t("Data")}>{t("Storage and data management.")}</SettingsHeader>
       <Row label={t("Storage")} hint={t("Your Shunhen data is stored locally on this device.")}>
         <span className="storage-value">{t("On this device")}</span>
@@ -1164,7 +1164,9 @@ function Data({ settings, setSetting, onNavigate }: SettingsProps & { onNavigate
           onChange={(value) => void setSetting("allowDirectActiveDeletion", value)}
         />
       </Row>
-      <RestoreSection keys={["allowDirectActiveDeletion"]} />
+      <Row label={t("Restore section defaults")}>
+        <RestoreSection keys={["allowDirectActiveDeletion"]} />
+      </Row>
       <Row label={t("Clear all data")} hint={t("Permanently remove all local Shunhen data.")}>
         <button className="danger-outline" onClick={startClear}>
           <Trash2 /> {t("Clear all data")}
@@ -1199,7 +1201,7 @@ function Data({ settings, setSetting, onNavigate }: SettingsProps & { onNavigate
           </section>
         </div>
       )}
-    </>
+    </div>
   );
 }
 

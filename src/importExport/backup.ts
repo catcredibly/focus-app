@@ -1,3 +1,4 @@
+import { sessionInvalidReason } from "../sessionValidity";
 import { normalizeNote } from "../notes";
 import packageMetadata from "../../package.json";
 import { db, type FocusDatabase } from "../db";
@@ -163,6 +164,11 @@ export async function restoreBackup(
           database.academicYears.clear(),
           database.settings.clear(),
         ]);
+      const countInvalid = async (id: string) => {
+        const session = await database.sessions.get(id);
+        if (session && sessionInvalidReason(session, await database.academicYears.get(session.academicYearId)))
+          summary.invalidSessionsImported = (summary.invalidSessionsImported ?? 0) + 1;
+      };
       const apply = async <T extends { id: string }>(
         table: { get: (id: string) => Promise<T | undefined>; put: (row: T) => Promise<unknown> },
         rows: T[],
@@ -173,10 +179,14 @@ export async function restoreBackup(
           if (!existing) {
             await table.put(row);
             summary[counter]++;
+            if (counter === "sessionsImported") await countInvalid(row.id);
           } else if (equivalent(existing, row)) summary.duplicatesSkipped++;
           else {
             summary.conflicts++;
-            if (policy === "use-imported") await table.put(row);
+            if (policy === "use-imported") {
+              await table.put(row);
+              if (counter === "sessionsImported") await countInvalid(row.id);
+            }
           }
         }
       };

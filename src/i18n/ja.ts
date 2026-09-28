@@ -323,7 +323,7 @@ const ja: Record<keyof typeof en, string> = {
   "Focus trend": "集中トレンド",
   "Cumulative Focus Time": "累積集中時間",
   "Weeks with Sessions": "セッションのある週",
-  "Focus time by weekday": "平日別の集中時間",
+  "Focus time by weekday": "曜日別の集中時間",
   "Focused time is distributed across each three-hour period a Session crosses.":
     "集中時間は、セッションが通過する 3 時間ごとに分散されます。",
   "Jump to latest": "最新にジャンプ",
@@ -643,6 +643,55 @@ const ja: Record<keyof typeof en, string> = {
   "Shortcut hide delay": "ショートカット非表示までの時間",
   "Seconds before hiding after shortcut. Set 0 for none.":
     "ショートカットで表示した後、非表示になるまでの秒数。0で自動非表示なし。",
+  Invalid: "無効",
+  "1 invalid session": "1 件の無効なセッション",
+  "{{count}} invalid sessions": "{{count}} 件の無効なセッション",
+  "Session starts before the Academic Year begins.": "セッションの開始時刻が学年の開始より前です。",
+  "Session ends after the Academic Year ends.": "セッションの終了時刻が学年の終了より後です。",
+  "Session falls outside its Academic Year's date range and is excluded from Analytics.":
+    "セッションが学年の日付範囲外にあるため、分析から除外されています。",
+  "Session will be invalid": "セッションが無効になります",
+  "This session falls outside its Academic Year's date range. It will remain in History but will not be included in Analytics.":
+    "このセッションは学年の日付範囲外です。履歴には残りますが、分析には含まれません。",
+  "Save Anyway": "このまま保存",
+  "1 session will become invalid. It will remain in History but will be excluded from Analytics.":
+    "1 件のセッションが無効になります。履歴には残りますが、分析には含まれません。",
+  "{{count}} sessions will become invalid. They will remain in History but will be excluded from Analytics.":
+    "{{count}} 件のセッションが無効になります。履歴には残りますが、分析には含まれません。",
+  "View invalid sessions": "無効なセッションを表示",
+  "Imported 1 invalid session.": "1 件の無効なセッションをインポートしました。",
+  "Imported {{count}} invalid sessions.": "{{count}} 件の無効なセッションをインポートしました。",
+  "No current academic year": "現在の学年がありません",
+  "Create or update an academic year to continue.": "続行するには学年を作成または更新してください。",
+  "No active subjects": "利用可能な科目がありません",
+  "Create or unarchive a subject in the current academic year to continue.":
+    "続行するには、現在の学年で科目を作成するかアーカイブを解除してください。",
+  "Next day": "翌日",
+  "+1 day": "+1日",
+  "In progress": "進行中",
+  "Average session": "平均セッション時間",
+  "Sessions by weekday": "曜日別のセッション数",
+  "Average session by weekday": "曜日別の平均セッション時間",
+  "Match case": "大文字と小文字を区別",
+  "Exact focus timing will be removed": "正確な集中時間の記録が削除されます",
+  "Changing this Session's start time, end time, or focused duration will remove its recorded pause/resume timing. Analytics will use proportional time allocation instead.":
+    "このセッションの開始時刻、終了時刻、または集中時間を変更すると、記録された一時停止・再開のタイミングが削除されます。分析では代わりに時間を比例配分します。",
+  "No academic years": "学年がありません",
+  "Select a specific academic year to filter by subject.": "科目で絞り込むには、特定の学年を選択してください。",
+  "By day": "日別",
+  "By week": "週別",
+  "By month": "月別",
+  week: "週",
+  month: "月",
+  "Daily Goal achievement by {{grouping}}.": "{{grouping}}別の毎日の目標達成率。",
+  "Weekly Goal achievement by {{grouping}}.": "{{grouping}}別の毎週の目標達成率。",
+  "Set a Daily or Weekly Goal to view goal achievement.":
+    "目標達成状況を表示するには、毎日または毎週の目標を設定してください。",
+  Pending: "未確定",
+  "Achieved: {{met}} of {{total}}": "達成：{{met}} / {{total}}",
+  "Cumulative focus by Academic Year": "学年別の累積集中時間",
+  "Active-day rate": "学習日の割合",
+  days: "日",
 };
 
 export default ja;

@@ -1,6 +1,6 @@
+import { validSessions } from "../sessionValidity";
 import { NoteEditor } from "./NoteEditor";
 import { TimerSetup } from "./TimerSetup";
-import { timerSetupStep } from "../subjectDefaults";
 import { defaultSessionSubject } from "../subjectDefaults";
 import { Check, ExternalLink, Maximize2, Minimize2, Pause, Play, Plus, Square } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -33,7 +33,10 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
     const id = (await db.settings.get(CURRENT_YEAR_KEY))?.value ?? "";
     const year = id ? await db.academicYears.get(id) : undefined;
     const subjects = id ? await db.subjects.where("academicYearId").equals(id).toArray() : [];
-    return timerSetupStep(year, subjects);
+    if (!(await db.academicYears.count())) return 1 as const;
+    if (!year || year.archived) return 3 as const;
+    if (!subjects.some((subject) => !subject.archived)) return 4 as const;
+    return undefined;
   }, []);
   const [hours, setHours] = useState("01");
   const [minutes, setMinutes] = useState("15");
@@ -82,8 +85,9 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
   const [recoverySubjectId, setRecoverySubjectId] = useState("");
   const defaultDuration = timerDefaultDuration(settings);
   const selectedSubject = subjects.find((subject) => subject.id === subjectId);
-  const summary = todaySummary(sessions);
-  const goals = goalProgress(sessions, now.getTime());
+  const analyticsSessions = validSessions(sessions, allYears);
+  const summary = todaySummary(analyticsSessions);
+  const goals = goalProgress(analyticsSessions, now.getTime());
   const recent = sessions.filter((session) => !session.archived).slice(0, 4);
   const duration = useMemo(
     () => normaliseDuration(Number(hours), Number(minutes), Number(seconds)).total,
@@ -198,11 +202,7 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
   const dateControl =
     todayAvailable && !setupActive ? (
       <span className="tooltip-host date-toggle-host">
-        <button
-          className={`date date-toggle ${todayOpen ? "active" : ""}`}
-          aria-pressed={todayOpen}
-          onClick={() => setTodayOpen((value) => !value)}
-        >
+        <button className="date date-toggle" aria-pressed={todayOpen} onClick={() => setTodayOpen((value) => !value)}>
           {dateTime || t("Today")}
         </button>
         <span className="focus-tooltip" role="tooltip">
@@ -440,7 +440,7 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
         {todayAvailable && todayOpen && (
           <TodayPanel
             summary={summary}
-            sessions={sessions}
+            sessions={analyticsSessions}
             recent={recent}
             dailySeconds={goals.dailySeconds}
             weeklySeconds={goals.weeklySeconds}
@@ -456,7 +456,29 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
       <main ref={shellRef} className="timer-shell timer-shell--idle">
         <section className="timer-card timer-card--setup">
           {dateControl}
-          <TimerSetup step={setupStep} onNavigate={onNavigate} />
+          {setupStep === 1 ? (
+            <TimerSetup step={1} onNavigate={onNavigate} />
+          ) : (
+            <section className="timer-unavailable">
+              <h2>{t(setupStep === 3 ? "No current academic year" : "No active subjects")}</h2>
+              <p>
+                {t(
+                  setupStep === 3
+                    ? "Create or update an academic year to continue."
+                    : "Create or unarchive a subject in the current academic year to continue.",
+                )}
+              </p>
+              <button
+                className="secondary-action"
+                onClick={() => onNavigate(setupStep === 3 ? "Academic Years" : "Subjects")}
+              >
+                {t(setupStep === 3 ? "Manage Academic Years" : "Manage Subjects")}
+              </button>
+              <button className="primary-action" disabled>
+                {t("Start")}
+              </button>
+            </section>
+          )}
         </section>
       </main>
     );
@@ -532,7 +554,7 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
       {todayAvailable && todayOpen && (
         <TodayPanel
           summary={summary}
-          sessions={sessions}
+          sessions={analyticsSessions}
           recent={recent}
           dailySeconds={goals.dailySeconds}
           weeklySeconds={goals.weeklySeconds}

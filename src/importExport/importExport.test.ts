@@ -260,3 +260,20 @@ it("normalizes oversized CSV notes without rejecting their Sessions", async () =
   await importCsvPreview(preview, target);
   expect((await target.sessions.get("session"))!.note!.split("\n")).toHaveLength(40);
 });
+
+it("preserves imported out-of-year sessions and reports only applied invalid imports", async () => {
+  const source = await seeded();
+  await source.academicYears.update("year", { startDate: "2026-09-01", endDate: "2026-09-21" });
+  const backup = await createBackup(source),
+    target = database();
+  const result = await restoreBackup(backup, "merge", "keep-existing", target);
+  expect(result.invalidSessionsImported).toBe(1);
+  expect(await target.sessions.count()).toBe(1);
+  const duplicate = await restoreBackup(backup, "merge", "keep-existing", target);
+  expect(duplicate.invalidSessionsImported ?? 0).toBe(0);
+  const csvTarget = database();
+  await csvTarget.academicYears.bulkAdd(await source.academicYears.toArray());
+  await csvTarget.subjects.bulkAdd(await source.subjects.toArray());
+  const preview = await previewCsv(exportSessionsCsv(await source.sessions.toArray()), undefined, undefined, csvTarget);
+  expect((await importCsvPreview(preview, csvTarget)).invalidSessionsImported).toBe(1);
+});

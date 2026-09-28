@@ -6,6 +6,7 @@ import type { AcademicYear, Subject } from "../types";
 import {
   ACTIVE_TIMER_STORAGE_KEY,
   timerStateAt as stateAt,
+  toggleTimerPause,
   closeRunningInterval,
   completedSession,
   extendTimerState,
@@ -266,21 +267,26 @@ export function useTimer() {
   );
 
   const pause = useCallback(() => {
-    const current = stateAt(stateRef.current),
-      now = Date.now();
-    if (!current.running || current.finished) return;
-    if (current.paused)
-      commit({
-        ...current,
-        paused: false,
-        runningSince: now,
-        targetEnd: current.mode === "stopwatch" ? null : now + current.remainingSeconds * 1000,
-        checkpointAt: now,
-        checkpointRemainingSeconds: current.remainingSeconds,
-        checkpointFocusedSeconds: current.accumulatedFocusedSeconds,
-        checkpointIntervals: current.focusIntervals,
-      });
-    else commit({ ...closeRunningInterval(current, now), paused: true, targetEnd: null });
+    const accept = () => {
+      const local = stateRef.current;
+      const stored = readStored();
+      // Read a newer transition before acting, even if its broadcast has not arrived yet.
+      const current =
+        stored.sessionId === local.sessionId &&
+        (stored.pauseResumeAcceptedAt ?? -Infinity) > (local.pauseResumeAcceptedAt ?? -Infinity)
+          ? { ...stored, note: local.note }
+          : local;
+      const next = toggleTimerPause(current);
+      if (next !== current) commit(next);
+    };
+    // Coordinate main-window and popout inputs; a busy lock drops the input, never queues it.
+    if (navigator.locks) {
+      void navigator.locks
+        .request("focus-pause-resume", { ifAvailable: true }, (lock) => {
+          if (lock) accept();
+        })
+        .catch(() => accept());
+    } else accept();
   }, [commit]);
 
   const stop = useCallback(async () => {

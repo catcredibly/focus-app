@@ -50,7 +50,7 @@ describe("analytics aggregation", () => {
     session("archived", at(2026, 9, 21), 99_000, { archived: true }),
   ];
   it("groups local daily and monthly focused totals", () => {
-    expect(dailyTotals(filterSessions(rows)).map((p) => p.seconds)).toEqual([5400, 106200]);
+    expect(dailyTotals(filterSessions(rows)).map((p) => p.seconds)).toEqual([5400, 50400, 55800]);
     expect(monthlyTotals(filterSessions(rows))[0].seconds).toBe(111600);
   });
   it("ignores the legacy Session archive flag and filters by Academic Year and Subject", () => {
@@ -60,9 +60,9 @@ describe("analytics aggregation", () => {
   });
   it("calculates active days, average active-day duration, and longest streak", () => {
     const active = filterSessions(rows);
-    expect(activeDayCount(active)).toBe(2);
-    expect(averageActiveDaySeconds(active)).toBe(55800);
-    expect(longestStreak(active)).toBe(2);
+    expect(activeDayCount(active)).toBe(3);
+    expect(averageActiveDaySeconds(active)).toBe(37200);
+    expect(longestStreak(active)).toBe(3);
   });
   it("uses Monday as the start of each week", () => {
     const sunday = at(2026, 9, 20),
@@ -156,7 +156,7 @@ describe("adaptive heatmap scale", () => {
   it("includes legacy archived Sessions after effective status filtering", () => {
     const rows = [session("a", at(2026, 1, 1), 3600), session("b", at(2026, 1, 2), 99_000, { archived: true })];
     const active = filterSessions(rows);
-    expect(dailyTotals(active)).toHaveLength(2);
+    expect(dailyTotals(active)).toHaveLength(3);
     expect(heatmapScale(active).p90).toBeGreaterThan(3600);
   });
 });

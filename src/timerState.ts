@@ -1,3 +1,4 @@
+import { dailyFocusAllocations, allocatedFocusInRange } from "./sessionAllocation";
 import type { AcademicYear, FocusSession, Subject } from "./types";
 
 export const ACTIVE_TIMER_STORAGE_KEY = "focus.activeTimer";
@@ -9,6 +10,7 @@ export type TimerState = {
   expiredNoticeDismissed?: boolean;
   running: boolean;
   paused: boolean;
+  pauseResumeAcceptedAt?: number;
   subject: string;
   subjectColor: string;
   subjectId: string;
@@ -95,6 +97,7 @@ export function startTimerState(
     academicYearId: year.id,
     academicYearName: year.name,
     sessionId,
+    pauseResumeAcceptedAt: undefined,
     running: true,
     paused: false,
     finished: false,
@@ -148,6 +151,38 @@ export function focusedSecondsAt(state: TimerState, now: number) {
   if (state.runningSince === null || state.paused || state.finished) return state.accumulatedFocusedSeconds;
   const end = state.targetEnd ? Math.min(now, state.targetEnd) : now;
   return state.accumulatedFocusedSeconds + Math.max(0, Math.round((end - state.runningSince) / 1000));
+}
+
+/** Ignore rapid inputs without changing the timestamps of accepted transitions. */
+export function toggleTimerPause(state: TimerState, now = Date.now()): TimerState {
+  if (
+    !state.running ||
+    state.finished ||
+    (state.pauseResumeAcceptedAt !== undefined &&
+      now >= state.pauseResumeAcceptedAt &&
+      now - state.pauseResumeAcceptedAt < 1000)
+  )
+    return state;
+  const current = timerStateAt(state, now);
+  if (current.finished) return state;
+  if (!current.paused)
+    return {
+      ...closeRunningInterval(current, now),
+      paused: true,
+      targetEnd: null,
+      pauseResumeAcceptedAt: now,
+    };
+  return {
+    ...current,
+    paused: false,
+    pauseResumeAcceptedAt: now,
+    runningSince: now,
+    targetEnd: current.mode === "stopwatch" ? null : now + current.remainingSeconds * 1000,
+    checkpointAt: now,
+    checkpointRemainingSeconds: current.remainingSeconds,
+    checkpointFocusedSeconds: current.accumulatedFocusedSeconds,
+    checkpointIntervals: current.focusIntervals,
+  };
 }
 
 export function closeRunningInterval(state: TimerState, endTime: number): TimerState {
@@ -246,13 +281,17 @@ export function todaySummary(sessions: FocusSession[], now = Date.now()) {
   );
   return {
     sessions: today,
-    focusedDurationSeconds: today.reduce((sum, session) => sum + session.focusedDurationSeconds, 0),
+    focusedDurationSeconds: sessions
+      .filter((session) => !session.archived)
+      .reduce((sum, session) => sum + allocatedFocusInRange(session, start, end), 0),
   };
 }
 
 export function currentStreak(sessions: FocusSession[], now = Date.now()) {
   const activeDays = new Set(
-    sessions.filter((session) => !session.archived).map((session) => localDateInputValue(session.startTime)),
+    sessions
+      .filter((session) => !session.archived)
+      .flatMap((session) => dailyFocusAllocations(session).map((day) => localDateInputValue(day.start))),
   );
   const cursor = new Date(now);
   cursor.setHours(0, 0, 0, 0);

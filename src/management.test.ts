@@ -325,3 +325,38 @@ describe("management archive and deletion integrity", () => {
     expect((await testDb.sessions.get("session"))?.focusedDurationSeconds).toBe(3600);
   });
 });
+
+it("preserves exact intervals for unrelated edits and removes them for timing edits", async () => {
+  const testDb = database();
+  await testDb.academicYears.add({ id: "y", name: "Year", archived: false });
+  await testDb.subjects.add({ id: "s", academicYearId: "y", name: "Subject", color: "#fff", archived: false });
+  const intervals = [
+    { startTime: 1001, endTime: 61001 },
+    { startTime: 63001, endTime: 123001 },
+  ];
+  await testDb.sessions.add({
+    id: "session",
+    academicYearId: "y",
+    academicYearName: "Year",
+    subjectId: "s",
+    subjectName: "Subject",
+    startTime: 1001,
+    endTime: 123001,
+    focusedDurationSeconds: 120,
+    focusIntervals: intervals,
+    archived: false,
+  });
+  const input = {
+    academicYearId: "y",
+    subjectId: "s",
+    startTime: 1001,
+    endTime: 123001,
+    focusedDurationSeconds: 120,
+    durationMode: "unlocked" as const,
+    note: "Updated note",
+  };
+  await updateSessionDetails("session", input, testDb);
+  expect((await testDb.sessions.get("session"))?.focusIntervals).toEqual(intervals);
+  await updateSessionDetails("session", { ...input, endTime: 124001 }, testDb);
+  expect((await testDb.sessions.get("session"))?.focusIntervals).toBeUndefined();
+});

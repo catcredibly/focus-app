@@ -1,3 +1,4 @@
+import { dailyFocusAllocations } from "../sessionAllocation";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { FocusSession } from "../types";
@@ -76,7 +77,10 @@ export function ActivityHeatmap({
     })
     .filter(Boolean) as { index: number; label: string }[];
   const selectedSessions = selected
-      ? sessions.filter((session) => localDayKey(session.startTime) === selected.key)
+      ? sessions.flatMap((session) => {
+          const day = dailyFocusAllocations(session).find((part) => localDayKey(part.start) === selected.key);
+          return day ? [{ ...session, focusedDurationSeconds: day.seconds }] : [];
+        })
       : [],
     breakdown = [
       ...selectedSessions.reduce(

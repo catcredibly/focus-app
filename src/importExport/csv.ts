@@ -1,3 +1,4 @@
+import { sessionInvalidReason } from "../sessionValidity";
 import { normalizeNote } from "../notes";
 import { db, type FocusDatabase } from "../db";
 import { makeId } from "../data";
@@ -256,6 +257,8 @@ export async function importCsvPreview(preview: CsvPreview, database: FocusDatab
         note: row.session.note === undefined ? undefined : normalizeNote(row.session.note),
       });
       summary.sessionsImported++;
+      if (sessionInvalidReason(row.session, await database.academicYears.get(row.session.academicYearId)))
+        summary.invalidSessionsImported = (summary.invalidSessionsImported ?? 0) + 1;
     }
   });
   return summary;
