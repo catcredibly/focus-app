@@ -1,7 +1,6 @@
 const en = {
   "Check manually for a newer version of Shihen.": "Check manually for a newer version of Shihen.",
   "Automatically check for updates when Shihen starts.": "Automatically check for updates when Shihen starts.",
-  "Reveal timeout": "Reveal timeout",
   "{{count}} seconds": "{{count}} seconds",
   "Set up Shihen": "Set up Shihen",
   "Create an Academic Year and a Subject before starting your first Session.":
@@ -32,8 +31,8 @@ const en = {
   "Timer finished while Shihen was closed": "Timer finished while Shihen was closed",
   "Your {{subject}} timer finished at {{time}}.": "Your {{subject}} timer finished at {{time}}.",
 
-  "Unable to register the Reveal shortcut. Try another combination.":
-    "Unable to register the Reveal shortcut. Try another combination.",
+  "Unable to register the shortcut. Try another combination.":
+    "Unable to register the shortcut. Try another combination.",
   Details: "Details",
 
   "Check for updates on launch": "Check for updates on launch",
@@ -137,7 +136,6 @@ const en = {
   "Open popout automatically when a timer starts": "Open popout automatically when a timer starts",
   "Open popout automatically": "Open popout automatically",
   "Show popout in taskbar": "Show popout in taskbar",
-  Transparency: "Transparency",
   "Corner docking": "Corner docking",
   "Dock the popout to a screen corner, with optional edge auto-hide.":
     "Dock the popout to a screen corner, with optional edge auto-hide.",
@@ -599,7 +597,6 @@ const en = {
   "Dock position": "Dock position",
   "Reveal edge": "Reveal edge",
   "Reveal tab size": "Reveal tab size",
-  "Reveal shortcut": "Reveal shortcut",
   Top: "Top",
   Right: "Right",
   Bottom: "Bottom",
@@ -625,8 +622,7 @@ const en = {
   "Used when Auto-hide is enabled.": "Used when Auto-hide is enabled.",
   "What's new": "What's new",
   "A new version of Shihen is ready to install.": "A new version of Shihen is ready to install.",
-  "Reveal shortcut is unavailable on this device.": "Reveal shortcut is unavailable on this device.",
-  "Seconds before hiding after shortcut reveal.": "Seconds before hiding after shortcut reveal.",
+  "Shortcut key is unavailable on this device.": "Shortcut key is unavailable on this device.",
   "Border opacity": "Border opacity",
   "Rows per page": "Rows per page",
   "Showing {{start}}–{{end}} of {{total}} sessions": "Showing {{start}}–{{end}} of {{total}} sessions",
@@ -640,6 +636,12 @@ const en = {
   "This academic year starts on {{date}}.": "This academic year starts on {{date}}.",
   "View release notes on GitHub": "View release notes on GitHub",
   "Note exceeds the allowed limits.": "Note exceeds the allowed limits.",
+  "Background opacity": "Background opacity",
+  Shortcut: "Shortcut",
+  "Show/hide shortcut": "Show/hide shortcut",
+  "Shortcut key": "Shortcut key",
+  "Shortcut hide delay": "Shortcut hide delay",
+  "Seconds before hiding after shortcut. Set 0 for none.": "Seconds before hiding after shortcut. Set 0 for none.",
 } as const;
 
 export default en;

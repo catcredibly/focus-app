@@ -61,7 +61,9 @@ export function Sidebar({ collapsed, onToggle, active, onNavigate }: Props) {
         <div className="sidebar-greeting">
           <div className="moon">◒</div>
           <div>
-            <div>{t(greetingKey, { name: greetingName })}</div>
+            <div className="greeting-subtitle greeting-name">
+              <b>{t(greetingKey, { name: greetingName })}</b>
+            </div>
             <span className="greeting-subtitle">
               <b>{settings.sidebarSubtitle || DEFAULT_SIDEBAR_SUBTITLE}</b>
             </span>

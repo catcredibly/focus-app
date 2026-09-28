@@ -228,9 +228,9 @@ it.each([true, false])("shortcut toggles visibility regardless of Auto-hide=%s",
   await revealTimerFromShortcut();
   expect(native.geometry).toMatchObject({ visible: true, tabVisible: false });
   await revealTimerFromShortcut();
-  expect(native.geometry).toMatchObject({ visible: false, tabVisible: false, requested: false });
+  expect(native.geometry).toMatchObject({ visible: false, tabVisible: enabled, requested: enabled });
   expect(native.invoke.mock.calls.filter(([command]) => command === "cancel_timer_auto_hide")).toHaveLength(1);
-  expect(native.invoke.mock.calls.some(([command]) => command === "show_timer_auto_hide_tab")).toBe(false);
+  expect(native.invoke.mock.calls.some(([command]) => command === "show_timer_auto_hide_tab")).toBe(enabled);
 });
 
 afterEach(() => {
@@ -246,7 +246,9 @@ it("uses the configured shortcut timeout and ignores older cancellation events",
   await vi.advanceTimersByTimeAsync(2999);
   expect(native.invoke.mock.calls.some(([command]) => command === "expire_shortcut_reveal")).toBe(false);
   await vi.advanceTimersByTimeAsync(1);
-  expect(native.invoke).toHaveBeenCalledWith("expire_shortcut_reveal", native.ticket);
+  await vi.waitFor(() =>
+    expect(native.invoke).toHaveBeenCalledWith("expire_shortcut_reveal", expect.objectContaining(native.ticket!)),
+  );
 });
 it("pointer cancellation removes the pending shortcut timeout", async () => {
   Object.assign(native.geometry, { visible: false, tabVisible: true });
@@ -255,4 +257,46 @@ it("pointer cancellation removes the pending shortcut timeout", async () => {
   cancelShortcutRevealTimer(21);
   await vi.advanceTimersByTimeAsync(15000);
   expect(native.invoke.mock.calls.some(([command]) => command === "expire_shortcut_reveal")).toBe(false);
+});
+
+it("zero shortcut delay arms interaction protection without scheduling a timeout", async () => {
+  await saveSetting("popoutRevealTimeoutSeconds", 0);
+  Object.assign(native.geometry, { visible: false, tabVisible: true });
+  native.ticket = { generation: 0, sequence: 30 };
+  await revealTimerFromShortcut();
+  expect(vi.getTimerCount()).toBe(0);
+  expect(native.geometry.visible).toBe(true);
+});
+it("disabled shortcuts ignore queued key events and retain preferences", async () => {
+  await saveSetting("popoutShortcutEnabled", false);
+  await revealTimerFromShortcut();
+  expect(native.invoke).not.toHaveBeenCalled();
+  expect((await loadSettings()).popoutRevealShortcut).toBe("Ctrl+Alt+KeyF");
+});
+
+it("untouched shortcut state suppresses normal Auto-hide", async () => {
+  await saveSetting("popoutDockAutoHide", true);
+  Object.assign(native.geometry, { shortcutActive: true });
+  await hideTimerAutomatically();
+  expect(native.invoke.mock.calls.some(([command]) => command === "show_timer_auto_hide_tab")).toBe(false);
+  Object.assign(native.geometry, { shortcutActive: false });
+  await hideTimerAutomatically();
+  expect(native.geometry).toMatchObject({ requested: true, visible: false, tabVisible: true });
+});
+it("shortcut timeout reconciles current Auto-hide preferences before native expiry", async () => {
+  Object.assign(native.geometry, { visible: false, tabVisible: true });
+  native.ticket = { generation: 0, sequence: 40 };
+  await revealTimerFromShortcut();
+  await saveSetting("popoutDockAutoHide", true);
+  await vi.advanceTimersByTimeAsync(5000);
+  await vi.waitFor(() =>
+    expect(native.invoke).toHaveBeenCalledWith("expire_shortcut_reveal", expect.objectContaining(native.ticket!)),
+  );
+  expect(native.invoke).toHaveBeenCalledWith("reconcile_popout_preferences", { autoHide: true, shortcutEnabled: true });
+});
+
+it("normal Auto-hide ignores a timeout from an older reveal", async () => {
+  await saveSetting("popoutDockAutoHide", true);
+  await hideTimerAutomatically({ generation: 0, revealSequence: -1 });
+  expect(native.invoke.mock.calls.some(([command]) => command === "show_timer_auto_hide_tab")).toBe(false);
 });

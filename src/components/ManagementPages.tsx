@@ -1057,17 +1057,19 @@ export function HistoryPage() {
             <span className={`badge ${isSessionEffectivelyArchived(s, subjects, years) ? "badge--archived" : ""}`}>
               {t(isSessionEffectivelyArchived(s, subjects, years) ? "Archived" : "Active")}
             </span>
-            <div className="row-actions">
-              {s.note?.trim() && (
-                <button
-                  className="note-indicator"
-                  aria-label={t("View note")}
-                  title={t("View note")}
-                  onClick={(event) => setViewingNote({ note: s.note!, anchor: event.currentTarget })}
-                >
-                  <FileText />
-                </button>
-              )}
+            <div className="row-actions history-actions">
+              <span className="history-note-slot">
+                {s.note?.trim() && (
+                  <button
+                    className="note-indicator"
+                    aria-label={t("View note")}
+                    title={t("View note")}
+                    onClick={(event) => setViewingNote({ note: s.note!, anchor: event.currentTarget })}
+                  >
+                    <FileText />
+                  </button>
+                )}
+              </span>
               <button title={t("Edit")} onClick={() => setEditing(s)}>
                 <Pencil />
               </button>

@@ -103,7 +103,8 @@ export function registerRevealShortcut(shortcut: string, persist: boolean | (() 
     .then(async () => {
       if (!isRevealShortcut(shortcut)) throw new Error("Invalid reveal shortcut.");
       if (!isTauri()) throw new Error("Global shortcuts require the desktop app.");
-      const previous = (await loadSettings()).popoutRevealShortcut;
+      const settings = await loadSettings();
+      const previous = settings.popoutShortcutEnabled ? settings.popoutRevealShortcut : "";
       if (shortcut && (await invoke<boolean>("reveal_shortcut_available")) === false)
         throw new Error("Global reveal shortcuts are unavailable on this device.");
       if (activeShortcut !== shortcut) await invoke("set_reveal_shortcut", { shortcut });

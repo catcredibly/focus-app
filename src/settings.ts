@@ -69,6 +69,7 @@ export type FocusSettings = {
   popoutDockMonitor: DockMonitor;
   popoutDocked: boolean;
   popoutDockAutoHide: boolean;
+  popoutShortcutEnabled: boolean;
   popoutRevealShortcut: string;
   popoutRevealTimeoutSeconds: number;
   popoutBorderOpacity: number;
@@ -133,6 +134,7 @@ export const SETTINGS_KEYS: { [K in keyof FocusSettings]: string } = {
   popoutDockMonitor: "popoutDockMonitor",
   popoutDocked: "popoutDocked",
   popoutDockAutoHide: "popoutDockAutoHide",
+  popoutShortcutEnabled: "popoutShortcutEnabled",
   popoutRevealShortcut: "popoutRevealShortcut",
   popoutRevealTimeoutSeconds: "popoutRevealTimeoutSeconds",
   popoutBorderOpacity: "popoutBorderOpacity",
@@ -197,6 +199,7 @@ export const DEFAULT_SETTINGS: FocusSettings = {
   popoutDockMonitor: "current",
   popoutDocked: false,
   popoutDockAutoHide: false,
+  popoutShortcutEnabled: true,
   popoutRevealShortcut: "Ctrl+Alt+KeyF",
   popoutRevealTimeoutSeconds: 5,
   popoutBorderOpacity: 100,
@@ -214,6 +217,7 @@ export const DEFAULT_SETTINGS: FocusSettings = {
 };
 
 const booleans = new Set<keyof FocusSettings>([
+  "popoutShortcutEnabled",
   "checkForUpdatesOnLaunch",
   "startMaximized",
   "launchAtStartup",
@@ -282,7 +286,7 @@ export function goalDurationSeconds(
 
 function decode<K extends keyof FocusSettings>(key: K, raw: string | undefined): FocusSettings[K] {
   if (key === "popoutRevealTimeoutSeconds")
-    return (raw?.trim() && Number.isFinite(Number(raw)) ? Math.max(0.2, Number(raw)) : 5) as FocusSettings[K];
+    return (raw?.trim() && Number.isFinite(Number(raw)) ? Math.max(0, Number(raw)) : 5) as FocusSettings[K];
   if (key === "historyPageSize") return ([10, 25, 50].includes(Number(raw)) ? Number(raw) : 25) as FocusSettings[K];
   if (key === "popoutBorderOpacity")
     return (
@@ -369,6 +373,8 @@ export async function loadSettings(database: FocusDatabase = db, migrate = true)
       // Older releases did not record intent. Treat their old default as untouched;
       // preserve all other supported combinations and deliberately cleared values.
       const value = !intent && normalized === "Alt+Backquote" ? DEFAULT_SETTINGS.popoutRevealShortcut : normalized;
+      if (!(await database.settings.get(SETTINGS_KEYS.popoutShortcutEnabled)))
+        await database.settings.put({ key: SETTINGS_KEYS.popoutShortcutEnabled, value: String(value !== "") });
       if (row && value !== row.value) await database.settings.put({ ...row, value });
       if (!intent)
         await database.settings.put({
@@ -385,6 +391,8 @@ export async function loadSettings(database: FocusDatabase = db, migrate = true)
     ]),
   ) as FocusSettings;
   settings.popoutRevealShortcut = normalizeLegacyRevealShortcut(settings.popoutRevealShortcut);
+  if (!rows.has(SETTINGS_KEYS.popoutShortcutEnabled))
+    settings.popoutShortcutEnabled = settings.popoutRevealShortcut !== "";
   settings.popoutAutoHideEdge = defaultEdgeForCorner(settings.popoutDockCorner, settings.popoutAutoHideEdge);
   return settings;
 }

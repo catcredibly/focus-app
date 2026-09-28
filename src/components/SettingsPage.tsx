@@ -4,7 +4,7 @@ import { CURRENT_YEAR_KEY } from "../data";
 import { resetPreferences } from "../resetPreferences";
 import { formatTimerDate, effectiveTimerDateFormat, timerDateFormats } from "../dateTime";
 import { edgesForCorner, dockEdgeOffset } from "../popoutPlacement";
-import { setPopoutDocked } from "../native";
+import { setPopoutDocked, reconcileAutoHideSetting } from "../native";
 import { ShortcutRecorder } from "./ShortcutRecorder";
 import {
   Bell,
@@ -418,11 +418,13 @@ function AutoHideDelayEditor({
   value,
   onChange,
   minimum = 0,
+  disabled = false,
   label = "Auto-hide delay in seconds",
 }: {
   value: number;
   onChange: (seconds: number) => void;
   minimum?: number;
+  disabled?: boolean;
   label?: string;
 }) {
   const { t } = useTranslation();
@@ -440,6 +442,7 @@ function AutoHideDelayEditor({
         className="settings-value-input"
         aria-label={t(label)}
         type="number"
+        disabled={disabled}
         min={minimum}
         step="0.1"
         value={draft}
@@ -741,7 +744,10 @@ function Popout({ settings, setSetting }: SettingsProps) {
     setDockError(false);
     autoHideWrites.current = autoHideWrites.current
       .catch(() => undefined)
-      .then(() => setSetting("popoutDockAutoHide", value))
+      .then(async () => {
+        await setSetting("popoutDockAutoHide", value);
+        await reconcileAutoHideSetting();
+      })
       .then(() => {
         if (request === autoHideRequest.current) setPendingAutoHide({ value, settled: true });
       })
@@ -867,22 +873,36 @@ function Popout({ settings, setSetting }: SettingsProps) {
           <option value="large">{t("Large")}</option>
         </select>
       </Row>
-      <Row label={t("Reveal shortcut")}>
-        <ShortcutRecorder value={settings.popoutRevealShortcut} />
-      </Row>
-      <Row label={t("Reveal timeout")} hint={t("Seconds before hiding after shortcut reveal.")}>
-        <AutoHideDelayEditor
-          value={settings.popoutRevealTimeoutSeconds}
-          minimum={0.2}
-          label="Reveal timeout"
-          onChange={(value) => void setSetting("popoutRevealTimeoutSeconds", value)}
-        />
-      </Row>
       <Row disabled={!autoHideEnabled} label={t("Show accent dot on reveal tab")}>
         <Toggle
           label={t("Show accent dot on reveal tab")}
           checked={settings.popoutAutoHideShowAccent}
           onChange={(value) => void setSetting("popoutAutoHideShowAccent", value)}
+        />
+      </Row>
+      <div className="settings-subheading settings-group-heading">
+        <strong>{t("Shortcut")}</strong>
+      </div>
+      <Row label={t("Show/hide shortcut")}>
+        <Toggle
+          label={t("Show/hide shortcut")}
+          checked={settings.popoutShortcutEnabled}
+          onChange={(value) => void setSetting("popoutShortcutEnabled", value)}
+        />
+      </Row>
+      <Row disabled={!settings.popoutShortcutEnabled} label={t("Shortcut key")}>
+        <ShortcutRecorder value={settings.popoutRevealShortcut} disabled={!settings.popoutShortcutEnabled} />
+      </Row>
+      <Row
+        disabled={!settings.popoutShortcutEnabled}
+        label={t("Shortcut hide delay")}
+        hint={t("Seconds before hiding after shortcut. Set 0 for none.")}
+      >
+        <AutoHideDelayEditor
+          value={settings.popoutRevealTimeoutSeconds}
+          disabled={!settings.popoutShortcutEnabled}
+          label="Shortcut hide delay"
+          onChange={(value) => void setSetting("popoutRevealTimeoutSeconds", value)}
         />
       </Row>
       <div className="settings-subheading settings-group-heading">
@@ -954,9 +974,9 @@ function Popout({ settings, setSetting }: SettingsProps) {
           <option value="large">{t("Large")}</option>
         </select>
       </Row>
-      <Row label={t("Transparency")} hint={`${settings.popoutTransparency}%`}>
+      <Row label={t("Background opacity")} hint={`${settings.popoutTransparency}%`}>
         <input
-          aria-label={t("Transparency")}
+          aria-label={t("Background opacity")}
           type="range"
           min="0"
           max="100"
@@ -1013,6 +1033,7 @@ function Popout({ settings, setSetting }: SettingsProps) {
           "popoutPositionY",
           "popoutFloatingWidth",
           "popoutFloatingHeight",
+          "popoutShortcutEnabled",
           "popoutRevealShortcut",
           "popoutRevealTimeoutSeconds",
           "popoutDockingEnabled",

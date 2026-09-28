@@ -307,9 +307,33 @@ it("defaults and validates the independent Reveal timeout", async () => {
     expect((await loadSettings(testDb)).popoutRevealTimeoutSeconds).toBe(5);
   }
   await saveSetting("popoutRevealTimeoutSeconds", 0.1, testDb);
-  expect((await loadSettings(testDb)).popoutRevealTimeoutSeconds).toBe(0.2);
+  expect((await loadSettings(testDb)).popoutRevealTimeoutSeconds).toBe(0.1);
   await saveSetting("popoutRevealTimeoutSeconds", 4.5, testDb);
   expect((await loadSettings(testDb)).popoutRevealTimeoutSeconds).toBe(4.5);
   await saveSetting("popoutRevealTimeoutSeconds", 15, testDb);
   expect((await loadSettings(testDb)).popoutRevealTimeoutSeconds).toBe(15);
+});
+
+it("migrates shortcut enablement without replacing cleared or custom keys", async () => {
+  const testDb = database();
+  expect((await loadSettings(testDb)).popoutShortcutEnabled).toBe(true);
+  await testDb.settings.clear();
+  await saveSetting("popoutRevealShortcut", "", testDb);
+  expect((await loadSettings(testDb)).popoutShortcutEnabled).toBe(false);
+  await saveSetting("popoutShortcutEnabled", true, testDb);
+  expect((await loadSettings(testDb)).popoutRevealShortcut).toBe("");
+  await saveSetting("popoutRevealShortcut", "Ctrl+Alt+KeyJ", testDb);
+  await saveSetting("popoutRevealTimeoutSeconds", 0, testDb);
+  await saveSetting("popoutShortcutEnabled", false, testDb);
+  expect(await loadSettings(testDb)).toMatchObject({
+    popoutShortcutEnabled: false,
+    popoutRevealShortcut: "Ctrl+Alt+KeyJ",
+    popoutRevealTimeoutSeconds: 0,
+  });
+  await saveSetting("popoutShortcutEnabled", true, testDb);
+  expect(await loadSettings(testDb)).toMatchObject({
+    popoutShortcutEnabled: true,
+    popoutRevealShortcut: "Ctrl+Alt+KeyJ",
+    popoutRevealTimeoutSeconds: 0,
+  });
 });

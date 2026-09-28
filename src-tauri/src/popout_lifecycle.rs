@@ -13,6 +13,8 @@ pub struct PopoutState {
     pub reveal_sequence: u64,
     pub shortcut_reveal: Option<u64>,
     pub pointer_inside: bool,
+    pub auto_hide: bool,
+    pub shortcut_disabled: bool,
 }
 
 impl PopoutState {
@@ -20,8 +22,16 @@ impl PopoutState {
         self.reveal_sequence = self.reveal_sequence.wrapping_add(1);
         self.shortcut_reveal = None;
     }
-    fn accepts_timeout(&self, generation: u64, sequence: u64) -> bool {
-        self.allows(generation) && !self.pointer_inside && self.shortcut_reveal == Some(sequence)
+    pub fn accepts_timeout(&self, generation: u64, sequence: u64) -> bool {
+        self.allows(generation) && !self.shortcut_disabled && !self.pointer_inside && self.shortcut_reveal == Some(sequence)
+    }
+
+    fn reconcile_preferences(&mut self, auto_hide: bool, shortcut_enabled: bool) -> bool {
+        let cancel = (self.auto_hide && !auto_hide) || !shortcut_enabled;
+        if cancel { self.cancel_shortcut_reveal(); }
+        self.auto_hide = auto_hide;
+        self.shortcut_disabled = !shortcut_enabled;
+        cancel
     }
 
     pub fn active(&self) -> bool {
@@ -95,11 +105,10 @@ pub struct RevealTicket { generation: u64, sequence: u64 }
 #[tauri::command]
 pub fn arm_shortcut_reveal(app: tauri::AppHandle) -> Result<Option<RevealTicket>, String> {
     let managed = app.state::<PopoutLifecycle>();
-    let mut state = lock(&managed)?;
-    state.cancel_shortcut_reveal();
-    if !state.requested || !state.active() || state.pointer_inside { return Ok(None); }
+    let state = lock(&managed)?;
+    if !state.requested || !state.active() || state.pointer_inside || state.shortcut_disabled || state.shortcut_reveal.is_none() { return Ok(None); }
     if !app.get_webview_window("timer").is_some_and(|window| window.is_visible().unwrap_or(false)) { return Ok(None); }
-    state.shortcut_reveal = Some(state.reveal_sequence);
+    let _ = app.emit_to("timer", "focus://shortcut-shown", ());
     Ok(Some(RevealTicket { generation: state.generation, sequence: state.reveal_sequence }))
 }
 
@@ -116,11 +125,33 @@ pub fn interact_with_shortcut_reveal(app: tauri::AppHandle, inside: bool) -> Res
 }
 
 #[tauri::command]
-pub fn expire_shortcut_reveal(app: tauri::AppHandle, generation: u64, sequence: u64) -> Result<(), String> {
+pub fn cancel_shortcut_reveal(app: tauri::AppHandle) -> Result<(), String> {
     let managed = app.state::<PopoutLifecycle>();
     let mut state = lock(&managed)?;
-    if !state.accepts_timeout(generation, sequence) { return Ok(()); }
     state.cancel_shortcut_reveal();
+    let _ = app.emit_to("main", "focus://cancel-shortcut-reveal", state.reveal_sequence);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn reconcile_popout_preferences(app: tauri::AppHandle, auto_hide: bool, shortcut_enabled: bool) -> Result<(), String> {
+    let managed = app.state::<PopoutLifecycle>();
+    let mut state = lock(&managed)?;
+    if state.reconcile_preferences(auto_hide, shortcut_enabled) {
+        let _ = app.emit_to("main", "focus://cancel-shortcut-reveal", state.reveal_sequence);
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn expire_shortcut_reveal(app: tauri::AppHandle, generation: u64, sequence: u64, edge: String, offset: f64, tab_size: String) -> Result<(), String> {
+    let managed = app.state::<PopoutLifecycle>();
+    let mut state = lock(&managed)?;
+    if !state.accepts_timeout(generation, sequence) || state.shortcut_disabled { return Ok(()); }
+    state.cancel_shortcut_reveal();
+    if state.auto_hide && crate::supports_window_positioning() {
+        return crate::auto_hide_windows(&app, edge, offset, tab_size);
+    }
     state.requested = false;
     state.generation = state.generation.wrapping_add(1);
     hide_windows(&app)
@@ -158,6 +189,25 @@ mod tests {
         assert!(state.accepts_timeout(7, 4));
         state.generation += 1;
         assert!(!state.accepts_timeout(7, 4));
+    }
+
+    #[test]
+    fn preference_changes_preserve_visibility_and_invalidate_only_obsolete_tickets() {
+        let mut state = PopoutState { session_id: Some("live".into()), requested: true, generation: 7, shortcut_reveal: Some(3), reveal_sequence: 3, ..Default::default() };
+        assert!(!state.reconcile_preferences(true, true));
+        assert!(state.accepts_timeout(7, 3)); // Off -> On retains the delay, now hiding to the tab.
+        assert!(state.auto_hide);
+        assert!(state.reconcile_preferences(false, true));
+        assert!(!state.accepts_timeout(7, 3));
+        assert!(state.requested);
+        state.shortcut_reveal = Some(state.reveal_sequence);
+        let sequence = state.reveal_sequence;
+        assert!(state.reconcile_preferences(false, false));
+        assert!(!state.accepts_timeout(7, sequence));
+        assert!(state.requested);
+        assert_eq!(state.generation, 7);
+        state.reconcile_preferences(false, true);
+        assert!(state.shortcut_reveal.is_none());
     }
 
 }

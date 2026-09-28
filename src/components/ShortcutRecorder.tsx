@@ -13,8 +13,8 @@ export function ShortcutRecorder({ value, disabled = false }: { value: string; d
   const message = failure
     ? t(
         failure.includes("unavailable on this")
-          ? "Reveal shortcut is unavailable on this device."
-          : "Unable to register the Reveal shortcut. Try another combination.",
+          ? "Shortcut key is unavailable on this device."
+          : "Unable to register the shortcut. Try another combination.",
       )
     : "";
   useEffect(() => {
@@ -64,9 +64,6 @@ export function ShortcutRecorder({ value, disabled = false }: { value: string; d
           }}
         >
           {t(recording ? "Press shortcut…" : "Change")}
-        </button>
-        <button className="secondary-action" disabled={disabled || busy || !value} onClick={() => void apply("")}>
-          {t("Clear")}
         </button>
       </div>
       {message && (

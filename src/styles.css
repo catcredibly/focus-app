@@ -258,17 +258,31 @@ button {
   color: #73899d;
   margin-top: 3px;
 }
+.sidebar-greeting > div:last-child {
+  min-width: 0;
+}
+.sidebar-greeting .moon {
+  flex-shrink: 0;
+}
 .greeting-subtitle {
   width: 150px;
+  max-width: 100%;
+  text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
 }
 .greeting-subtitle b {
   display: inline-block;
   min-width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
   font-weight: 400;
 }
 .greeting-subtitle:hover b {
+  max-width: none;
+  overflow: visible;
   animation: subtitleMarquee 8s linear 800ms infinite alternate;
 }
 @keyframes subtitleMarquee {
@@ -641,8 +655,10 @@ button {
 .popout-root {
   width: 100vw;
   height: 100vh;
-  background: rgba(7, 18, 29, var(--popout-surface-alpha, 1));
-  border: 1px solid rgba(34, 61, 82, var(--popout-border-alpha, 1));
+  background: color-mix(in srgb, var(--surface-page) calc(var(--popout-surface-alpha, 1) * 100%), transparent);
+  border: 1px solid color-mix(in srgb, var(--border) calc(var(--popout-border-alpha, 1) * 100%), transparent);
+  box-shadow: none;
+  outline: none;
   border-radius: 10px;
   position: relative;
   font-size: var(--ui-font-size, 14px);
@@ -3274,8 +3290,6 @@ input {
 }
 [data-theme="light"].popout-root {
   color: #172431;
-  border-color: rgba(189, 203, 212, var(--popout-border-alpha, 1));
-  background: rgba(248, 250, 251, var(--popout-surface-alpha, 1));
 }
 [data-theme="light"].popout-root .popout-time {
   color: #13202a;
@@ -4888,4 +4902,22 @@ button:disabled {
 }
 .running-stage .session-note-editor {
   margin-top: 52px;
+}
+
+.history-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 34px);
+  gap: 4px;
+  width: 110px;
+}
+.history-note-slot {
+  width: 34px;
+  height: 34px;
+}
+
+/* Utility windows must never inherit the application bootstrap surface. */
+html[data-utility-window],
+html[data-utility-window] body,
+html[data-utility-window] #root {
+  background: transparent;
 }

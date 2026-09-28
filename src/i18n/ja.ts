@@ -3,7 +3,6 @@ import en from "./en";
 const ja: Record<keyof typeof en, string> = {
   "Check manually for a newer version of Shihen.": "Shihen の新しいバージョンを手動で確認します。",
   "Automatically check for updates when Shihen starts.": "Shihen の起動時に更新を自動で確認します。",
-  "Reveal timeout": "ショートカット表示の制限時間",
   "{{count}} seconds": "{{count}} 秒間",
   "Set up Shihen": "Shihen の準備",
   "Create an Academic Year and a Subject before starting your first Session.":
@@ -33,7 +32,7 @@ const ja: Record<keyof typeof en, string> = {
   "Timer finished while Shihen was closed": "Shihen を閉じている間にタイマーが終了しました",
   "Your {{subject}} timer finished at {{time}}.": "{{subject}} のタイマーは {{time}} に終了しました。",
 
-  "Unable to register the Reveal shortcut. Try another combination.":
+  "Unable to register the shortcut. Try another combination.":
     "表示ショートカットを登録できません。別の組み合わせをお試しください。",
   Details: "詳細",
 
@@ -138,7 +137,6 @@ const ja: Record<keyof typeof en, string> = {
   "Open popout automatically when a timer starts": "タイマーが開始するとポップアウトを自動的に開きます",
   "Open popout automatically": "ポップアウトを自動的に開く",
   "Show popout in taskbar": "タスクバーにポップアウトを表示",
-  Transparency: "透明性",
   "Corner docking": "コーナードッキング",
   "Dock the popout to a screen corner, with optional edge auto-hide.":
     "オプションのエッジ自動非表示を使用して、ポップアウトを画面の隅にドッキングします。",
@@ -598,7 +596,6 @@ const ja: Record<keyof typeof en, string> = {
   "Dock position": "ドッキング位置",
   "Reveal edge": "表示する辺",
   "Reveal tab size": "表示タブのサイズ",
-  "Reveal shortcut": "表示ショートカット",
   Top: "上",
   Right: "右",
   Bottom: "下",
@@ -625,8 +622,7 @@ const ja: Record<keyof typeof en, string> = {
   "Used when Auto-hide is enabled.": "自動非表示が有効なときに使用します。",
   "What's new": "更新内容",
   "A new version of Shihen is ready to install.": "Shihen の新しいバージョンをインストールできます。",
-  "Reveal shortcut is unavailable on this device.": "このデバイスでは表示ショートカットを使用できません。",
-  "Seconds before hiding after shortcut reveal.": "ショートカットで表示してから隠すまでの秒数。",
+  "Shortcut key is unavailable on this device.": "このデバイスでは表示ショートカットを使用できません。",
   "Border opacity": "枠線の不透明度",
   "Rows per page": "1ページの行数",
   "Showing {{start}}–{{end}} of {{total}} sessions": "全 {{total}} セッション中 {{start}}–{{end}} 件を表示",
@@ -640,6 +636,13 @@ const ja: Record<keyof typeof en, string> = {
   "This academic year starts on {{date}}.": "この学年は {{date}} に始まります。",
   "View release notes on GitHub": "GitHubでリリースノートを見る",
   "Note exceeds the allowed limits.": "メモが上限を超えています。",
+  "Background opacity": "背景の不透明度",
+  Shortcut: "ショートカット",
+  "Show/hide shortcut": "表示/非表示ショートカット",
+  "Shortcut key": "ショートカットキー",
+  "Shortcut hide delay": "ショートカット非表示までの時間",
+  "Seconds before hiding after shortcut. Set 0 for none.":
+    "ショートカットで表示した後、非表示になるまでの秒数。0で自動非表示なし。",
 };
 
 export default ja;

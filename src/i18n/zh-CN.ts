@@ -3,7 +3,6 @@ import en from "./en";
 const zhCN: Record<keyof typeof en, string> = {
   "Check manually for a newer version of Shihen.": "手动检查是否有更新版本的 Shihen。",
   "Automatically check for updates when Shihen starts.": "启动 Shihen 时自动检查更新。",
-  "Reveal timeout": "快捷显示时限",
   "{{count}} seconds": "{{count}} 秒",
   "Set up Shihen": "设置 Shihen",
   "Create an Academic Year and a Subject before starting your first Session.":
@@ -33,7 +32,7 @@ const zhCN: Record<keyof typeof en, string> = {
   "Timer finished while Shihen was closed": "Shihen 关闭期间计时器已结束",
   "Your {{subject}} timer finished at {{time}}.": "你的 {{subject}} 计时器已于 {{time}} 结束。",
 
-  "Unable to register the Reveal shortcut. Try another combination.": "无法注册显示快捷键。请尝试其他组合。",
+  "Unable to register the shortcut. Try another combination.": "无法注册显示快捷键。请尝试其他组合。",
   Details: "详情",
 
   "Check for updates on launch": "启动时检查更新",
@@ -137,7 +136,6 @@ const zhCN: Record<keyof typeof en, string> = {
   "Open popout automatically when a timer starts": "开始计时时自动打开悬浮窗",
   "Open popout automatically": "自动打开悬浮窗",
   "Show popout in taskbar": "在任务栏显示悬浮窗",
-  Transparency: "透明度",
   "Corner docking": "角落停靠",
   "Dock the popout to a screen corner, with optional edge auto-hide.": "将悬浮窗停靠到屏幕角落，并可选择边缘自动隐藏。",
   "Enable corner docking": "启用角落停靠",
@@ -582,7 +580,6 @@ const zhCN: Record<keyof typeof en, string> = {
   "Dock position": "停靠位置",
   "Reveal edge": "显示边缘",
   "Reveal tab size": "显示标签大小",
-  "Reveal shortcut": "显示快捷键",
   Top: "顶部",
   Right: "右侧",
   Bottom: "底部",
@@ -608,8 +605,7 @@ const zhCN: Record<keyof typeof en, string> = {
   "Used when Auto-hide is enabled.": "启用自动隐藏时使用。",
   "What's new": "更新内容",
   "A new version of Shihen is ready to install.": "Shihen 新版本已准备好安装。",
-  "Reveal shortcut is unavailable on this device.": "此设备无法使用显示悬浮窗快捷键。",
-  "Seconds before hiding after shortcut reveal.": "快捷键显示浮窗后隐藏前的秒数。",
+  "Shortcut key is unavailable on this device.": "此设备无法使用显示悬浮窗快捷键。",
   "Border opacity": "边框不透明度",
   "Rows per page": "每页行数",
   "Showing {{start}}–{{end}} of {{total}} sessions": "显示第 {{start}}–{{end}} 条，共 {{total}} 条学习记录",
@@ -623,6 +619,12 @@ const zhCN: Record<keyof typeof en, string> = {
   "This academic year starts on {{date}}.": "此学年将于 {{date}} 开始。",
   "View release notes on GitHub": "在 GitHub 上查看更新说明",
   "Note exceeds the allowed limits.": "笔记超出允许的限制。",
+  "Background opacity": "背景不透明度",
+  Shortcut: "快捷键",
+  "Show/hide shortcut": "显示/隐藏快捷键",
+  "Shortcut key": "快捷键组合",
+  "Shortcut hide delay": "快捷键隐藏延迟",
+  "Seconds before hiding after shortcut. Set 0 for none.": "使用快捷键后自动隐藏前的秒数。设为 0 则不自动隐藏。",
 };
 
 export default zhCN;

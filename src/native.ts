@@ -13,6 +13,9 @@ import {
 
 export type TimerGeometry = {
   positioningSupported?: boolean;
+  shortcutActive?: boolean;
+  revealSequence?: number;
+  menuVisible?: boolean;
   x: number;
   y: number;
   width: number;
@@ -136,7 +139,7 @@ export async function syncPopoutLayout(resize = false) {
     }
   });
 }
-export async function openTimerPopout(_settings?: FocusSettings) {
+export async function openTimerPopout(_settings?: FocusSettings, shortcut = false) {
   if (!isTauri()) return;
   const intendedSession = activePopoutSession();
   // Capture Close's generation before entering the geometry queue. An explicit
@@ -160,10 +163,19 @@ export async function openTimerPopout(_settings?: FocusSettings) {
     }
     const latest = await synchronizePopoutSession();
     if (latest?.sessionId === session.sessionId)
-      await invoke("open_timer_popout", { sessionId: session.sessionId, generation });
+      await invoke("open_timer_popout", {
+        sessionId: session.sessionId,
+        generation,
+        ...(shortcut ? { shortcut: true } : {}),
+      });
   });
 }
-async function hide(settings: FocusSettings, geometry: TimerGeometry, generation = geometry.generation) {
+async function hide(
+  settings: FocusSettings,
+  geometry: TimerGeometry,
+  generation = geometry.generation,
+  normal = false,
+) {
   if (geometry.positioningSupported === false) return;
   if (
     (!settings.popoutDockAutoHide && !geometry.tabVisible) ||
@@ -171,6 +183,13 @@ async function hide(settings: FocusSettings, geometry: TimerGeometry, generation
     (!geometry.visible && !geometry.tabVisible)
   )
     return;
+  await invoke("show_timer_auto_hide_tab", {
+    ...autoHidePlacement(settings, geometry),
+    generation,
+    ...(normal ? { requirePointerOutside: true, expectedSequence: geometry.revealSequence } : {}),
+  });
+}
+function autoHidePlacement(settings: FocusSettings, geometry: TimerGeometry) {
   const docked = settings.popoutDockingEnabled && settings.popoutDocked;
   const edge = docked
     ? settings.popoutAutoHideEdge
@@ -183,19 +202,25 @@ async function hide(settings: FocusSettings, geometry: TimerGeometry, generation
       workArea: geometry.workArea,
       corner: docked ? settings.popoutDockCorner : null,
       edge,
-      generation,
     });
   const offset = docked ? settings.popoutAutoHideOffset : edgeOffset(geometry, geometry.workArea, geometry, edge);
-  await invoke("show_timer_auto_hide_tab", { edge, offset, tabSize: settings.popoutAutoHideTabSize, generation });
+  return { edge, offset, tabSize: settings.popoutAutoHideTabSize };
 }
-export async function hideTimerAutomatically() {
+
+export async function hideTimerAutomatically(expected?: { generation: number; revealSequence?: number }) {
   if (!isTauri()) return;
   return withPopoutGeometry(async () => {
     // Re-read inside the queue: a timeout scheduled before Disable is obsolete.
     const settings = await loadSettings();
     if (!settings.popoutDockAutoHide) return;
     await synchronizePopoutSession();
-    await hide(settings, await timerGeometry());
+    const geometry = await timerGeometry();
+    if (
+      expected &&
+      (expected.generation !== geometry.generation || expected.revealSequence !== geometry.revealSequence)
+    )
+      return;
+    if (!geometry.shortcutActive) await hide(settings, geometry, geometry.generation, true);
   });
 }
 export async function revealTimerAutomatically() {
@@ -256,7 +281,12 @@ export async function rememberFloatingPosition() {
 export async function reconcileAutoHideSetting() {
   if (!isTauri()) return;
   return withPopoutGeometry(async () => {
-    if ((await loadSettings()).popoutDockAutoHide) return;
+    const settings = await loadSettings();
+    await invoke("reconcile_popout_preferences", {
+      autoHide: settings.popoutDockAutoHide,
+      shortcutEnabled: settings.popoutShortcutEnabled,
+    });
+    if (settings.popoutDockAutoHide) return;
     await synchronizePopoutSession();
     const geometry = await timerGeometry();
     if (geometry.requested && geometry.tabVisible)
@@ -280,24 +310,32 @@ export function revealTimerFromShortcut(): Promise<void> {
     .then(async () => {
       cancelShortcutRevealTimer();
       if (!isTauri() || !activePopoutSession()) return;
+      if (!(await loadSettings()).popoutShortcutEnabled) return;
       const action = await withPopoutGeometry(async () => {
+        const settings = await loadSettings();
+        if (!settings.popoutShortcutEnabled) return "hidden";
+        await invoke("reconcile_popout_preferences", { autoHide: settings.popoutDockAutoHide, shortcutEnabled: true });
+        await invoke("cancel_shortcut_reveal");
         await synchronizePopoutSession();
         const geometry = await timerGeometry();
+        if (geometry.menuVisible) return "hidden";
         if (geometry.visible) {
-          await invoke("hide_timer_popout");
+          if (settings.popoutDockAutoHide && geometry.positioningSupported !== false) await hide(settings, geometry);
+          else await invoke("hide_timer_popout");
           return "hidden";
         }
         if (!geometry.requested) return "open";
-        await invoke("cancel_timer_auto_hide", { generation: geometry.generation });
+        await invoke("cancel_timer_auto_hide", { generation: geometry.generation, shortcut: true });
         return "revealed";
       });
       if (action === "hidden") return;
-      if (action === "open") await openTimerPopout();
+      if (action === "open") await openTimerPopout(undefined, true);
       const settings = await loadSettings();
       const ticket = await invoke<{ generation: number; sequence: number } | null>("arm_shortcut_reveal");
-      if (ticket) {
+      if (ticket && settings.popoutShortcutEnabled) {
         shortcutSequence = ticket.sequence;
         let remaining = settings.popoutRevealTimeoutSeconds;
+        if (remaining === 0) return;
         let previous = Date.now();
         const schedule = () => {
           shortcutTimer = setTimeout(
@@ -310,7 +348,15 @@ export function revealTimerFromShortcut(): Promise<void> {
                 return;
               }
               shortcutTimer = undefined;
-              void invoke("expire_shortcut_reveal", ticket).catch(console.error);
+              void withPopoutGeometry(async () => {
+                const latest = await loadSettings();
+                await invoke("reconcile_popout_preferences", {
+                  autoHide: latest.popoutDockAutoHide,
+                  shortcutEnabled: latest.popoutShortcutEnabled,
+                });
+                const geometry = await timerGeometry();
+                await invoke("expire_shortcut_reveal", { ...ticket, ...autoHidePlacement(latest, geometry) });
+              }).catch(console.error);
             },
             Math.min(remaining, 2147483) * 1000,
           );

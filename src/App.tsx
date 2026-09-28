@@ -52,12 +52,14 @@ export default function App() {
 
   useEffect(() => {
     if (isTauri() && !isPopout && loaded)
-      void registerRevealShortcut(settings.popoutRevealShortcut).catch(() => undefined);
-  }, [isPopout, loaded, settings.popoutRevealShortcut]);
+      void registerRevealShortcut(settings.popoutShortcutEnabled ? settings.popoutRevealShortcut : "").catch(
+        () => undefined,
+      );
+  }, [isPopout, loaded, settings.popoutRevealShortcut, settings.popoutShortcutEnabled]);
 
   useEffect(() => {
     if (!isPopout && loaded) void reconcileAutoHideSetting().catch(console.error);
-  }, [isPopout, loaded, settings.popoutDockAutoHide]);
+  }, [isPopout, loaded, settings.popoutDockAutoHide, settings.popoutShortcutEnabled]);
   useEffect(() => {
     if (!isTauri() || isPopout) return;
     const cancellation = listen<number>("focus://cancel-shortcut-reveal", ({ payload }) =>

@@ -53,6 +53,7 @@ export function PopoutTimer() {
   const closeEpochRef = useRef(0);
   const [interacting, setInteracting] = useState(false);
   const hideTimerRef = useRef(0);
+  const hideRequestRef = useRef(0);
   const lastSize = useRef(`${settings.popoutLayout}:${settings.popoutSize}`);
   const compact = settings.popoutLayout === "compact";
   const openMenu = (view: string) => {
@@ -68,27 +69,33 @@ export function PopoutTimer() {
         .catch(() => undefined);
   }, []);
   const dockedActive = positioningSupported && settings.popoutDockingEnabled && settings.popoutDocked;
-  const clearHideTimer = useCallback(() => window.clearTimeout(hideTimerRef.current), []);
+  const clearHideTimer = useCallback(() => {
+    hideRequestRef.current += 1;
+    window.clearTimeout(hideTimerRef.current);
+  }, []);
   const report = (operation: Promise<unknown>) => operation.catch(() => setNativeError(true));
   const reveal = useCallback(async () => {
     if (draggingRef.current) return;
     clearHideTimer();
     await revealTimerAutomatically();
   }, [clearHideTimer]);
-  const hide = useCallback(async () => {
-    if (
-      closedRef.current ||
-      pointerInsideRef.current ||
-      draggingRef.current ||
-      interacting ||
-      menu ||
-      menuWindowOpen ||
-      stopping ||
-      voiding
-    )
-      return;
-    await hideTimerAutomatically();
-  }, [interacting, menu, menuWindowOpen, stopping, voiding]);
+  const hide = useCallback(
+    async (expected: { generation: number; revealSequence?: number }) => {
+      if (
+        closedRef.current ||
+        pointerInsideRef.current ||
+        draggingRef.current ||
+        interacting ||
+        menu ||
+        menuWindowOpen ||
+        stopping ||
+        voiding
+      )
+        return;
+      await hideTimerAutomatically(expected);
+    },
+    [interacting, menu, menuWindowOpen, stopping, voiding],
+  );
   const scheduleHide = useCallback(() => {
     clearHideTimer();
     if (
@@ -102,9 +109,16 @@ export function PopoutTimer() {
       !voiding &&
       !draggingRef.current
     ) {
-      hideTimerRef.current = window.setTimeout(
-        () => void report(hide()),
-        autoHideSettings.current.popoutAutoHideDelaySeconds * 1000,
+      const request = hideRequestRef.current;
+      void report(
+        timerGeometry().then((geometry) => {
+          if (request !== hideRequestRef.current || !geometry.requested || !geometry.visible || geometry.shortcutActive)
+            return;
+          hideTimerRef.current = window.setTimeout(
+            () => void report(hide(geometry)),
+            autoHideSettings.current.popoutAutoHideDelaySeconds * 1000,
+          );
+        }),
       );
     }
   }, [clearHideTimer, hide, interacting, menu, menuWindowOpen, stopping, voiding]);
@@ -112,10 +126,11 @@ export function PopoutTimer() {
     scheduleHide();
     return clearHideTimer;
   }, [scheduleHide, clearHideTimer]);
-  // A preference change cancels pending hides but never requests a new hide/reveal.
+  // Native shortcut state suppresses normal hides until interaction takes over.
   useEffect(() => {
     clearHideTimer();
-  }, [settings.popoutDockAutoHide, clearHideTimer]);
+    if (loaded && settings.popoutDockAutoHide) scheduleHide();
+  }, [loaded, settings.popoutDockAutoHide, scheduleHide, clearHideTimer]);
   const runInteraction = async (operation: () => Promise<unknown>) => {
     clearHideTimer();
     setInteracting(true);
@@ -227,6 +242,15 @@ export function PopoutTimer() {
             }
           }),
         );
+      }),
+      getCurrentWindow().listen("focus://shortcut-shown", clearHideTimer),
+      getCurrentWindow().listen("focus://popout-auto-hidden", () => {
+        pointerInsideRef.current = false;
+        clearHideTimer();
+      }),
+      getCurrentWindow().listen("focus://popout-shown", () => {
+        closedRef.current = false;
+        scheduleHide();
       }),
       getCurrentWindow().listen("focus://popout-menu-closed", () => setMenuWindowOpen(false)),
     ];

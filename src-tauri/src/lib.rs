@@ -198,9 +198,10 @@ fn ensure_timer_on_screen(window: &tauri::WebviewWindow) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn open_timer_popout(app: tauri::AppHandle, session_id: String, generation: u64) -> Result<(), String> {
+fn open_timer_popout(app: tauri::AppHandle, session_id: String, generation: u64, shortcut: Option<bool>) -> Result<(), String> {
     let managed = app.state::<popout_lifecycle::PopoutLifecycle>();
     let mut lifecycle = popout_lifecycle::lock(&managed)?;
+    if shortcut.unwrap_or(false) && lifecycle.shortcut_disabled { return Ok(()); }
     if !lifecycle.active() || lifecycle.session_id.as_deref() != Some(session_id.as_str()) || lifecycle.generation != generation { return Ok(()); }
     if let Some(window) = app.get_webview_window("timer") {
         ensure_timer_on_screen(&window)?;
@@ -208,6 +209,8 @@ fn open_timer_popout(app: tauri::AppHandle, session_id: String, generation: u64)
         show_without_focus(&window)?;
         lifecycle.cancel_shortcut_reveal();
         lifecycle.requested = true;
+        if shortcut.unwrap_or(false) && !lifecycle.pointer_inside && !lifecycle.shortcut_disabled { lifecycle.shortcut_reveal = Some(lifecycle.reveal_sequence); }
+        let _ = window.emit("focus://popout-shown", ());
         return Ok(());
     }
     Err("The configured timer window is unavailable".into())
@@ -216,8 +219,10 @@ fn open_timer_popout(app: tauri::AppHandle, session_id: String, generation: u64)
 #[tauri::command]
 fn open_timer_menu(app: tauri::AppHandle, view: Option<String>) -> Result<(), String> {
     let managed = app.state::<popout_lifecycle::PopoutLifecycle>();
-    let lifecycle = popout_lifecycle::lock(&managed)?;
+    let mut lifecycle = popout_lifecycle::lock(&managed)?;
     if !lifecycle.requested || !lifecycle.active() { return Ok(()); }
+    lifecycle.cancel_shortcut_reveal();
+    let _ = app.emit_to("main", "focus://cancel-shortcut-reveal", lifecycle.reveal_sequence);
     let timer = app.get_webview_window("timer").ok_or_else(|| "The timer window is unavailable".to_string())?;
     let menu = app.get_webview_window("timer-menu").ok_or_else(|| "The timer menu is unavailable".to_string())?;
     if supports_window_positioning() {
@@ -274,7 +279,7 @@ fn show_without_focus(window: &tauri::WebviewWindow) -> Result<(), String> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct TimerGeometry { positioning_supported: bool, x: i32, y: i32, width: u32, height: u32, scale: f64, visible: bool, tab_visible: bool, requested: bool, generation: u64, work_area: WorkArea }
+struct TimerGeometry { positioning_supported: bool, x: i32, y: i32, width: u32, height: u32, scale: f64, visible: bool, tab_visible: bool, requested: bool, generation: u64, shortcut_active: bool, reveal_sequence: u64, menu_visible: bool, work_area: WorkArea }
 
 #[tauri::command]
 fn get_timer_geometry(app: tauri::AppHandle, monitor_id: Option<String>) -> Result<TimerGeometry, String> {
@@ -287,8 +292,9 @@ fn get_timer_geometry(app: tauri::AppHandle, monitor_id: Option<String>) -> Resu
     let position = if supports_window_positioning() { timer.outer_position().map_err(|e| e.to_string())? } else { tauri::PhysicalPosition::new(0, 0) };
     let size = timer.outer_size().map_err(|e| e.to_string())?;
     Ok(TimerGeometry { positioning_supported: supports_window_positioning(), x: position.x, y: position.y, width: size.width, height: size.height,
-        requested: lifecycle.requested && lifecycle.active(), generation: lifecycle.generation,
+        requested: lifecycle.requested && lifecycle.active(), generation: lifecycle.generation, shortcut_active: lifecycle.shortcut_reveal.is_some(), reveal_sequence: lifecycle.reveal_sequence,
         scale: timer.scale_factor().map_err(|e| e.to_string())?, visible: timer.is_visible().map_err(|e| e.to_string())?,
+        menu_visible: app.get_webview_window("timer-menu").is_some_and(|menu| menu.is_visible().unwrap_or(false)),
         tab_visible: app.get_webview_window("timer-tab").is_some_and(|tab| tab.is_visible().unwrap_or(false)),
         work_area: timer_work_area(&timer, monitor_id.as_deref())? })
 }
@@ -318,12 +324,21 @@ fn reveal_tab_position(area: &WorkArea, width: u32, height: u32, inset: i32, edg
 }
 
 #[tauri::command]
-fn show_timer_auto_hide_tab(app: tauri::AppHandle, edge: String, offset: f64, tab_size: String, generation: u64) -> Result<(), String> {
+fn show_timer_auto_hide_tab(app: tauri::AppHandle, edge: String, offset: f64, tab_size: String, generation: u64, require_pointer_outside: Option<bool>, expected_sequence: Option<u64>) -> Result<(), String> {
     #[cfg(target_os = "linux")]
     if !supports_window_positioning() { return Ok(()); }
     let managed = app.state::<popout_lifecycle::PopoutLifecycle>();
-    let lifecycle = popout_lifecycle::lock(&managed)?;
+    let mut lifecycle = popout_lifecycle::lock(&managed)?;
     if !lifecycle.allows(generation) { return Ok(()); }
+    if expected_sequence.is_some_and(|sequence| sequence != lifecycle.reveal_sequence) { return Ok(()); }
+    if lifecycle.shortcut_reveal.is_some() || (require_pointer_outside.unwrap_or(false) && lifecycle.pointer_inside) { return Ok(()); }
+    if app.get_webview_window("timer-menu").is_some_and(|menu| menu.is_visible().unwrap_or(false)) { return Ok(()); }
+    auto_hide_windows(&app, edge, offset, tab_size)?;
+    lifecycle.pointer_inside = false;
+    Ok(())
+}
+
+fn auto_hide_windows(app: &tauri::AppHandle, edge: String, offset: f64, tab_size: String) -> Result<(), String> {
     let timer = app.get_webview_window("timer").ok_or_else(|| "The timer window is unavailable".to_string())?;
     let tab = app.get_webview_window("timer-tab").ok_or_else(|| "The timer reveal tab is unavailable".to_string())?;
     if !timer.is_visible().map_err(|e| e.to_string())? && !tab.is_visible().map_err(|e| e.to_string())? {
@@ -345,7 +360,9 @@ fn show_timer_auto_hide_tab(app: tauri::AppHandle, edge: String, offset: f64, ta
     tab.set_position(position).map_err(|e| e.to_string())?;
     tab.emit("focus://auto-hide-tab-edge", edge).map_err(|e| e.to_string())?;
     show_without_focus(&tab)?;
+    if let Some(menu) = app.get_webview_window("timer-menu") { menu.hide().map_err(|e| e.to_string())?; }
     timer.hide().map_err(|e| e.to_string())?;
+    let _ = timer.emit("focus://popout-auto-hidden", ());
     Ok(())
 }
 
@@ -388,9 +405,9 @@ fn request_timer_reveal(app: tauri::AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn cancel_timer_auto_hide(app: tauri::AppHandle, generation: u64) -> Result<(), String> {
+fn cancel_timer_auto_hide(app: tauri::AppHandle, generation: u64, shortcut: Option<bool>) -> Result<(), String> {
     let managed = app.state::<popout_lifecycle::PopoutLifecycle>();
-    let lifecycle = popout_lifecycle::lock(&managed)?;
+    let mut lifecycle = popout_lifecycle::lock(&managed)?;
     if !lifecycle.allows(generation) { return Ok(()); }
     if let Some(tab) = app.get_webview_window("timer-tab") {
         tab.hide().map_err(|e| e.to_string())?;
@@ -398,6 +415,9 @@ fn cancel_timer_auto_hide(app: tauri::AppHandle, generation: u64) -> Result<(), 
     if let Some(timer) = app.get_webview_window("timer") {
         ensure_timer_on_screen(&timer)?;
         show_without_focus(&timer)?;
+        lifecycle.cancel_shortcut_reveal();
+        if shortcut.unwrap_or(false) && !lifecycle.pointer_inside && !lifecycle.shortcut_disabled { lifecycle.shortcut_reveal = Some(lifecycle.reveal_sequence); }
+        let _ = timer.emit("focus://popout-shown", ());
     }
     Ok(())
 }
@@ -587,6 +607,8 @@ pub fn run() {
             popout_lifecycle::sync_popout_session,
             popout_lifecycle::prepare_timer_popout,
             popout_lifecycle::arm_shortcut_reveal,
+            popout_lifecycle::cancel_shortcut_reveal,
+            popout_lifecycle::reconcile_popout_preferences,
             popout_lifecycle::interact_with_shortcut_reveal,
             popout_lifecycle::expire_shortcut_reveal,
             open_timer_popout,

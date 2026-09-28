@@ -3,7 +3,6 @@ import en from "./en";
 const zhTW: Record<keyof typeof en, string> = {
   "Check manually for a newer version of Shihen.": "手動檢查是否有更新版本的 Shihen。",
   "Automatically check for updates when Shihen starts.": "啟動 Shihen 時自動檢查更新。",
-  "Reveal timeout": "快捷顯示時限",
   "{{count}} seconds": "{{count}} 秒",
   "Set up Shihen": "設定 Shihen",
   "Create an Academic Year and a Subject before starting your first Session.":
@@ -33,7 +32,7 @@ const zhTW: Record<keyof typeof en, string> = {
   "Timer finished while Shihen was closed": "Shihen 關閉期間計時器已結束",
   "Your {{subject}} timer finished at {{time}}.": "你的 {{subject}} 計時器已於 {{time}} 結束。",
 
-  "Unable to register the Reveal shortcut. Try another combination.": "無法註冊顯示快捷鍵。請嘗試其他組合。",
+  "Unable to register the shortcut. Try another combination.": "無法註冊顯示快捷鍵。請嘗試其他組合。",
   Details: "詳細資訊",
 
   "Check for updates on launch": "啟動時檢查更新",
@@ -137,7 +136,6 @@ const zhTW: Record<keyof typeof en, string> = {
   "Open popout automatically when a timer starts": "定時器啟動時自動開啟彈出視窗",
   "Open popout automatically": "自動開啟彈出視窗",
   "Show popout in taskbar": "在工作列中顯示彈出視窗",
-  Transparency: "透明度",
   "Corner docking": "角對接",
   "Dock the popout to a screen corner, with optional edge auto-hide.":
     "將彈出視窗停靠在螢幕角落，並可選擇邊緣自動隱藏。",
@@ -568,7 +566,7 @@ const zhTW: Record<keyof typeof en, string> = {
   "Reveal popout shortcut": "顯示浮動計時器快捷鍵",
   "Press shortcut…": "請按快捷鍵…",
   "That shortcut is unavailable. Your previous shortcut is unchanged.": "此快捷鍵無法使用。原快捷鍵保持不變。",
-  Change: "變更",
+  Change: "更改",
   Clear: "清除",
   None: "無",
   "Unable to update the popout window. Try again.": "無法更新浮動計時器視窗。請重試。",
@@ -583,7 +581,6 @@ const zhTW: Record<keyof typeof en, string> = {
   "Dock position": "停靠位置",
   "Reveal edge": "顯示邊緣",
   "Reveal tab size": "顯示標籤大小",
-  "Reveal shortcut": "顯示快捷鍵",
   Top: "頂部",
   Right: "右側",
   Bottom: "底部",
@@ -609,8 +606,7 @@ const zhTW: Record<keyof typeof en, string> = {
   "Used when Auto-hide is enabled.": "啟用自動隱藏時使用。",
   "What's new": "更新內容",
   "A new version of Shihen is ready to install.": "Shihen 新版本已準備好安裝。",
-  "Reveal shortcut is unavailable on this device.": "此裝置無法使用顯示浮動視窗快捷鍵。",
-  "Seconds before hiding after shortcut reveal.": "快捷鍵顯示浮窗後隱藏前的秒數。",
+  "Shortcut key is unavailable on this device.": "此裝置無法使用顯示浮動視窗快捷鍵。",
   "Border opacity": "邊框不透明度",
   "Rows per page": "每頁列數",
   "Showing {{start}}–{{end}} of {{total}} sessions": "顯示第 {{start}}–{{end}} 筆，共 {{total}} 筆學習紀錄",
@@ -624,6 +620,12 @@ const zhTW: Record<keyof typeof en, string> = {
   "This academic year starts on {{date}}.": "此學年將於 {{date}} 開始。",
   "View release notes on GitHub": "在 GitHub 上檢視更新說明",
   "Note exceeds the allowed limits.": "筆記超出允許的限制。",
+  "Background opacity": "背景不透明度",
+  Shortcut: "快捷鍵",
+  "Show/hide shortcut": "顯示/隱藏快捷鍵",
+  "Shortcut key": "快捷鍵組合",
+  "Shortcut hide delay": "快捷鍵隱藏延遲",
+  "Seconds before hiding after shortcut. Set 0 for none.": "使用快捷鍵後自動隱藏前的秒數。設為 0 則不自動隱藏。",
 };
 
 export default zhTW;
