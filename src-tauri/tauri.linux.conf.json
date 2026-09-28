@@ -5,9 +5,9 @@
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png"],
     "linux": {
       "deb": {
-        "replaces": ["focus"],
-        "conflicts": ["focus"],
-        "provides": ["focus"]
+        "replaces": ["focus", "shihen"],
+        "conflicts": ["focus", "shihen"],
+        "provides": ["focus", "shihen"]
       }
     }
   }

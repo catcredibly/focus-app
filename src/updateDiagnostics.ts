@@ -96,7 +96,7 @@ export function validateManifest(probe: ManifestProbe, target = "windows-x86_64"
 }
 function diagnostic(manual: boolean, probe: ManifestProbe | undefined, category: UpdateCategory, error?: unknown) {
   if (import.meta.env.DEV)
-    console.info("Shihen updater", {
+    console.info("Shunhen updater", {
       check: manual ? "manual" : "automatic",
       endpoint: probe?.endpoint ? sanitizeUpdateError(probe.endpoint) : "configured endpoint unavailable",
       status: probe?.status,

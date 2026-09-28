@@ -943,6 +943,34 @@ Function CreateOrUpdateStartMenuShortcut
       !insertmacro SetLnkAppUserModelId "$SMPROGRAMS\${PRODUCTNAME}.lnk"
     ${EndIf}
   ${EndIf}
+  !insertmacro IsShortcutTarget "$SMPROGRAMS\$AppStartMenuFolder\Shihen.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+  Pop $0
+  ${If} $0 = 1
+    ${If} ${FileExists} "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
+      !insertmacro IsShortcutTarget "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+      Pop $0
+      ${If} $0 = 1
+        Delete "$SMPROGRAMS\$AppStartMenuFolder\Shihen.lnk"
+      ${EndIf}
+    ${Else}
+      Rename "$SMPROGRAMS\$AppStartMenuFolder\Shihen.lnk" "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
+      !insertmacro SetLnkAppUserModelId "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
+    ${EndIf}
+  ${EndIf}
+  !insertmacro IsShortcutTarget "$SMPROGRAMS\Shihen.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+  Pop $0
+  ${If} $0 = 1
+    ${If} ${FileExists} "$SMPROGRAMS\${PRODUCTNAME}.lnk"
+      !insertmacro IsShortcutTarget "$SMPROGRAMS\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+      Pop $0
+      ${If} $0 = 1
+        Delete "$SMPROGRAMS\Shihen.lnk"
+      ${EndIf}
+    ${Else}
+      Rename "$SMPROGRAMS\Shihen.lnk" "$SMPROGRAMS\${PRODUCTNAME}.lnk"
+      !insertmacro SetLnkAppUserModelId "$SMPROGRAMS\${PRODUCTNAME}.lnk"
+    ${EndIf}
+  ${EndIf}
   ; We used to use product name as MAINBINARYNAME
   ; migrate old shortcuts to target the new MAINBINARYNAME
   StrCpy $R0 0
@@ -996,6 +1024,20 @@ Function CreateOrUpdateDesktopShortcut
       ${EndIf}
     ${Else}
       Rename "$DESKTOP\${LEGACY_PRODUCTNAME}.lnk" "$DESKTOP\${PRODUCTNAME}.lnk"
+      !insertmacro SetLnkAppUserModelId "$DESKTOP\${PRODUCTNAME}.lnk"
+    ${EndIf}
+  ${EndIf}
+  !insertmacro IsShortcutTarget "$DESKTOP\Shihen.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+  Pop $0
+  ${If} $0 = 1
+    ${If} ${FileExists} "$DESKTOP\${PRODUCTNAME}.lnk"
+      !insertmacro IsShortcutTarget "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+      Pop $0
+      ${If} $0 = 1
+        Delete "$DESKTOP\Shihen.lnk"
+      ${EndIf}
+    ${Else}
+      Rename "$DESKTOP\Shihen.lnk" "$DESKTOP\${PRODUCTNAME}.lnk"
       !insertmacro SetLnkAppUserModelId "$DESKTOP\${PRODUCTNAME}.lnk"
     ${EndIf}
   ${EndIf}

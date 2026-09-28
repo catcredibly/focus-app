@@ -37,7 +37,7 @@ export function TimerSetup({ step, onNavigate }: { step: 1 | 2; onNavigate: (pag
         </button>
       </div>
       <GraduationCap className="setup-illustration" aria-hidden="true" />
-      <h1 id="setup-title">{t("Set up Shihen")}</h1>
+      <h1 id="setup-title">{t("Set up Shunhen")}</h1>
       <p>{t("Create an Academic Year and a Subject before starting your first Session.")}</p>
       <ol className="setup-steps">
         {steps.map(([title, hint], index) => (

@@ -49,7 +49,7 @@ jobs:
           cargo check --locked --all-targets --manifest-path src-tauri/Cargo.toml
           cargo test --locked --lib --manifest-path src-tauri/Cargo.toml
 
-      - name: Build Shihen for Linux
+      - name: Build Shunhen for Linux
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,25 +63,25 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          appimages=(src-tauri/target/release/bundle/appimage/[Ss]hihen_*.AppImage)
-          debs=(src-tauri/target/release/bundle/deb/[Ss]hihen_*.deb)
+          appimages=(src-tauri/target/release/bundle/appimage/[Ss]hunhen_*.AppImage)
+          debs=(src-tauri/target/release/bundle/deb/[Ss]hunhen_*.deb)
           test "${#appimages[@]}" -gt 0
           test "${#debs[@]}" -gt 0
           for package in "${debs[@]}"; do
             test "$(dpkg-deb -f "$package" Architecture)" = amd64
-            test "$(dpkg-deb -f "$package" Package)" = shihen
-            dpkg-deb -x "$package" /tmp/shihen-deb
-            grep -R '^Name=Shihen$' /tmp/shihen-deb/usr/share/applications
-            desktop=$(find /tmp/shihen-deb/usr/share/applications -name "*.desktop" -print -quit)
+            test "$(dpkg-deb -f "$package" Package)" = shunhen
+            dpkg-deb -x "$package" /tmp/shunhen-deb
+            grep -R '^Name=Shunhen$' /tmp/shunhen-deb/usr/share/applications
+            desktop=$(find /tmp/shunhen-deb/usr/share/applications -name "*.desktop" -print -quit)
             icon=$(sed -n 's/^Icon=//p' "$desktop")
             test -n "$icon"
-            find /tmp/shihen-deb/usr/share/icons/hicolor -name "$icon.png" -print -quit | grep .
+            find /tmp/shunhen-deb/usr/share/icons/hicolor -name "$icon.png" -print -quit | grep .
           done
           for package in "${appimages[@]}"; do
             file "$package" | grep 'x86-64'
             chmod +x "$package"
             "$package" --appimage-extract >/dev/null
             test -e squashfs-root/AppRun
-            grep -R '^Name=Shihen$' squashfs-root/usr/share/applications
+            grep -R '^Name=Shunhen$' squashfs-root/usr/share/applications
             find squashfs-root/usr/share/icons -name '*.png' -print -quit | grep .
           done

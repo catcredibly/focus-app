@@ -154,7 +154,7 @@ export function PopoutMenu() {
               void invoke("focus_main_window");
             }}
           >
-            {t("Open Shihen")}
+            {t("Open Shunhen")}
           </button>
           <button
             onClick={() => {

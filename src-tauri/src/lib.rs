@@ -134,7 +134,7 @@ fn list_monitor_work_areas(app: tauri::AppHandle) -> Result<Vec<MonitorWorkArea>
     let window = app
         .get_webview_window("timer")
         .or_else(|| app.get_webview_window("main"))
-        .ok_or_else(|| "No Shihen window is available".to_string())?;
+        .ok_or_else(|| "No Shunhen window is available".to_string())?;
     window
         .available_monitors()
         .map_err(|e| e.to_string())?
@@ -543,7 +543,7 @@ fn set_main_fullscreen(app: tauri::AppHandle, fullscreen: bool) -> Result<(), St
 #[tauri::command]
 fn is_main_fullscreen(app: tauri::AppHandle) -> Result<bool, String> {
     app.get_webview_window("main")
-        .ok_or_else(|| "The main Shihen window is unavailable".to_string())?
+        .ok_or_else(|| "The main Shunhen window is unavailable".to_string())?
         .is_fullscreen()
         .map_err(|e| e.to_string())
 }
@@ -662,7 +662,7 @@ pub fn run() {
             }
         })
         .build(tauri::generate_context!())
-        .expect("error while building Shihen")
+        .expect("error while building Shunhen")
         .run(|_app, event| {
             if let tauri::RunEvent::WindowEvent { label, event, .. } = event {
                 if label == "main" && matches!(event, tauri::WindowEvent::CloseRequested { .. } | tauri::WindowEvent::Destroyed) {

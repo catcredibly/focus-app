@@ -8,7 +8,7 @@ import metadata from "../package.json";
 it("uses the same notes file verbatim and preserves only matching-version platform signatures", () => {
   const directory = mkdtempSync(join(tmpdir(), "focus-manifest-test-"));
   try {
-    const artifact = join(directory, `Shihen_${metadata.version}_x64-setup.exe`),
+    const artifact = join(directory, `Shunhen_${metadata.version}_x64-setup.exe`),
       notesFile = join(directory, "notes.md"),
       output = join(directory, "latest.json");
     const notes = '# Fixes\n\n- Quotes "work" and paths C:\\notes\n- 日本語';
@@ -40,7 +40,7 @@ it("uses the same notes file verbatim and preserves only matching-version platfo
     expect(manifest.version).toBe(metadata.version);
     expect(manifest.platforms["windows-x86_64"].signature).toBe("matching-signature");
     expect(manifest.platforms["linux-x86_64"].signature).toBe("linux-signature");
-    expect(manifest.platforms["windows-x86_64"].url).toContain(`/v${metadata.version}/Shihen_${metadata.version}`);
+    expect(manifest.platforms["windows-x86_64"].url).toContain(`/v${metadata.version}/Shunhen_${metadata.version}`);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

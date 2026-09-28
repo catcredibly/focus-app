@@ -15,7 +15,7 @@ function statusKey(state: UpdateState) {
   if (state.error === "check" && state.checkCategory === "manifest-missing")
     return "Update information is not available yet.";
   if (state.error === "install") return "Unable to install the update. Try again later.";
-  if (state.error === "restart") return "Update installed. Restart Shihen to finish.";
+  if (state.error === "restart") return "Update installed. Restart Shunhen to finish.";
   return {
     checking: "Checking for updates…",
     current: "You're up to date.",
@@ -35,13 +35,13 @@ export function UpdateControls() {
   return (
     <section className="update-controls">
       <h3>{t("Updates")}</h3>
-      <Row label={t("Check for updates")} hint={t("Check manually for a newer version of Shihen.")}>
+      <Row label={t("Check for updates")} hint={t("Check manually for a newer version of Shunhen.")}>
         <button className="secondary-action" disabled={busy(state)} onClick={() => void updater.check(true)}>
           {t(state.phase === "checking" ? "Checking for updates…" : "Check for updates")}
         </button>
       </Row>
       {statusKey(state) && <p role="status">{t(statusKey(state))}</p>}
-      <Row label={t("Check for updates on launch")} hint={t("Automatically check for updates when Shihen starts.")}>
+      <Row label={t("Check for updates on launch")} hint={t("Automatically check for updates when Shunhen starts.")}>
         <Toggle
           label={t("Check for updates on launch")}
           checked={settings.checkForUpdatesOnLaunch}
@@ -109,7 +109,7 @@ export function UpdatePrompt({ ready = true }: { ready?: boolean }) {
           <ReleaseNotes notes={notes} />
         </section>
       ) : (
-        <p>{t("A new version of Shihen is ready to install.")}</p>
+        <p>{t("A new version of Shunhen is ready to install.")}</p>
       )}
       {state.availableVersion && (
         <a
@@ -165,7 +165,7 @@ export function UpdatePrompt({ ready = true }: { ready?: boolean }) {
             if (!preview) void updater.install();
           }}
         >
-          {t(state.error === "restart" ? "Restart Shihen" : "Update now")}
+          {t(state.error === "restart" ? "Restart Shunhen" : "Update now")}
         </button>
       </div>
     </dialog>

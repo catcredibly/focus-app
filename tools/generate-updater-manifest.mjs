@@ -18,6 +18,9 @@ if (!values.notes || !values.artifact || !values.repository || !/^[\w.-]+\/[\w.-
 }
 const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 const artifact = resolve(values.artifact);
+const { productName } = JSON.parse(readFileSync(new URL("../src-tauri/tauri.conf.json", import.meta.url), "utf8"));
+if (values.platform === "windows-x86_64" && basename(artifact) !== `${productName}_${version}_x64-setup.exe`)
+  throw new Error("Windows artifact filename must match the current product name and version.");
 if (!existsSync(artifact)) throw new Error("Build the release artifact before generating its manifest.");
 if (!basename(artifact).includes(version))
   throw new Error("Artifact filename must contain the current application version.");

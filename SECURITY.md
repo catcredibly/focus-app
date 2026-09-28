@@ -8,4 +8,4 @@ Include the affected version, reproduction steps, impact, and any suggested miti
 
 ## Sensitive Material
 
-Updater keys, Windows code-signing certificates, certificate passwords, access tokens, and personal Shihen backups must never be committed. If a credential is accidentally committed, revoke or rotate it immediately; deleting it from the latest revision is not sufficient.
+Updater keys, Windows code-signing certificates, certificate passwords, access tokens, and personal Shunhen backups must never be committed. If a credential is accidentally committed, revoke or rotate it immediately; deleting it from the latest revision is not sufficient.

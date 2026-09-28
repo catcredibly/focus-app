@@ -36,7 +36,7 @@ export function Sidebar({ collapsed, onToggle, active, onNavigate }: Props) {
         <FocusLeaf className="brand-mark" />
         {!collapsed && (
           <div>
-            <div className="brand-name">Shihen</div>
+            <div className="brand-name">Shunhen</div>
           </div>
         )}
         <button className="icon-button sidebar-toggle" onClick={onToggle} aria-label={t("Toggle sidebar")}>

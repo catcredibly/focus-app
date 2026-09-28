@@ -1,22 +1,22 @@
-# Shihen Architecture
+# Shunhen Architecture
 
 ## Current runtime guarantees
 
-- Shihen is single-instance. A second launch focuses the existing main window.
+- Shunhen runs as a single-instance application. A second launch focuses the existing main window.
 - The main window and compact popout share one authoritative active Timer through persisted state and cross-window updates.
-- Running, Paused, Finished, recovery, checkpoint, note, and save-failure state is kept in the active Timer record until it is finalized or explicitly discarded.
-- Completed Sessions may include focus intervals so daily and weekly goals allocate focused time correctly across local day and Monday-based week boundaries.
-- The popout can target the current monitor or an explicit display. Native Windows work-area coordinates keep docking clear of the taskbar and support negative multi-monitor coordinates.
-- English, Simplified Chinese, Traditional Chinese, and Japanese are selectable persisted locales. User-created names and notes are never translated.
+- Running, Paused, Finished, recovery, checkpoint, note, and save-failure state remains in the active Timer record until it is finalized or explicitly discarded.
+- Completed Sessions may include focus intervals so daily and weekly goals allocate focused time correctly across local-day and Monday-based week boundaries.
+- The popout can target either the current monitor or an explicitly selected display. Native Windows work-area coordinates keep docking clear of the taskbar and support negative coordinates in multi-monitor layouts.
+- English, Simplified Chinese, Traditional Chinese, and Japanese are available as persisted locales. User-created names and notes are not translated.
 
 ## Technology stack
 
-- **Tauri 2 and Rust** provide the Windows desktop shell and native integrations.
+- **Tauri 2 and Rust** provide the desktop shell and native integrations.
 - **React 19 and TypeScript** implement the application UI and domain logic.
 - **Vite** builds and serves the frontend.
-- **Tailwind CSS 4** is available through the Vite integration alongside the app's shared CSS.
+- **Tailwind CSS 4** is available through the Vite integration alongside the application's shared CSS.
 - **Dexie 4 and IndexedDB** provide local-first persistence and reactive queries.
-- **Recharts** renders the standard analytics charts; custom React/CSS views render heatmaps and other specialized visualizations.
+- **Recharts** renders standard analytics charts, while custom React/CSS views handle heatmaps and other specialized visualizations.
 - **Vitest** covers data, timer, analytics, settings, and import/export behavior.
 
 ## Runtime structure
@@ -28,13 +28,13 @@ Windows
        -> Compact timer React WebView popout
 ```
 
-Both windows load the same Vite bundle. `App.tsx` selects the compact popout UI when the window URL contains `#/popout`; otherwise it renders the main application and its page navigation.
+Both windows load the same Vite bundle. `App.tsx` selects the compact popout UI when the window URL contains `#/popout`; otherwise, it renders the main application and page navigation.
 
-Application and domain behavior lives in TypeScript. Native Windows behavior is implemented through Tauri APIs, Rust commands, and narrowly scoped Tauri plugins where needed.
+Application and domain behavior resides primarily in TypeScript. Native desktop behavior is implemented through Tauri APIs, Rust commands, and narrowly scoped Tauri plugins where required.
 
 ## Persistence
 
-Shihen uses one local IndexedDB database through Dexie. Its main stores are:
+Shunhen uses a single local IndexedDB database through Dexie. Its primary stores are:
 
 - `academicYears`
 - `subjects`
@@ -43,9 +43,9 @@ Shihen uses one local IndexedDB database through Dexie. Its main stores are:
 
 Dexie schema versions define indexes and migrate older Sessions to the current backwards-compatible shape. Settings are stored as string key/value records and exposed through typed TypeScript helpers.
 
-The active in-progress timer is transient recovery state rather than study history. It is stored separately in `localStorage` until it is cleared or completed; completed Sessions are written to IndexedDB.
+The active in-progress timer is treated as transient recovery state rather than study history. It is stored separately in `localStorage` until cleared or completed. Completed Sessions are written to IndexedDB.
 
-The production Dexie database name is `focus`. A fresh installation creates the schema with empty study tables and default settings supplied by application code; no development database is bundled.
+The production Dexie database is named `focus`. A fresh installation creates an empty study schema and uses application-defined default settings. No development database is bundled.
 
 ## Data relationships
 
@@ -55,9 +55,9 @@ Academic Year
        -> Sessions
 ```
 
-A Subject stores its parent `academicYearId`. A Session stores its `subjectId`, plus the Academic Year ID and display-name snapshots needed for history and backwards compatibility.
+A Subject stores its parent `academicYearId`. A Session stores its `subjectId` together with Academic Year ID and display-name snapshots used for history and backwards compatibility.
 
-Archiving retains records. Permanent deletion uses Dexie transactions and follows the current deletion rules: deleting a Subject removes its Sessions, while deleting an Academic Year removes its Subjects and their Sessions. This prevents orphaned dependent records.
+Archiving retains records. Permanent deletion follows the application's current relational rules and is performed using Dexie transactions. Deleting a Subject also removes its Sessions, while deleting an Academic Year removes its Subjects and their Sessions. This prevents orphaned dependent records.
 
 ## Timer architecture
 
@@ -68,53 +68,56 @@ The user-facing timer states are:
 - Paused
 - Expired/Finished
 
-Pure functions in `timerState.ts` perform timer calculations from timestamps. The `useTimer` hook owns the live React state, persists recoverable active-timer state, and coordinates completion behavior.
+Pure functions in `timerState.ts` calculate timer state from timestamps. The `useTimer` hook owns the live React state, persists recoverable active-timer state, and coordinates completion behavior.
 
-There is one authoritative active timer shared by the main window and popout. The windows synchronize updates through a `BroadcastChannel` and recover from the same stored timer state. The popout does not run an independent timer, and closing it does not stop or alter the active Session.
+The application maintains one authoritative active timer shared between the main window and popout. Both windows synchronize through a `BroadcastChannel` and recover from the same persisted timer state. The popout does not maintain an independent timer, and closing it does not stop or otherwise alter the active Session.
 
 ## Analytics
 
 ```text
 IndexedDB Sessions
-  -> apply effective Subject/Academic Year archive status and filters
+  -> effective Subject/Academic Year archive status and filters
   -> pure TypeScript aggregation utilities
   -> React Analytics pages
   -> Recharts and custom heatmaps
 ```
 
-The Analytics UI reads the Dexie stores with live queries, so persisted changes flow into the dashboard without a separate analytics database or cache. Aggregation utilities group completed focus time by date, Subject, Academic Year, session length, and other displayed dimensions.
+The Analytics UI reads Dexie stores through live queries, allowing persisted changes to flow directly into the dashboard without a separate analytics database or cache.
+
+Aggregation utilities group completed focus time by date, Subject, Academic Year, session length, and other dimensions displayed by the analytics interface.
 
 ## Import / Export
 
-- **JSON full backup and restore** includes Academic Years, Subjects, Sessions, and Settings. Restore data is validated and applied transactionally using merge or replace behavior.
-- **CSV Session import and export** supports Shihen's CSV format and mapped generic CSV data, including duplicate and invalid-row checks.
+- **JSON full backup and restore** covers Academic Years, Subjects, Sessions, and Settings. Restore data is validated and applied transactionally using either merge or replace behavior.
+- **CSV Session import and export** supports Shunhen's native CSV format as well as mapped generic CSV data, with checks for duplicate and invalid rows.
 
-In the desktop app, Tauri file dialogs and filesystem access read and write these files. Browser development mode uses download and file-input fallbacks.
+In the desktop application, Tauri file dialogs and filesystem APIs handle file access. Browser development mode uses download and file-input fallbacks.
 
 ## Native Windows integration
 
-The repository currently implements these native features:
+The current Windows implementation includes:
 
-- Native open/save file dialogs and filesystem access for import/export
+- Native open/save dialogs and filesystem access for import/export
 - A configured compact timer popout window
-- Popout always-on-top, taskbar visibility, sizing, positioning, and monitor-bound checks
-- Native close handling that hides the popout without changing timer state
+- Popout always-on-top behavior, taskbar visibility control, sizing, positioning, and monitor-bound checks
+- Native close handling that hides the popout without altering timer state
 - Desktop completion notifications
-- Launch-at-startup control
+- Launch-at-startup support
 - Main-window maximize and restore controls through the Tauri window API
 
-Rust in `src-tauri/src/lib.rs` owns the custom window commands and lifecycle handling. Tauri plugins provide dialogs, filesystem access, notifications, and autostart support.
+Custom window commands and lifecycle handling reside in `src-tauri/src/lib.rs`. Tauri plugins provide dialogs, filesystem access, notifications, and autostart support.
 
 ## Release identity
 
-- Visible brand: `Shihen`
-- Bundle/display product name: `Shihen`; legacy installation identifiers are retained (see [Windows installer compatibility](../src-tauri/windows/README.md)).
-- Version: root `package.json` (canonical source)
+- Visible brand: `Shunhen`
+- Bundle/display product name: `Shunhen`
+- Legacy installation identifiers: retained for upgrade compatibility; see [Windows installer compatibility](../src-tauri/windows/README.md)
+- Canonical version source: root `package.json`
 - Tauri application identifier: `com.focus.timer`
 - Dexie database name: `focus`
-- Windows installer: NSIS
+- Windows installer format: NSIS
 
-The application identifier and database name are stable V1 identities. Future installers must retain them so upgrades continue to use the same installed application and local data store.
+The application identifier and database name are stable V1 identities. They remain unchanged across future installers so upgrades continue to use the existing application identity and local data store.
 
 The Orange leaf is the permanent Windows application icon. In-app leaf artwork follows the selected accent using approved packaged variants.
 
@@ -145,81 +148,81 @@ src-tauri/
 
 ## Release notes and updater metadata
 
-Use one UTF-8 Markdown notes file for the GitHub Release body and updater manifest.
-After the existing signed release build, run (with the actual current-version artifact):
+GitHub Release notes and updater metadata use the same UTF-8 Markdown notes file.
+
+Following creation of a signed release build, updater metadata can be generated from the current-version artifact:
 
 ```powershell
-node tools/generate-updater-manifest.mjs --notes RELEASE_NOTES.md --artifact "src-tauri/target/release/bundle/nsis/Shihen_<version>_x64-setup.exe" --repository catcredibly/shihen
+node tools/generate-updater-manifest.mjs --notes RELEASE_NOTES.md --artifact "src-tauri/target/release/bundle/nsis/Shunhen_<version>_x64-setup.exe" --repository catcredibly/shihen
+
 gh release create "v<version>" --repo catcredibly/shihen --notes-file RELEASE_NOTES.md <installer> <installer.sig> <latest.json>
 ```
 
-The helper reads the authoritative package version and existing matching `.sig`;
-it does not build, sign, upload, or change the embedded updater endpoint/public key.
-Use `--platform linux-x86_64 --artifact <signed AppImage>` to add Linux updater
-metadata to the same output with `--output <latest.json>`. Only same-version platform
-entries are retained, preventing stale signatures from carrying into another release.
-Never commit generated manifests, signatures or bundles. JSON serialization preserves
-quotes/newlines in notes. The frontend escapes all text and supports only headings,
-paragraphs, lists, bold, inline code and HTTP(S) links; it never renders raw HTML.
+The manifest helper reads the authoritative package version and the existing matching `.sig`. It does not build or sign the application, upload release assets, or modify the embedded updater endpoint or public key.
+
+Linux updater metadata can be added to the same output using:
+
+```text
+--platform linux-x86_64 --artifact <signed AppImage>
+```
+
+together with:
+
+```text
+--output <latest.json>
+```
+
+Only same-version platform entries are retained, preventing stale signatures from being carried into another release.
+
+Generated manifests, signatures, and bundles are release artifacts rather than repository source files and are excluded from commits.
+
+JSON serialization preserves quotes and line breaks in release notes. The frontend escapes rendered text and supports headings, paragraphs, lists, bold text, inline code, and HTTP(S) links. Raw HTML is not rendered.
 
 ## Experimental desktop capabilities
 
-One React application and Tauri project serve Windows and Linux. Windows native
-window constraints and display-message handling remain target-gated. Linux uses
-GTK's selected backend and monitor signals behind Rust capability queries, not UI
-OS checks. X11/XWayland supports placement where the window manager permits it.
-Native Wayland uses compositor placement and keeps popouts visible instead of hiding
-them behind an unplaceable reveal tab; global shortcuts are unavailable without an
-appropriate backend. Existing preferences remain saved. Real Linux desktop testing
-is still needed for mixed-DPI monitors, docking, autostart and notifications. The
-Linux workflow is manually run by the maintainer; headless checks do not establish
-native desktop parity.
+Windows and Linux share a single React application and Tauri project.
+
+Windows-specific window constraints and display-message handling are target-gated. Linux uses GTK's selected backend and monitor signals exposed through Rust capability queries rather than UI-level operating-system checks.
+
+Under X11/XWayland, window placement is available where permitted by the window manager. Under native Wayland, placement is controlled by the compositor. In environments where precise popout positioning is unavailable, Shunhen keeps the popout visible rather than relying on an unplaceable reveal tab.
+
+Global shortcuts depend on backend support and may be unavailable in environments without an appropriate implementation. Existing preferences remain persisted regardless of capability availability.
+
+Real Linux desktop testing is still required for mixed-DPI monitors, docking, autostart, and notifications. The Linux workflow is run manually by the maintainer. Headless checks establish build and source compatibility but do not demonstrate full native desktop parity.
 
 ## Platform architecture
 
-Keep Shihen as one shared Tauri/React codebase. Do not create separate Windows and Linux application implementations.
+Shunhen uses one shared Tauri/React codebase across supported desktop platforms rather than separate Windows and Linux application implementations.
 
-For platform differences, use this order of preference:
+Platform-specific behavior follows a layered architecture:
 
-1. Use Tauri's cross-platform API when it provides the required behavior.
-2. For small OS-specific differences, use narrowly scoped Rust `#[cfg(...)]` branches.
-3. For substantial native behavior that differs between Windows and Linux, isolate it behind a shared interface with platform-specific Rust implementations/modules.
-4. If exact parity is not available, especially under Wayland, use a graceful fallback rather than forcing Windows-specific behavior or allowing the feature to fail.
+1. Tauri's cross-platform APIs provide the default implementation where they support the required behavior.
+2. Small operating-system-specific differences are handled with narrowly scoped Rust `#[cfg(...)]` branches.
+3. Substantial native differences are isolated behind shared interfaces with platform-specific Rust implementations or modules.
+4. Where exact parity is unavailable, particularly under Wayland, capability-aware fallbacks preserve usable application behavior.
 
-Keep React/UI code platform-neutral wherever practical. The frontend should request capabilities such as reveal, dock, or determine work area without needing to know the OS-specific implementation.
+React and other frontend code remains platform-neutral wherever practical. The frontend requests capabilities such as popout reveal, docking, or work-area detection without depending on the operating-system-specific implementation behind them.
 
-Where behavior genuinely depends on environment capabilities rather than simply the OS, prefer capability-based handling over scattered checks such as `platform === "linux"`.
+Environment capabilities are preferred over operating-system identity when behavior depends on factors such as display-server support. This avoids spreading checks such as `platform === "linux"` through UI code.
 
-Keep Windows-specific dependencies and imports target-gated so they are not unnecessarily compiled/imported on Linux. Add Linux-specific native dependencies only when Tauri/cross-platform APIs are insufficient.
+Windows-specific dependencies and imports are target-gated so they are not unnecessarily compiled on Linux. Linux-specific native dependencies are used only where Tauri or other cross-platform APIs do not provide the required functionality.
 
-Do not refactor working Windows-native implementations merely for architectural symmetry. Introduce platform abstraction where it meaningfully isolates substantial platform differences.
+Existing Windows-native implementations remain unchanged where additional abstraction would provide no practical isolation benefit. Platform abstractions are introduced where native behavior differs substantially enough to justify a shared interface.
 
-For Linux, account for both X11 and Wayland. If a feature such as precise window positioning/docking cannot be implemented reliably under a particular environment, degrade gracefully and document the limitation rather than treating it as a build/runtime failure.
+Linux support accounts for both X11 and Wayland. Features such as precise positioning or docking may degrade gracefully when they cannot be implemented reliably under the active desktop environment. Such limitations are treated as capability differences rather than application failures.
 
-The goal is:
+The resulting platform model consists of:
 
 - one repository
 - one shared React application
 - one Tauri project
 - shared behavior by default
-- small `#[cfg]` branches for small differences
-- platform modules/adapters for substantial native differences
-- graceful capability-based fallbacks where exact parity is impossible
+- small `#[cfg]` branches for limited platform differences
+- platform modules or adapters for substantial native differences
+- capability-based fallbacks where exact parity is unavailable
 
 ## Release metadata and branding compatibility
 
-The root `package.json` is the canonical application version. Run `npm run version:set -- <version>` to update npm and Cargo metadata together. Tauri reads `../package.json`; About, backups, and the updater manifest use that same package metadata. `npm run version:check` detects drift and runs before production frontend builds. This does not change the backup schema version.
+The root `package.json` is the canonical source of the application version. `npm run version:set -- <version>` updates npm and Cargo version metadata together.
 
-The NSIS installer displays Shihen while retaining the original installation directory, uninstall/location registry keys, binary and autostart identity. See [the installer notes](../src-tauri/windows/README.md) before updating the Tauri CLI or publishing a renamed installer. Debian packages are named `shihen` and declare replacement/conflict/provision of the old `focus` package so both packages do not compete for the same executable. AppImage and Debian desktop entries display Shihen; the Linux workflow verifies the desktop entry's actual icon name instead of assuming a filename. Linux package generation and real desktop upgrades still require the maintainer's Linux run.
-
-Remaining Focus/focus references are intentional categories:
-
-- Study terminology such as **Focus time**, focused duration, and focus timer.
-- Browser/CSS focus states, focus handling, and internal symbol names such as `FocusSettings`, `FocusDatabase`, `focusedDurationSeconds`, and `sendFocusNotification`.
-- Persisted identities: `com.focus.timer`, the `focus` database, storage/event/lock names, and the `focus-backup` format. Existing backup fixtures and schema identifiers remain compatible; newly suggested export filenames use Shihen.
-- Build and asset identifiers: the npm/Cargo `focus` package, `focus.exe`, and existing logo/mask filenames. Renaming these adds no user-facing benefit and can break installed-app continuity.
-- Installer, autostart, and Debian replacement identities for the earlier Focus application, plus documentation describing that upgrade path.
-- Historical release-note parsing/tests and legacy ignored export filenames. The parser deliberately accepts both Focus and Shihen headings.
-- The former `catcredibly/focus-app` URL is mentioned only to document the redirect needed by older installed clients. Current source links and the embedded updater endpoint use `catcredibly/shihen`. Do not recreate the old repository and break GitHub's redirect.
-
-No data-directory/database migration, updater key change, or backup schema change accompanies the rename. Compiling packages and testing source logic do not establish the signed Focus-to-Shihen upgrade path; verify it in a disposable environment before release.
+Tauri reads the version from `../package.json`. The About interface, backups, and updater manifest use the same package metadata. `npm run version:check` detects version drift and runs before production frontend builds.

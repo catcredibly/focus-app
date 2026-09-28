@@ -10,7 +10,7 @@ export function meaningfulReleaseNotes(notes?: string): string {
         .replace(/\*\*/g, "")
         .trim();
       return (
-        !/^(?:(?:Shihen|Focus)\s+)?v?\d+\.\d+\.\d+(?:[-+][\w.-]+)?(?:\s*[\/—–-]\s*Update available)?$/i.test(text) &&
+        !/^(?:(?:Shunhen|Shihen|Focus)\s+)?v?\d+\.\d+\.\d+(?:[-+][\w.-]+)?(?:\s*[\/—–-]\s*Update available)?$/i.test(text) &&
         !/^(?:Update available|Release notes|What's new)[:.!]?$/i.test(text) &&
         !/^[-_=]{3,}$/.test(text)
       );

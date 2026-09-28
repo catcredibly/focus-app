@@ -162,16 +162,16 @@ export default function App() {
         {closeWarning && (
           <div className="modal-backdrop">
             <section className="modal" role="dialog" aria-modal="true">
-              <h2>{t("Close Shihen while a timer is active?")}</h2>
+              <h2>{t("Close Shunhen while a timer is active?")}</h2>
               <p>
                 {t(
-                  "The timer will be recovered the next time Shihen opens. No Session will be finalized by closing the app.",
+                  "The timer will be recovered the next time Shunhen opens. No Session will be finalized by closing the app.",
                 )}
               </p>
               <div className="modal-actions">
                 <button onClick={() => setCloseWarning(false)}>{t("Cancel")}</button>
                 <button className="danger-action" onClick={() => void invoke("close_main_window")}>
-                  {t("Close Shihen")}
+                  {t("Close Shunhen")}
                 </button>
               </div>
             </section>
@@ -180,8 +180,8 @@ export default function App() {
         {secondInstanceWarning && (
           <div className="modal-backdrop">
             <section className="modal" role="alertdialog" aria-modal="true">
-              <h2>{t("Shihen is already running")}</h2>
-              <p>{t("The existing Shihen window has been brought to the front.")}</p>
+              <h2>{t("Shunhen is already running")}</h2>
+              <p>{t("The existing Shunhen window has been brought to the front.")}</p>
               <div className="modal-actions">
                 <button className="primary-action" onClick={() => setSecondInstanceWarning(false)}>
                   {t("OK")}

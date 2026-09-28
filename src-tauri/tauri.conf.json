@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Shihen",
+  "productName": "Shunhen",
   "version": "../package.json",
   "identifier": "com.focus.timer",
   "build": {
@@ -14,7 +14,7 @@
       {
         "label": "main",
         "backgroundColor": "#081521",
-        "title": "Shihen",
+        "title": "Shunhen",
         "width": 1440,
         "height": 900,
         "minWidth": 420,
@@ -26,7 +26,7 @@
       },
       {
         "label": "timer",
-        "title": "Shihen Timer",
+        "title": "Shunhen Timer",
         "url": "index.html#/popout",
         "width": 360,
         "height": 170,
@@ -41,7 +41,7 @@
       },
       {
         "label": "timer-menu",
-        "title": "Shihen Timer Menu",
+        "title": "Shunhen Timer Menu",
         "url": "index.html#/popout-menu",
         "width": 320,
         "height": 330,
@@ -56,7 +56,7 @@
       },
       {
         "label": "timer-tab",
-        "title": "Shihen Timer Tab",
+        "title": "Shunhen Timer Tab",
         "url": "index.html#/auto-hide-tab",
         "width": 18,
         "height": 58,

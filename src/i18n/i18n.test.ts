@@ -28,7 +28,7 @@ describe("translation resources", () => {
   });
 
   it("does not silently inherit ordinary English UI copy", () => {
-    const allowed = new Set(["English", "Shihen", "OK", "{{subject}} - {{duration}}"]);
+    const allowed = new Set(["English", "Shunhen", "OK", "{{subject}} - {{duration}}"]);
     for (const locale of [zhCN, zhTW, ja]) {
       const untranslated = (Object.keys(en) as Array<keyof typeof en>).filter(
         (key) => locale[key] === en[key] && !allowed.has(en[key]),

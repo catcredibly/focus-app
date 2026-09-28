@@ -47,7 +47,7 @@ async function seeded() {
   return value;
 }
 
-describe("Shihen JSON backups", () => {
+describe("Shunhen JSON backups", () => {
   it("serializes and restores all persistent data losslessly", async () => {
     const source = await seeded();
     const backup = validateBackup(JSON.parse(JSON.stringify(await createBackup(source))));
@@ -131,14 +131,14 @@ describe("Shihen JSON backups", () => {
   });
 });
 
-describe("Shihen CSV", () => {
+describe("Shunhen CSV", () => {
   it("escapes commas, quotes, and newlines", () => {
     expect(escapeCsv('Review "A",\nthen B')).toBe('"Review ""A"",\nthen B"');
     expect(parseCsv(`Name,Note\r\nSubject,${escapeCsv('Review "A",\nthen B')}`)).toMatchObject({
       records: [{ Name: "Subject", Note: 'Review "A",\nthen B' }],
     });
   });
-  it("round-trips Shihen CSV IDs, archived state, and midnight crossing", async () => {
+  it("round-trips Shunhen CSV IDs, archived state, and midnight crossing", async () => {
     const source = await seeded();
     const session = (await source.sessions.toArray())[0];
     const csv = exportSessionsCsv([session]);

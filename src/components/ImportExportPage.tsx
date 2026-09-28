@@ -75,8 +75,8 @@ export function ImportExportPage({ onNavigate }: { onNavigate: (page: string) =>
     setError("");
     try {
       const sessions = await db.sessions.orderBy("startTime").toArray();
-      const date = backupFilename().replace("shihen-backup-", "").replace(".json", "");
-      if (await saveTextFile(`shihen-sessions-${date}.csv`, exportSessionsCsv(sessions), "csv"))
+      const date = backupFilename().replace("shunhen-backup-", "").replace(".json", "");
+      if (await saveTextFile(`shunhen-sessions-${date}.csv`, exportSessionsCsv(sessions), "csv"))
         showToast("CSV exported successfully");
     } catch (reason) {
       setError(translateError(reason, "CSV export failed."));
@@ -121,7 +121,7 @@ export function ImportExportPage({ onNavigate }: { onNavigate: (page: string) =>
     if (
       preview.kind === "json" &&
       mode === "replace" &&
-      !confirm(t("Replace all persistent Shihen data with this backup? This cannot be undone."))
+      !confirm(t("Replace all persistent Shunhen data with this backup? This cannot be undone."))
     )
       return;
     setBusy(true);
@@ -146,7 +146,7 @@ export function ImportExportPage({ onNavigate }: { onNavigate: (page: string) =>
         <header className="page-header">
           <div>
             <h1>{t("Import complete")}</h1>
-            <p>{t("Your Shihen data was updated in one transaction.")}</p>
+            <p>{t("Your Shunhen data was updated in one transaction.")}</p>
           </div>
         </header>
         <section className="result-panel">
@@ -282,7 +282,7 @@ export function ImportExportPage({ onNavigate }: { onNavigate: (page: string) =>
           <div className="drop-zone">
             <Upload />
             <h3>{t("Import Data")}</h3>
-            <p>{t("Restore a Shihen backup or import Session records from CSV.")}</p>
+            <p>{t("Restore a Shunhen backup or import Session records from CSV.")}</p>
             <button className="secondary-action" disabled={busy} onClick={choose}>
               {t("Choose file")}
             </button>
@@ -313,7 +313,7 @@ function JsonPreview({
   return (
     <div className="preview-layout">
       <section className="preview-panel">
-        <h2>{t("Shihen backup")}</h2>
+        <h2>{t("Shunhen backup")}</h2>
         <p>{t("Created {{date}}", { date: new Date(backup.exportedAt).toLocaleString(localeCode()) })}</p>
         <div className="preview-counts">
           <span>
@@ -405,7 +405,7 @@ function CsvPreviewPanel({
   return (
     <div className="preview-layout preview-layout--csv">
       <section className="preview-panel">
-        <h2>{t(data.recognizedFocusCsv ? "Shihen Sessions CSV" : "Map CSV columns")}</h2>
+        <h2>{t(data.recognizedFocusCsv ? "Shunhen Sessions CSV" : "Map CSV columns")}</h2>
         {!data.recognizedFocusCsv && (
           <div className="mapping-grid">
             {fields.map(([field, label]) => (

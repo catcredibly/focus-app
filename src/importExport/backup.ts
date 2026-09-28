@@ -41,9 +41,9 @@ export async function createBackup(database: FocusDatabase = db): Promise<FocusB
 }
 
 export function validateBackup(value: unknown): FocusBackup {
-  if (!isObject(value) || value.format !== BACKUP_FORMAT) throw new Error("This is not a Shihen backup.");
+  if (!isObject(value) || value.format !== BACKUP_FORMAT) throw new Error("This is not a Shunhen backup.");
   if (value.formatVersion !== BACKUP_VERSION)
-    throw new Error(`Unsupported Shihen backup version: ${String(value.formatVersion)}.`);
+    throw new Error(`Unsupported Shunhen backup version: ${String(value.formatVersion)}.`);
   if (typeof value.exportedAt !== "string" || typeof value.appVersion !== "string" || !isObject(value.data))
     throw new Error("The backup header is incomplete.");
   const { academicYears, subjects, sessions, settings } = value.data;
@@ -218,5 +218,5 @@ export function parseBackupText(text: string) {
 }
 export function backupFilename(now = new Date()) {
   const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  return `shihen-backup-${local}.json`;
+  return `shunhen-backup-${local}.json`;
 }

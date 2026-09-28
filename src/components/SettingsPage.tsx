@@ -67,7 +67,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string) => voi
       <header className="page-header">
         <div>
           <h1>{t("Settings")}</h1>
-          <p>{t("Configure Shihen for the way you study.")}</p>
+          <p>{t("Configure Shunhen for the way you study.")}</p>
         </div>
       </header>
       <div className="settings-layout">
@@ -185,16 +185,16 @@ function General({ settings, setSetting }: SettingsProps) {
           onChange={(event) => void setSetting("sidebarSubtitle", event.target.value)}
         />
       </Row>
-      <Row label={t("Start Shihen maximized")}>
+      <Row label={t("Start Shunhen maximized")}>
         <Toggle
-          label={t("Start Shihen maximized")}
+          label={t("Start Shunhen maximized")}
           checked={settings.startMaximized}
           onChange={(value) => void setSetting("startMaximized", value)}
         />
       </Row>
-      <Row label={t("Launch Shihen at Windows startup")}>
+      <Row label={t("Launch Shunhen at Windows startup")}>
         <Toggle
-          label={t("Launch Shihen at Windows startup")}
+          label={t("Launch Shunhen at Windows startup")}
           checked={settings.launchAtStartup}
           onChange={(value) => void startup(value)}
         />
@@ -237,7 +237,7 @@ function ResetAllSettings() {
       <Row
         label={t("Reset all settings")}
         hint={t(
-          "Restore every Shihen preference to its default without deleting Sessions, Subjects, Academic Years, or study history.",
+          "Restore every Shunhen preference to its default without deleting Sessions, Subjects, Academic Years, or study history.",
         )}
       >
         <button
@@ -274,7 +274,7 @@ function ResetAllSettings() {
             <h2 id="reset-settings-title">{t("Reset all settings?")}</h2>
             <p>
               {t(
-                "This will restore all Shihen preferences to their defaults. Your Sessions, Subjects, Academic Years, and study history will not be deleted.",
+                "This will restore all Shunhen preferences to their defaults. Your Sessions, Subjects, Academic Years, and study history will not be deleted.",
               )}
             </p>
             <p>{t("Type RESET to continue.")}</p>
@@ -667,7 +667,7 @@ function NotificationsAndSounds({ settings, setSetting }: SettingsProps) {
   return (
     <>
       <SettingsHeader title={t("Notifications & Sounds")}>
-        {t("Choose how Shihen tells you that a Session has finished.")}
+        {t("Choose how Shunhen tells you that a Session has finished.")}
       </SettingsHeader>
       <Row label={t("Show notification when timer finishes")}>
         <Toggle
@@ -1064,7 +1064,7 @@ function Appearance({ settings, setSetting }: SettingsProps) {
   const { t } = useTranslation();
   return (
     <>
-      <SettingsHeader title={t("Appearance")}>{t("Customize the Shihen interface.")}</SettingsHeader>
+      <SettingsHeader title={t("Appearance")}>{t("Customize the Shunhen interface.")}</SettingsHeader>
       <Row label={t("Theme")}>
         <select
           value={settings.theme}
@@ -1119,7 +1119,7 @@ function Data({ settings, setSetting, onNavigate }: SettingsProps & { onNavigate
       await clearAllFocusData();
       window.location.reload();
     } catch (reason) {
-      setError(t(reason instanceof Error ? reason.message : "Shihen data could not be cleared."));
+      setError(t(reason instanceof Error ? reason.message : "Shunhen data could not be cleared."));
       setBusy(false);
     }
   };
@@ -1134,7 +1134,7 @@ function Data({ settings, setSetting, onNavigate }: SettingsProps & { onNavigate
   return (
     <>
       <SettingsHeader title={t("Data")}>{t("Storage and data management.")}</SettingsHeader>
-      <Row label={t("Storage")} hint={t("Your Shihen data is stored locally on this device.")}>
+      <Row label={t("Storage")} hint={t("Your Shunhen data is stored locally on this device.")}>
         <span className="storage-value">{t("On this device")}</span>
       </Row>
       <Row
@@ -1165,7 +1165,7 @@ function Data({ settings, setSetting, onNavigate }: SettingsProps & { onNavigate
         />
       </Row>
       <RestoreSection keys={["allowDirectActiveDeletion"]} />
-      <Row label={t("Clear all data")} hint={t("Permanently remove all local Shihen data.")}>
+      <Row label={t("Clear all data")} hint={t("Permanently remove all local Shunhen data.")}>
         <button className="danger-outline" onClick={startClear}>
           <Trash2 /> {t("Clear all data")}
         </button>
@@ -1177,7 +1177,7 @@ function Data({ settings, setSetting, onNavigate }: SettingsProps & { onNavigate
             className="modal clear-data-modal typed-confirmation-modal"
             onMouseDown={(event) => event.stopPropagation()}
           >
-            <h2>{t("Clear all Shihen data?")}</h2>
+            <h2>{t("Clear all Shunhen data?")}</h2>
             <p>
               {t(
                 "This permanently deletes all study history, Subjects, Academic Years, and Settings stored on this device.",
@@ -1220,20 +1220,20 @@ function About() {
         <div className="about-identity">
           <FocusLeaf className="about-leaf" />
           <div>
-            <h3>Shihen</h3>
+            <h3>Shunhen</h3>
             <p>{t("Time well spent.")}</p>
             <span>V{version}</span>
           </div>
         </div>
         <section>
-          <h3>{t("About Shihen")}</h3>
-          <p>{t("Shihen is a local-first study timer and analytics app designed for long-term study tracking.")}</p>
+          <h3>{t("About Shunhen")}</h3>
+          <p>{t("Shunhen is a local-first study timer and analytics app designed for long-term study tracking.")}</p>
         </section>
         <section>
           <h3>{t("Your data")}</h3>
           <p>
             {t(
-              "Shihen stores your study data locally on this device. Your data is not uploaded to a Shihen account or cloud service.",
+              "Shunhen stores your study data locally on this device. Your data is not uploaded to a Shunhen account or cloud service.",
             )}
           </p>
         </section>
@@ -1262,7 +1262,7 @@ function About() {
         {import.meta.env.DEV && isTauri() && (
           <section>
             <h3>{t("Developer tools")}</h3>
-            <p>{t("Development-only tools for previewing Shihen UI states.")}</p>
+            <p>{t("Development-only tools for previewing Shunhen UI states.")}</p>
             <Row label={t("Preview update dialog")}>
               <button className="secondary-action" onClick={() => updatePreview.open(version)}>
                 {t("Preview update dialog")}

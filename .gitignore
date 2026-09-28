@@ -75,3 +75,7 @@ RELEASE_NOTES.md
 # Shihen exports (legacy Focus patterns remain above).
 shihen-backup*.json
 shihen-sessions*.csv
+
+# Shunhen exports (keep prior-brand exports ignored too).
+shunhen-backup*.json
+shunhen-sessions*.csv

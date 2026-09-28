@@ -1,8 +1,8 @@
 const en = {
-  "Check manually for a newer version of Shihen.": "Check manually for a newer version of Shihen.",
-  "Automatically check for updates when Shihen starts.": "Automatically check for updates when Shihen starts.",
+  "Check manually for a newer version of Shunhen.": "Check manually for a newer version of Shunhen.",
+  "Automatically check for updates when Shunhen starts.": "Automatically check for updates when Shunhen starts.",
   "{{count}} seconds": "{{count}} seconds",
-  "Set up Shihen": "Set up Shihen",
+  "Set up Shunhen": "Set up Shunhen",
   "Create an Academic Year and a Subject before starting your first Session.":
     "Create an Academic Year and a Subject before starting your first Session.",
   "Create an Academic Year": "Create an Academic Year",
@@ -15,7 +15,7 @@ const en = {
   "Switch to light mode": "Switch to light mode",
   "Switch to dark mode": "Switch to dark mode",
 
-  "Development-only tools for previewing Shihen UI states.": "Development-only tools for previewing Shihen UI states.",
+  "Development-only tools for previewing Shunhen UI states.": "Development-only tools for previewing Shunhen UI states.",
   "<30 min": "<30 min",
   "30–59 min": "30–59 min",
   "60–89 min": "60–89 min",
@@ -28,7 +28,7 @@ const en = {
 
   "More start options": "More start options",
   "Start stopwatch": "Start stopwatch",
-  "Timer finished while Shihen was closed": "Timer finished while Shihen was closed",
+  "Timer finished while Shunhen was closed": "Timer finished while Shunhen was closed",
   "Your {{subject}} timer finished at {{time}}.": "Your {{subject}} timer finished at {{time}}.",
 
   "Unable to register the shortcut. Try another combination.":
@@ -76,7 +76,7 @@ const en = {
   "No Subject": "No Subject",
   More: "More",
   "Always on top": "Always on top",
-  "Open Shihen": "Open Shihen",
+  "Open Shunhen": "Open Shunhen",
   "Close popout": "Close popout",
   Undock: "Undock",
   "Dock to": "Dock to",
@@ -109,15 +109,15 @@ const en = {
   "{{count}} days": "{{count}} days",
   "Recent Sessions": "Recent Sessions",
   "No completed Sessions yet.": "No completed Sessions yet.",
-  "Shihen session complete": "Shihen session complete",
+  "Shunhen session complete": "Shunhen session complete",
   "{{subject}} - {{duration}}": "{{subject}} - {{duration}}",
-  "Configure Shihen for the way you study.": "Configure Shihen for the way you study.",
+  "Configure Shunhen for the way you study.": "Configure Shunhen for the way you study.",
   "Settings sections": "Settings sections",
   "Basic app settings.": "Basic app settings.",
   "Your name": "Your name",
   "Used in the sidebar greeting.": "Used in the sidebar greeting.",
-  "Start Shihen maximized": "Start Shihen maximized",
-  "Launch Shihen at Windows startup": "Launch Shihen at Windows startup",
+  "Start Shunhen maximized": "Start Shunhen maximized",
+  "Launch Shunhen at Windows startup": "Launch Shunhen at Windows startup",
   "Behaviour during focus Sessions.": "Behaviour during focus Sessions.",
   "New timer duration": "New timer duration",
   "Remember last used": "Remember last used",
@@ -142,7 +142,7 @@ const en = {
   "Enable corner docking": "Enable corner docking",
   "Default corner": "Default corner",
   "Auto-hide when docked": "Auto-hide when docked",
-  "Customize the Shihen interface.": "Customize the Shihen interface.",
+  "Customize the Shunhen interface.": "Customize the Shunhen interface.",
   Theme: "Theme",
   Dark: "Dark",
   "Accent colour": "Accent colour",
@@ -156,7 +156,7 @@ const en = {
   Purple: "Purple",
   "Storage and data management.": "Storage and data management.",
   Storage: "Storage",
-  "Your Shihen data is stored locally on this device.": "Your Shihen data is stored locally on this device.",
+  "Your Shunhen data is stored locally on this device.": "Your Shunhen data is stored locally on this device.",
   "On this device": "On this device",
   "Last full backup": "Last full backup",
   Never: "Never",
@@ -170,8 +170,8 @@ const en = {
   "Permanent deletion still requires confirmation and removes related study data.":
     "Permanent deletion still requires confirmation and removes related study data.",
   "Clear all data": "Clear all data",
-  "Permanently remove all local Shihen data.": "Permanently remove all local Shihen data.",
-  "Clear all Shihen data?": "Clear all Shihen data?",
+  "Permanently remove all local Shunhen data.": "Permanently remove all local Shunhen data.",
+  "Clear all Shunhen data?": "Clear all Shunhen data?",
   "This permanently deletes all study history, Subjects, Academic Years, and Settings stored on this device.":
     "This permanently deletes all study history, Subjects, Academic Years, and Settings stored on this device.",
   "This cannot be undone without a backup. Type DELETE to continue.":
@@ -180,12 +180,12 @@ const en = {
   "Clearing...": "Clearing...",
   "Application information.": "Application information.",
   "Version {{version}}": "Version {{version}}",
-  "About Shihen": "About Shihen",
-  "Shihen is a local-first study timer and analytics app designed for long-term study tracking.":
-    "Shihen is a local-first study timer and analytics app designed for long-term study tracking.",
+  "About Shunhen": "About Shunhen",
+  "Shunhen is a local-first study timer and analytics app designed for long-term study tracking.":
+    "Shunhen is a local-first study timer and analytics app designed for long-term study tracking.",
   "Your data": "Your data",
-  "Shihen stores your study data locally on this device. Your data is not uploaded to a Shihen account or cloud service.":
-    "Shihen stores your study data locally on this device. Your data is not uploaded to a Shihen account or cloud service.",
+  "Shunhen stores your study data locally on this device. Your data is not uploaded to a Shunhen account or cloud service.":
+    "Shunhen stores your study data locally on this device. Your data is not uploaded to a Shunhen account or cloud service.",
   Application: "Application",
   Version: "Version",
   Platform: "Platform",
@@ -198,8 +198,8 @@ const en = {
   "Current monitor": "Current monitor",
   Monitor: "Monitor",
   "Notifications & Sounds": "Notifications & Sounds",
-  "Choose how Shihen tells you that a Session has finished.":
-    "Choose how Shihen tells you that a Session has finished.",
+  "Choose how Shunhen tells you that a Session has finished.":
+    "Choose how Shunhen tells you that a Session has finished.",
   "Test notification": "Test notification",
   "Send test": "Send test",
   "Completion sound": "Completion sound",
@@ -241,8 +241,8 @@ const en = {
   "Stop and save": "Stop and save",
   "Discard timer": "Discard timer",
   "Active timer protected": "Active timer protected",
-  "Close Shihen": "Close Shihen",
-  "Shihen is already running": "Shihen is already running",
+  "Close Shunhen": "Close Shunhen",
+  "Shunhen is already running": "Shunhen is already running",
   OK: "OK",
   "Time well spent.": "Time well spent.",
   Light: "Light",
@@ -301,11 +301,11 @@ const en = {
   "Study time by weekday and time": "Study time by weekday and time",
   "Rolling calendar-day averages": "Rolling calendar-day averages",
   "Zero-study calendar days are included.": "Zero-study calendar days are included.",
-  "Close Shihen while a timer is active?": "Close Shihen while a timer is active?",
-  "The timer will be recovered the next time Shihen opens. No Session will be finalized by closing the app.":
-    "The timer will be recovered the next time Shihen opens. No Session will be finalized by closing the app.",
-  "The existing Shihen window has been brought to the front.":
-    "The existing Shihen window has been brought to the front.",
+  "Close Shunhen while a timer is active?": "Close Shunhen while a timer is active?",
+  "The timer will be recovered the next time Shunhen opens. No Session will be finalized by closing the app.":
+    "The timer will be recovered the next time Shunhen opens. No Session will be finalized by closing the app.",
+  "The existing Shunhen window has been brought to the front.":
+    "The existing Shunhen window has been brought to the front.",
   "Academic Year": "Academic Year",
   Subject: "Subject",
   "{{duration}} left": "{{duration}} left",
@@ -337,10 +337,10 @@ const en = {
   "No study": "No study",
   "Finish or stop the current timer before importing app data.":
     "Finish or stop the current timer before importing app data.",
-  "Replace all persistent Shihen data with this backup? This cannot be undone.":
-    "Replace all persistent Shihen data with this backup? This cannot be undone.",
+  "Replace all persistent Shunhen data with this backup? This cannot be undone.":
+    "Replace all persistent Shunhen data with this backup? This cannot be undone.",
   "Import complete": "Import complete",
-  "Your Shihen data was updated in one transaction.": "Your Shihen data was updated in one transaction.",
+  "Your Shunhen data was updated in one transaction.": "Your Shunhen data was updated in one transaction.",
   "Academic Years created": "Academic Years created",
   "Subjects created": "Subjects created",
   "Sessions imported": "Sessions imported",
@@ -363,13 +363,13 @@ const en = {
   "Export CSV": "Export CSV",
   Import: "Import",
   "Import Data": "Import Data",
-  "Restore a Shihen backup or import Session records from CSV.":
-    "Restore a Shihen backup or import Session records from CSV.",
+  "Restore a Shunhen backup or import Session records from CSV.":
+    "Restore a Shunhen backup or import Session records from CSV.",
   "Choose file": "Choose file",
   "or drop a .json or .csv file here": "or drop a .json or .csv file here",
   "Your data stays on this device. Export backups regularly.":
     "Your data stays on this device. Export backups regularly.",
-  "Shihen backup": "Shihen backup",
+  "Shunhen backup": "Shunhen backup",
   "Created {{date}}": "Created {{date}}",
   "Backup structure and references are valid.": "Backup structure and references are valid.",
   "Restore mode": "Restore mode",
@@ -453,8 +453,8 @@ const en = {
   "Finish or stop the current timer before clearing app data.":
     "Finish or stop the current timer before clearing app data.",
   "Recover timer": "Recover timer",
-  "Shihen closed while this timer was running. How would you like to continue?":
-    "Shihen closed while this timer was running. How would you like to continue?",
+  "Shunhen closed while this timer was running. How would you like to continue?":
+    "Shunhen closed while this timer was running. How would you like to continue?",
   "Continue timer": "Continue timer",
   "Resume from where I left off": "Resume from where I left off",
   "Discard timer?": "Discard timer?",
@@ -462,8 +462,8 @@ const en = {
     "This unfinished timer and its unsaved focus time will be discarded.",
   Discard: "Discard",
   "Couldn't save this session": "Couldn't save this session",
-  "Shihen couldn't save this study session. Your session data has been preserved.":
-    "Shihen couldn't save this study session. Your session data has been preserved.",
+  "Shunhen couldn't save this study session. Your session data has been preserved.":
+    "Shunhen couldn't save this study session. Your session data has been preserved.",
   Retry: "Retry",
   "Choose a Subject for this timer": "Choose a Subject for this timer",
   "The original Subject or Academic Year is no longer active. Choose an active Subject before continuing.":
@@ -558,14 +558,14 @@ const en = {
   "Current version": "Current version",
   "Available version": "Available version",
   "Check for updates": "Check for updates",
-  "Shihen is up to date": "Shihen is up to date",
+  "Shunhen is up to date": "Shunhen is up to date",
   "Update available": "Update available",
   "Update now": "Update now",
   Later: "Later",
   "Unable to check for updates. Try again later.": "Unable to check for updates. Try again later.",
   "Unable to install the update. Try again later.": "Unable to install the update. Try again later.",
-  "Update installed. Restart Shihen to finish.": "Update installed. Restart Shihen to finish.",
-  "Restart Shihen": "Restart Shihen",
+  "Update installed. Restart Shunhen to finish.": "Update installed. Restart Shunhen to finish.",
+  "Restart Shunhen": "Restart Shunhen",
   "Release notes": "Release notes",
   "Checking for updates…": "Checking for updates…",
   "Downloading update…": "Downloading update…",
@@ -612,16 +612,16 @@ const en = {
   Automatic: "Automatic",
   Reset: "Reset",
   "Reset all settings": "Reset all settings",
-  "Restore every Shihen preference to its default without deleting Sessions, Subjects, Academic Years, or study history.":
-    "Restore every Shihen preference to its default without deleting Sessions, Subjects, Academic Years, or study history.",
+  "Restore every Shunhen preference to its default without deleting Sessions, Subjects, Academic Years, or study history.":
+    "Restore every Shunhen preference to its default without deleting Sessions, Subjects, Academic Years, or study history.",
   "Reset all settings?": "Reset all settings?",
-  "This will restore all Shihen preferences to their defaults. Your Sessions, Subjects, Academic Years, and study history will not be deleted.":
-    "This will restore all Shihen preferences to their defaults. Your Sessions, Subjects, Academic Years, and study history will not be deleted.",
+  "This will restore all Shunhen preferences to their defaults. Your Sessions, Subjects, Academic Years, and study history will not be deleted.":
+    "This will restore all Shunhen preferences to their defaults. Your Sessions, Subjects, Academic Years, and study history will not be deleted.",
   "Type RESET to continue.": "Type RESET to continue.",
   "Unable to reset settings. Please try again.": "Unable to reset settings. Please try again.",
   "Used when Auto-hide is enabled.": "Used when Auto-hide is enabled.",
   "What's new": "What's new",
-  "A new version of Shihen is ready to install.": "A new version of Shihen is ready to install.",
+  "A new version of Shunhen is ready to install.": "A new version of Shunhen is ready to install.",
   "Shortcut key is unavailable on this device.": "Shortcut key is unavailable on this device.",
   "Border opacity": "Border opacity",
   "Rows per page": "Rows per page",

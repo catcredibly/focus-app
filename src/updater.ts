@@ -150,7 +150,7 @@ export function createUpdateController(deps: Dependencies) {
         await restart();
       } catch (error) {
         if (import.meta.env.DEV)
-          console.info("Shihen updater install", {
+          console.info("Shunhen updater install", {
             category: classifyUpdateError(error),
             error: sanitizeUpdateError(error),
           });

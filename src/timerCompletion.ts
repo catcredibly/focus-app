@@ -34,7 +34,7 @@ export function playCompletionSound(choice: CompletionSound, volume: number) {
 }
 
 export async function sendFocusNotification(title: string, body: string) {
-  if (!isTauri()) throw new Error("Notifications are available in the Shihen desktop app.");
+  if (!isTauri()) throw new Error("Notifications are available in the Shunhen desktop app.");
   let granted = await isPermissionGranted();
   if (!granted) granted = (await requestPermission()) === "granted";
   if (!granted) throw new Error("Notification permission was not granted.");
@@ -43,7 +43,7 @@ export async function sendFocusNotification(title: string, body: string) {
 
 export async function testCompletionNotification() {
   await sendFocusNotification(
-    i18n.t("Shihen notifications are working"),
+    i18n.t("Shunhen notifications are working"),
     i18n.t("You will be notified when a focus Session finishes."),
   );
 }
@@ -65,7 +65,7 @@ export async function handleTimerCompletion(state: TimerState) {
   if (settings.completionNotification && isTauri()) {
     try {
       await sendFocusNotification(
-        i18n.t("Shihen session complete"),
+        i18n.t("Shunhen session complete"),
         i18n.t("{{subject}} - {{duration}}", {
           subject: state.subject,
           duration: formatDuration(state.plannedDurationSeconds),

@@ -45,7 +45,7 @@ export async function chooseTextFile() {
   if (isTauri()) {
     const { open } = await import("@tauri-apps/plugin-dialog");
     const { readTextFile } = await import("@tauri-apps/plugin-fs");
-    const path = await open({ multiple: false, filters: [{ name: "Shihen data", extensions: ["json", "csv"] }] });
+    const path = await open({ multiple: false, filters: [{ name: "Shunhen data", extensions: ["json", "csv"] }] });
     if (!path) return null;
     return { name: String(path).split(/[\\/]/).pop() ?? "data", text: await readTextFile(path) };
   }

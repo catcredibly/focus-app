@@ -1,6 +1,6 @@
-# Shihen Release Build Guide
+# Shunhen Release Build Guide
 
-Use this process for Windows production releases of Shihen.
+Use this process for Windows production releases of Shunhen.
 
 ## Release version
 
@@ -36,7 +36,7 @@ RELEASE_NOTES.md
 Place it in the repository root alongside `package.json`:
 
 ```text
-shihen/
+Shunhen/
 ├── RELEASE_NOTES.md
 ├── package.json
 ├── tools/
@@ -104,11 +104,11 @@ The NSIS release files are created under:
 src-tauri\target\release\bundle\nsis\
 ```
 
-For Shihen 2.2.3, expect:
+For Shunhen 2.2.3, expect:
 
 ```text
-Shihen_2.2.3_x64-setup.exe
-Shihen_2.2.3_x64-setup.exe.sig
+Shunhen_2.2.3_x64-setup.exe
+Shunhen_2.2.3_x64-setup.exe.sig
 ```
 
 The `.sig` belongs to that exact build.
@@ -123,7 +123,7 @@ Still from the repository root:
 
 ```powershell
 $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
-$installer = "Shihen_${version}_x64-setup.exe"
+$installer = "Shunhen_${version}_x64-setup.exe"
 $dir = "src-tauri\target\release\bundle\nsis"
 
 node tools/generate-updater-manifest.mjs --notes RELEASE_NOTES.md --artifact "$dir\$installer" --repository catcredibly/shihen
@@ -200,15 +200,15 @@ gh release create "v$version" `
   "$dir\$installer.sig" `
   "$dir\latest.json" `
   --repo catcredibly/shihen `
-  --title "Shihen $version" `
+  --title "Shunhen $version" `
   --notes-file RELEASE_NOTES.md
 ```
 
 This creates the release and uploads:
 
 ```text
-Shihen_<version>_x64-setup.exe
-Shihen_<version>_x64-setup.exe.sig
+Shunhen_<version>_x64-setup.exe
+Shunhen_<version>_x64-setup.exe.sig
 latest.json
 ```
 
@@ -223,8 +223,8 @@ If you create the release manually through GitHub instead, use the contents of `
 After publishing, confirm that the GitHub Release contains:
 
 ```text
-Shihen_<version>_x64-setup.exe
-Shihen_<version>_x64-setup.exe.sig
+Shunhen_<version>_x64-setup.exe
+Shunhen_<version>_x64-setup.exe.sig
 latest.json
 ```
 

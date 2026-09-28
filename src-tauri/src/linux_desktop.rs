@@ -1,5 +1,5 @@
 //! Backend detection must use GTK's selected display, not session environment
-//! variables: a Wayland session may deliberately run Shihen through XWayland.
+//! variables: a Wayland session may deliberately run Shunhen through XWayland.
 use gtk::prelude::*;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{Emitter, Manager};

@@ -1,44 +1,44 @@
 <p align="center">
-  <img src="src/assets/focus-logo-orange.png" alt="Shihen leaf logo" width="112" />
+  <img src="src/assets/shunhen-logo-orange.png" alt="Shunhen leaf logo" width="112" />
 </p>
 
-# Shihen
+# Shunhen
 
 **Time well spent.**
 
-Shihen is a desktop focus timer and study tracker. It combines a clean countdown with Subjects, Academic Years, history, study goals, and long-term analytics without requiring a Shihen account or cloud service.
+Shunhen is a desktop focus timer and study tracker that combines a clean countdown with Subjects, Academic Years, Session history, study goals, and long-term analytics. Everything works locally without requiring an account or cloud service.
 
 ## Features
 
-- Focus timer with pause, extend, recovery, notes, and completion notifications
-- Compact always-on-top timer popout with corner docking and auto-hide features
-- Subjects grouped into Academic Years
-- Searchable, editable Session history
+- Focus timer with pause, extend, recovery, notes, and completion notifications and Stopwatch mode
+- Compact always-on-top timer Popout with corner docking and auto-hide
+- Subjects organized into Academic Years
+- Filterable, editable Session history with note search
 - Daily and weekly study goals
 - Analytics for trends, streaks, Subjects, Academic Years, and study patterns
-- Dark and light themes with six accent colours
+- Dark and light themes with six accent colors
 - English, Simplified Chinese, Traditional Chinese, and Japanese interfaces
-- Full JSON backup/restore and CSV Session import/export
+- Full JSON backup and restore, plus CSV Session import and export
 
 ## Privacy
 
-Shihen is local-first. Academic Years, Subjects, Sessions, settings, and notes are stored in IndexedDB on the device where Shihen runs.
-The application does not upload study data to a Shihen account or bundled cloud service.
+Shunhen is local-first. Academic Years, Subjects, Sessions, settings, and notes are stored locally in IndexedDB on the device where Shunhen runs.
 
-Export regular backups if the data matters to you.
-Removing the application or its WebView storage may remove local data.
+Shunhen does not upload study data to an account or bundled cloud service.
+
+Export regular backups if your data matters to you. Removing Shunhen or its WebView storage may remove locally stored data.
 
 ## Availability
 
-Shihen is available for Windows and Linux on x86-64 systems.
+Shunhen is available for Windows and Linux on x86-64 systems.
 
-Linux releases are provided as AppImage and Debian (`.deb`) packages and are currently experimental.
-Please note some platform-specific features may behave differently or be unavailable on Linux.
+Linux releases are available as AppImage and Debian (`.deb`) packages and are currently experimental. Some platform-specific features may behave differently or be unavailable on Linux.
+
 Support for additional platforms may be considered in the future.
 
 ## Development
 
-### Prerequisites
+### Windows prerequisites
 
 - Node.js LTS and npm
 - Rust stable with the MSVC toolchain
@@ -67,9 +67,9 @@ cargo check --manifest-path src-tauri/Cargo.toml
 npm run tauri build
 ```
 
-Set release metadata with `npm run version:set -- <version>`. The root package version drives Tauri and is checked before production builds. See [installer compatibility](src-tauri/windows/README.md) for the Focus-to-Shihen upgrade verification.
+Set release metadata with `npm run version:set -- <version>`. The root package version drives Tauri and is checked before production builds. See [installer compatibility](src-tauri/windows/README.md) for the Focus/Shihen-to-Shunhen upgrade verification.
 
-Generated installers and executables belong outside source control.
+Generated installers and executables should not be committed to source control.
 
 ## Technology
 
@@ -83,8 +83,8 @@ See [Architecture](docs/ARCHITECTURE.md) for implementation details and [release
 
 ## Security
 
-Never commit personal Shihen backups, signing keys, certificates, or credentials. See [SECURITY.md](SECURITY.md) for reporting and handling guidance.
+Never commit personal backup files, signing keys, certificates, or credentials. See [SECURITY.md](SECURITY.md) for reporting and handling guidance.
 
 ## License
 
-Shihen is available under the [MIT License](LICENSE).
+Shunhen is available under the [MIT License](LICENSE).

@@ -52,7 +52,7 @@ export function AutoHideTab() {
       data-edge={edge}
       data-size={settings.popoutAutoHideTabSize}
     >
-      <button aria-label={t("Open Shihen")} onPointerEnter={reveal} onClick={reveal}>
+      <button aria-label={t("Open Shunhen")} onPointerEnter={reveal} onClick={reveal}>
         {settings.popoutAutoHideShowAccent && <span />}
       </button>
     </main>

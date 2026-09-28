@@ -1,10 +1,10 @@
 import en from "./en";
 
 const ja: Record<keyof typeof en, string> = {
-  "Check manually for a newer version of Shihen.": "Shihen の新しいバージョンを手動で確認します。",
-  "Automatically check for updates when Shihen starts.": "Shihen の起動時に更新を自動で確認します。",
+  "Check manually for a newer version of Shunhen.": "Shunhen の新しいバージョンを手動で確認します。",
+  "Automatically check for updates when Shunhen starts.": "Shunhen の起動時に更新を自動で確認します。",
   "{{count}} seconds": "{{count}} 秒間",
-  "Set up Shihen": "Shihen の準備",
+  "Set up Shunhen": "Shunhen の準備",
   "Create an Academic Year and a Subject before starting your first Session.":
     "最初の学習セッションを始める前に、学年と科目を作成しましょう。",
   "Create an Academic Year": "学年を作成",
@@ -16,7 +16,7 @@ const ja: Record<keyof typeof en, string> = {
   "Switch to light mode": "ライトモードに切り替え",
   "Switch to dark mode": "ダークモードに切り替え",
 
-  "Development-only tools for previewing Shihen UI states.": "Shihen の画面状態をプレビューする開発専用ツールです。",
+  "Development-only tools for previewing Shunhen UI states.": "Shunhen の画面状態をプレビューする開発専用ツールです。",
   "<30 min": "30分未満",
   "30–59 min": "30～59分",
   "60–89 min": "60～89分",
@@ -29,7 +29,7 @@ const ja: Record<keyof typeof en, string> = {
 
   "More start options": "開始オプション",
   "Start stopwatch": "ストップウォッチを開始",
-  "Timer finished while Shihen was closed": "Shihen を閉じている間にタイマーが終了しました",
+  "Timer finished while Shunhen was closed": "Shunhen を閉じている間にタイマーが終了しました",
   "Your {{subject}} timer finished at {{time}}.": "{{subject}} のタイマーは {{time}} に終了しました。",
 
   "Unable to register the shortcut. Try another combination.":
@@ -50,7 +50,7 @@ const ja: Record<keyof typeof en, string> = {
   General: "一般",
   Appearance: "外観",
   Data: "データ",
-  About: "Shihen について",
+  About: "Shunhen について",
   Start: "開始",
   Pause: "一時停止",
   Resume: "再開",
@@ -77,7 +77,7 @@ const ja: Record<keyof typeof en, string> = {
   "No Subject": "科目なし",
   More: "詳細",
   "Always on top": "常に手前に表示",
-  "Open Shihen": "Shihen を開く",
+  "Open Shunhen": "Shunhen を開く",
   "Close popout": "ポップアウトを閉じる",
   Undock: "ドッキング解除",
   "Dock to": "ドッキング先",
@@ -110,15 +110,15 @@ const ja: Record<keyof typeof en, string> = {
   "{{count}} days": "{{count}} 日",
   "Recent Sessions": "最近のセッション",
   "No completed Sessions yet.": "完了したセッションはまだありません。",
-  "Shihen session complete": "Shihen のセッションが完了しました",
+  "Shunhen session complete": "Shunhen のセッションが完了しました",
   "{{subject}} - {{duration}}": "{{subject}} - {{duration}}",
-  "Configure Shihen for the way you study.": "勉強方法に合わせてShihenを設定します。",
+  "Configure Shunhen for the way you study.": "勉強方法に合わせてShunhenを設定します。",
   "Settings sections": "設定セクション",
   "Basic app settings.": "アプリの基本設定。",
   "Your name": "あなたの名前",
   "Used in the sidebar greeting.": "サイドバーの挨拶文で使用されます。",
-  "Start Shihen maximized": "Shihenを最大化して開始",
-  "Launch Shihen at Windows startup": "Windows 起動時にShihenを起動します",
+  "Start Shunhen maximized": "Shunhenを最大化して開始",
+  "Launch Shunhen at Windows startup": "Windows 起動時にShunhenを起動します",
   "Behaviour during focus Sessions.": "集中セッション中の動作。",
   "New timer duration": "新しいタイマー期間",
   "Remember last used": "最後に使用したものを記憶する",
@@ -143,7 +143,7 @@ const ja: Record<keyof typeof en, string> = {
   "Enable corner docking": "コーナードッキングを有効にする",
   "Default corner": "デフォルトのコーナー",
   "Auto-hide when docked": "ドッキング時に自動非表示",
-  "Customize the Shihen interface.": "Shihen のインターフェイスをカスタマイズします。",
+  "Customize the Shunhen interface.": "Shunhen のインターフェイスをカスタマイズします。",
   Theme: "テーマ",
   Dark: "ダーク",
   "Accent colour": "アクセントカラー",
@@ -157,7 +157,7 @@ const ja: Record<keyof typeof en, string> = {
   Purple: "パープル",
   "Storage and data management.": "ストレージとデータ管理。",
   Storage: "ストレージ",
-  "Your Shihen data is stored locally on this device.": "Shihen データはこのデバイスにローカルに保存されます。",
+  "Your Shunhen data is stored locally on this device.": "Shunhen データはこのデバイスにローカルに保存されます。",
   "On this device": "このデバイス上",
   "Last full backup": "最後の完全バックアップ",
   Never: "決してしない",
@@ -170,8 +170,8 @@ const ja: Record<keyof typeof en, string> = {
   "Permanent deletion still requires confirmation and removes related study data.":
     "永久削除には依然として確認が必要であり、関連する研究データが削除されます。",
   "Clear all data": "すべてのデータをクリアします",
-  "Permanently remove all local Shihen data.": "このデバイスの Shihen データをすべて完全に削除します。",
-  "Clear all Shihen data?": "Shihen のデータをすべて削除しますか？",
+  "Permanently remove all local Shunhen data.": "このデバイスの Shunhen データをすべて完全に削除します。",
+  "Clear all Shunhen data?": "Shunhen のデータをすべて削除しますか？",
   "This permanently deletes all study history, Subjects, Academic Years, and Settings stored on this device.":
     "これにより、このデバイスに保存されているすべての学習履歴、科目、学年、設定が完全​​に削除されます。",
   "This cannot be undone without a backup. Type DELETE to continue.":
@@ -180,12 +180,12 @@ const ja: Record<keyof typeof en, string> = {
   "Clearing...": "クリア中...",
   "Application information.": "アプリケーション情報。",
   "Version {{version}}": "バージョン {{version}}",
-  "About Shihen": "Shihenについて",
-  "Shihen is a local-first study timer and analytics app designed for long-term study tracking.":
-    "Shihen は、長期的な学習追跡のために設計されたローカルファーストの学習タイマーおよび分析アプリです。",
+  "About Shunhen": "Shunhenについて",
+  "Shunhen is a local-first study timer and analytics app designed for long-term study tracking.":
+    "Shunhen は、長期的な学習追跡のために設計されたローカルファーストの学習タイマーおよび分析アプリです。",
   "Your data": "あなたのデータ",
-  "Shihen stores your study data locally on this device. Your data is not uploaded to a Shihen account or cloud service.":
-    "Shihen は、学習データをこのデバイスにローカルに保存します。データは Shihen アカウントまたはクラウド サービスにアップロードされません。",
+  "Shunhen stores your study data locally on this device. Your data is not uploaded to a Shunhen account or cloud service.":
+    "Shunhen は、学習データをこのデバイスにローカルに保存します。データは Shunhen アカウントまたはクラウド サービスにアップロードされません。",
   Application: "アプリケーション",
   Version: "バージョン",
   Platform: "プラットフォーム",
@@ -198,8 +198,8 @@ const ja: Record<keyof typeof en, string> = {
   "Current monitor": "現在のモニター",
   Monitor: "モニター",
   "Notifications & Sounds": "通知とサウンド",
-  "Choose how Shihen tells you that a Session has finished.":
-    "セッションが終了したことをShihenが通知する方法を選択します。",
+  "Choose how Shunhen tells you that a Session has finished.":
+    "セッションが終了したことをShunhenが通知する方法を選択します。",
   "Test notification": "通知をテスト",
   "Send test": "テストを送信",
   "Completion sound": "完了音",
@@ -241,8 +241,8 @@ const ja: Record<keyof typeof en, string> = {
   "Stop and save": "停止して保存",
   "Discard timer": "タイマーを破棄",
   "Active timer protected": "使用中のタイマーは保護されています",
-  "Close Shihen": "Shihen を閉じる",
-  "Shihen is already running": "Shihen はすでに起動しています",
+  "Close Shunhen": "Shunhen を閉じる",
+  "Shunhen is already running": "Shunhen はすでに起動しています",
   OK: "OK",
   "Time well spent.": "時間を大切に。",
   Light: "ライト",
@@ -301,10 +301,10 @@ const ja: Record<keyof typeof en, string> = {
   "Study time by weekday and time": "曜日・時間帯別の学習時間",
   "Rolling calendar-day averages": "暦日ベースの移動平均",
   "Zero-study calendar days are included.": "学習していない日も含まれます。",
-  "Close Shihen while a timer is active?": "タイマーがアクティブなときにShihenを閉じますか?",
-  "The timer will be recovered the next time Shihen opens. No Session will be finalized by closing the app.":
-    "タイマーは、次回Shihenが開いたときに回復されます。アプリを閉じてもセッションは終了しません。",
-  "The existing Shihen window has been brought to the front.": "既存の Shihen ウィンドウを前面に表示しました。",
+  "Close Shunhen while a timer is active?": "タイマーがアクティブなときにShunhenを閉じますか?",
+  "The timer will be recovered the next time Shunhen opens. No Session will be finalized by closing the app.":
+    "タイマーは、次回Shunhenが開いたときに回復されます。アプリを閉じてもセッションは終了しません。",
+  "The existing Shunhen window has been brought to the front.": "既存の Shunhen ウィンドウを前面に表示しました。",
   "Academic Year": "学年",
   Subject: "科目",
   "{{duration}} left": "残り {{duration}}",
@@ -336,10 +336,10 @@ const ja: Record<keyof typeof en, string> = {
   "No study": "研究なし",
   "Finish or stop the current timer before importing app data.":
     "アプリ データをインポートする前に、現在のタイマーを終了または停止します。",
-  "Replace all persistent Shihen data with this backup? This cannot be undone.":
+  "Replace all persistent Shunhen data with this backup? This cannot be undone.":
     "すべての永続的な 集中 データをこのバックアップで置き換えますか?これを元に戻すことはできません。",
   "Import complete": "インポートが完了しました",
-  "Your Shihen data was updated in one transaction.": "Shihen データは 1 つのトランザクションで更新されました。",
+  "Your Shunhen data was updated in one transaction.": "Shunhen データは 1 つのトランザクションで更新されました。",
   "Academic Years created": "学年が作成されました",
   "Subjects created": "科目が作成されました",
   "Sessions imported": "セッションがインポートされました",
@@ -363,13 +363,13 @@ const ja: Record<keyof typeof en, string> = {
   "Export CSV": "CSV のエクスポート",
   Import: "インポート",
   "Import Data": "データのインポート",
-  "Restore a Shihen backup or import Session records from CSV.":
-    "Shihen バックアップを復元するか、CSV からセッション レコードをインポートします。",
+  "Restore a Shunhen backup or import Session records from CSV.":
+    "Shunhen バックアップを復元するか、CSV からセッション レコードをインポートします。",
   "Choose file": "ファイルを選択してください",
   "or drop a .json or .csv file here": "または .json または .csv ファイルをここにドロップします",
   "Your data stays on this device. Export backups regularly.":
     "データはこのデバイスに残ります。バックアップを定期的にエクスポートします。",
-  "Shihen backup": "Shihenのバックアップ",
+  "Shunhen backup": "Shunhenのバックアップ",
   "Created {{date}}": "{{date}} が作成されました",
   "Backup structure and references are valid.": "バックアップ構造と参照は有効です。",
   "Restore mode": "復元モード",
@@ -453,8 +453,8 @@ const ja: Record<keyof typeof en, string> = {
   "Finish or stop the current timer before clearing app data.":
     "アプリのデータをクリアする前に、現在のタイマーを終了または停止してください。",
   "Recover timer": "リカバリタイマー",
-  "Shihen closed while this timer was running. How would you like to continue?":
-    "このタイマーの実行中にShihenが閉じられました。続けていかがですか？",
+  "Shunhen closed while this timer was running. How would you like to continue?":
+    "このタイマーの実行中にShunhenが閉じられました。続けていかがですか？",
   "Continue timer": "タイマーを継続します",
   "Resume from where I left off": "中断したところから再開",
   "Discard timer?": "タイマーを破棄しますか?",
@@ -462,8 +462,8 @@ const ja: Record<keyof typeof en, string> = {
     "この未完了のタイマーとその未保存の集中時間は破棄されます。",
   Discard: "破棄",
   "Couldn't save this session": "このセッションを保存できませんでした",
-  "Shihen couldn't save this study session. Your session data has been preserved.":
-    "Shihenはこの勉強セッションを保存できませんでした。セッションデータは保存されています。",
+  "Shunhen couldn't save this study session. Your session data has been preserved.":
+    "Shunhenはこの勉強セッションを保存できませんでした。セッションデータは保存されています。",
   Retry: "再試行",
   "Choose a Subject for this timer": "このタイマーの科目を選択してください",
   "The original Subject or Academic Year is no longer active. Choose an active Subject before continuing.":
@@ -557,14 +557,14 @@ const ja: Record<keyof typeof en, string> = {
   "Current version": "現在のバージョン",
   "Available version": "新しいバージョン",
   "Check for updates": "更新を確認",
-  "Shihen is up to date": "Shihen は最新です",
+  "Shunhen is up to date": "Shunhen は最新です",
   "Update available": "更新があります",
   "Update now": "今すぐ更新",
   Later: "後で",
   "Unable to check for updates. Try again later.": "更新を確認できません。後でもう一度お試しください。",
   "Unable to install the update. Try again later.": "更新をインストールできません。後でもう一度お試しください。",
-  "Update installed. Restart Shihen to finish.": "更新をインストールしました。Shihen を再起動してください。",
-  "Restart Shihen": "Shihen を再起動",
+  "Update installed. Restart Shunhen to finish.": "更新をインストールしました。Shunhen を再起動してください。",
+  "Restart Shunhen": "Shunhen を再起動",
   "Release notes": "リリースノート",
   "Checking for updates…": "更新を確認中…",
   "Downloading update…": "更新をダウンロード中…",
@@ -612,16 +612,16 @@ const ja: Record<keyof typeof en, string> = {
   Automatic: "自動",
   Reset: "リセット",
   "Reset all settings": "すべての設定をリセット",
-  "Restore every Shihen preference to its default without deleting Sessions, Subjects, Academic Years, or study history.":
-    "セッション、科目、学年度、学習履歴を削除せずに、すべての Shihen 設定を初期値に戻します。",
+  "Restore every Shunhen preference to its default without deleting Sessions, Subjects, Academic Years, or study history.":
+    "セッション、科目、学年度、学習履歴を削除せずに、すべての Shunhen 設定を初期値に戻します。",
   "Reset all settings?": "すべての設定をリセットしますか？",
-  "This will restore all Shihen preferences to their defaults. Your Sessions, Subjects, Academic Years, and study history will not be deleted.":
-    "すべての Shihen 設定が初期値に戻ります。セッション、科目、学年度、学習履歴は削除されません。",
+  "This will restore all Shunhen preferences to their defaults. Your Sessions, Subjects, Academic Years, and study history will not be deleted.":
+    "すべての Shunhen 設定が初期値に戻ります。セッション、科目、学年度、学習履歴は削除されません。",
   "Type RESET to continue.": "続行するには RESET と入力してください。",
   "Unable to reset settings. Please try again.": "設定をリセットできませんでした。もう一度お試しください。",
   "Used when Auto-hide is enabled.": "自動非表示が有効なときに使用します。",
   "What's new": "更新内容",
-  "A new version of Shihen is ready to install.": "Shihen の新しいバージョンをインストールできます。",
+  "A new version of Shunhen is ready to install.": "Shunhen の新しいバージョンをインストールできます。",
   "Shortcut key is unavailable on this device.": "このデバイスでは表示ショートカットを使用できません。",
   "Border opacity": "枠線の不透明度",
   "Rows per page": "1ページの行数",

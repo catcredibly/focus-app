@@ -10,3 +10,11 @@ describe("canonical repository identity", () => {
     expect(tauri.plugins.updater.endpoints).toEqual([`${repository}/releases/latest/download/latest.json`]);
   });
 });
+
+it("changes display branding without changing installation identity", () => {
+  expect(tauri.productName).toBe("Shunhen");
+  expect(tauri.identifier).toBe("com.focus.timer");
+  expect(tauri.version).toBe("../package.json");
+  expect(tauri.bundle.publisher).toBe("focus");
+  for (const window of tauri.app.windows) expect(window.title).toMatch(/^Shunhen(?: |$)/);
+});

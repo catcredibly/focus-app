@@ -217,7 +217,7 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
     <>
       {timer.recovery === "running" && (
         <Dialog title={t("Recover timer")}>
-          <p>{t("Shihen closed while this timer was running. How would you like to continue?")}</p>
+          <p>{t("Shunhen closed while this timer was running. How would you like to continue?")}</p>
           <div className="modal-actions modal-actions--stack">
             <button className="primary-action" onClick={timer.continueRecovery}>
               {t("Continue timer")}
@@ -248,7 +248,7 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
       )}
       {timer.saveError && (
         <Dialog title={t("Couldn't save this session")}>
-          <p>{t("Shihen couldn't save this study session. Your session data has been preserved.")}</p>
+          <p>{t("Shunhen couldn't save this study session. Your session data has been preserved.")}</p>
           <div className="modal-actions">
             <button className="primary-action" disabled={!timer.noteValid} onClick={() => void timer.retrySave()}>
               {t("Retry")}
@@ -357,7 +357,7 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
           {dateTime && dateControl}
           {timer.state.expiredWhileClosed && !timer.state.expiredNoticeDismissed && (
             <aside className="expired-timer-notice" role="status">
-              <strong>{t("Timer finished while Shihen was closed")}</strong>
+              <strong>{t("Timer finished while Shunhen was closed")}</strong>
               <span>
                 {t("Your {{subject}} timer finished at {{time}}.", {
                   subject: timer.state.subject,

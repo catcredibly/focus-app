@@ -4,6 +4,8 @@ import { meaningfulReleaseNotes } from "./releaseNotes";
 import { ReleaseNotes } from "./components/ReleaseNotes";
 it("hides absent/generic notes and strips repeated release headings", () => {
   expect(meaningfulReleaseNotes()).toBe("");
+  expect(meaningfulReleaseNotes("# Shunhen 2.2.3\n- Updated branding")).toBe("- Updated branding");
+  expect(meaningfulReleaseNotes("# Shihen 2.2.2\n- Older release")).toBe("- Older release");
   expect(meaningfulReleaseNotes("Focus 2.1.1 / Update available")).toBe("");
   expect(meaningfulReleaseNotes("# Focus 2.1.1\nUpdate available\n\n- Fixed reset")).toBe("- Fixed reset");
 });
