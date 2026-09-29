@@ -5,7 +5,6 @@ import { goalProgress, localDayBounds, localWeekBounds } from "./goals";
 import { loadSettings } from "./settings";
 import type { FocusSession } from "./types";
 import type { ToastMessage } from "./toasts";
-import { summarizeTimerSession } from "./sessionAllocation";
 
 /** Claim notifications in the save transaction so concurrent timer webviews cannot
  * celebrate the same session twice. Recovery/import/edit callers never opt in. */
@@ -16,7 +15,6 @@ export async function saveFocusSession(
   now = Date.now(),
 ) {
   if (!noteMetrics(session.note ?? "").valid) throw new Error("Note exceeds the allowed limits.");
-  session = summarizeTimerSession(session);
   return database.transaction("rw", database.sessions, database.settings, database.academicYears, async () => {
     const messages: { message: ToastMessage; kind: "daily" | "weekly" }[] = [];
     if (await database.sessions.get(session.id)) return messages;

@@ -3655,7 +3655,7 @@ input {
   grid-column: 1 / -1;
 }
 .analytics-page .year-summary-table :is(.analytics-table-head, .analytics-table-row) {
-  grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 2fr) repeat(5, minmax(0, 1fr));
 }
 .year-comparison-row small {
   grid-column: 1 / -1;
@@ -5033,4 +5033,15 @@ html[data-utility-window] #root {
 }
 .settings-data {
   padding-bottom: 24px;
+}
+
+.end-day-offset {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.session-editor .end-day-offset input {
+  width: 64px;
+  padding: 4px 6px;
 }

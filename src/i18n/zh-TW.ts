@@ -488,16 +488,10 @@ const zhTW: Record<keyof typeof en, string> = {
   HH: "時",
   MM: "分",
   SS: "秒",
-  "Unlock duration": "解除鎖定時長",
-  "Lock duration": "鎖定時長",
   "Choose an Academic Year.": "請選擇一個學年。",
   "Choose a Subject from the selected Academic Year.": "請選擇所選學年中的科目。",
   "End time must be after start time.": "結束時間必須晚於開始時間。",
   "Duration must be greater than zero.": "時長必須大於零。",
-  "Duration cannot exceed the available Start and End span.": "時長不能超過開始與結束時間之間的可用時段。",
-  "Reconnect Duration to Start and End?": "將時長重新連結到開始和結束時間嗎？",
-  "Duration will change from {{current}} to {{next}}.": "時長將從 {{current}} 變更為 {{next}}。",
-  "Lock and update": "鎖定並更新",
   "Session not found.": "找不到該專注記錄。",
   "Invalid session": "無效的專注記錄",
   "Accent color": "強調色",
@@ -655,9 +649,6 @@ const zhTW: Record<keyof typeof en, string> = {
   "Sessions by weekday": "按星期幾統計的專注記錄",
   "Average session by weekday": "按星期幾統計的平均專注時長",
   "Match case": "區分大小寫",
-  "Exact focus timing will be removed": "精確專注時間記錄將被移除",
-  "Changing this Session's start time, end time, or focused duration will remove its recorded pause/resume timing. Analytics will use proportional time allocation instead.":
-    "更改此記錄的開始時間、結束時間或專注時長將移除已記錄的暫停/繼續時間。分析將改用按比例分配時間。",
   "No academic years": "沒有學年",
   "Select a specific academic year to filter by subject.": "選擇特定學年以按科目篩選。",
   "By day": "按日",
@@ -673,6 +664,8 @@ const zhTW: Record<keyof typeof en, string> = {
   "Cumulative focus by Academic Year": "按學年累計專注時間",
   "Active-day rate": "活躍天數比例",
   days: "天",
+  "End day offset": "結束日偏移",
+  "+{{count}} days": "+{{count}} 天",
 };
 
 export default zhTW;

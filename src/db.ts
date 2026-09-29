@@ -1,5 +1,4 @@
 import { normalizeNote } from "./notes";
-import { reconstructSessionFields } from "./sessionAllocation";
 import Dexie, { type Table } from "dexie";
 import type { AcademicYear, AppSetting, FocusSession, Subject } from "./types";
 
@@ -50,18 +49,8 @@ export class FocusDatabase extends Dexie {
             if (normalized !== session.note) session.note = normalized;
           });
       });
-    this.version(4)
-      .stores({})
-      .upgrade(async (tx) => {
-        await tx
-          .table("sessions")
-          .toCollection()
-          .modify((session: FocusSession) => {
-            const reconstructed = reconstructSessionFields(session);
-            if (reconstructed !== session)
-              session.focusedAfterMidnightSeconds = reconstructed.focusedAfterMidnightSeconds;
-          });
-      });
+    // Keep the schema number for databases already opened by the previous build.
+    this.version(4).stores({});
   }
 }
 

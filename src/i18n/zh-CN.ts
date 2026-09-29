@@ -487,16 +487,10 @@ const zhCN: Record<keyof typeof en, string> = {
   HH: "时",
   MM: "分",
   SS: "秒",
-  "Unlock duration": "解锁时长",
-  "Lock duration": "锁定时长",
   "Choose an Academic Year.": "请选择一个学年。",
   "Choose a Subject from the selected Academic Year.": "请选择所选学年中的科目。",
   "End time must be after start time.": "结束时间必须晚于开始时间。",
   "Duration must be greater than zero.": "时长必须大于零。",
-  "Duration cannot exceed the available Start and End span.": "时长不能超过开始与结束时间之间的可用时段。",
-  "Reconnect Duration to Start and End?": "将时长重新关联到开始和结束时间吗？",
-  "Duration will change from {{current}} to {{next}}.": "时长将从 {{current}} 更改为 {{next}}。",
-  "Lock and update": "锁定并更新",
   "Session not found.": "找不到该专注记录。",
   "Invalid session": "无效的专注记录",
   "Accent color": "强调色",
@@ -654,9 +648,6 @@ const zhCN: Record<keyof typeof en, string> = {
   "Sessions by weekday": "按星期几统计的专注记录",
   "Average session by weekday": "按星期几统计的平均专注时长",
   "Match case": "区分大小写",
-  "Exact focus timing will be removed": "精确专注时间记录将被移除",
-  "Changing this Session's start time, end time, or focused duration will remove its recorded pause/resume timing. Analytics will use proportional time allocation instead.":
-    "更改此记录的开始时间、结束时间或专注时长将移除已记录的暂停/继续时间。分析将改用按比例分配时间。",
   "No academic years": "没有学年",
   "Select a specific academic year to filter by subject.": "选择特定学年以按科目筛选。",
   "By day": "按日",
@@ -672,6 +663,8 @@ const zhCN: Record<keyof typeof en, string> = {
   "Cumulative focus by Academic Year": "按学年累计专注时间",
   "Active-day rate": "活跃天数比例",
   days: "天",
+  "End day offset": "结束日偏移",
+  "+{{count}} days": "+{{count}} 天",
 };
 
 export default zhCN;

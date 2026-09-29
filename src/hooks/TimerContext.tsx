@@ -5,6 +5,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const timer = useTimer();
   return <TimerContext.Provider value={timer}>{children}</TimerContext.Provider>;
 }
+
 export function useMainTimer() {
   const timer = useContext(TimerContext);
   if (!timer) throw new Error("Main timer provider missing");

@@ -26,8 +26,7 @@ export type FocusSession = {
   academicYearName: string;
   note?: string;
   archived: boolean;
-  focusedAfterMidnightSeconds?: number;
-  /** Legacy/import compatibility only. New completed Sessions store summarized focus values. */
+  manual?: true;
   focusIntervals?: { startTime: number; endTime: number }[];
 };
 

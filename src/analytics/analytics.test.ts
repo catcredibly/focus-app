@@ -12,7 +12,6 @@ import {
   filterSessions,
   heatmapLevel,
   heatmapScale,
-  sessionsWithoutExactTimeOfDay,
   localDayKey,
   longestStreak,
   medianSessionSeconds,
@@ -181,9 +180,8 @@ it("excludes Sessions without exact clock-time data from only the time-of-day he
       .flat()
       .reduce((sum, seconds) => sum + seconds, 0),
   ).toBe(0);
-  expect(sessionsWithoutExactTimeOfDay([historical], period)).toEqual([historical]);
   expect(
-    timeOfDayMatrix([{ ...historical, focusedDurationSeconds: 7200 }], period)
+    timeOfDayMatrix([{ ...historical, focusedDurationSeconds: 7200, manual: true }], period)
       .flat()
       .reduce((sum, seconds) => sum + seconds, 0),
   ).toBe(7200);

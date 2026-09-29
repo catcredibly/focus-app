@@ -308,3 +308,15 @@ it("preserves paused and running intervals through reload and completion retry",
     completedSession(closed, 12000),
   );
 });
+
+it("allows countdowns and stopwatches across arbitrary calendar dates, retaining permanent intervals", () => {
+  const start = new Date(2026, 8, 20, 23).getTime();
+  const countdown = startTimerState(initialTimerState, 7 * 86400, subject, year, start);
+  expect(countdown.running).toBe(true);
+  expect(extendTimerState(countdown, 7 * 86400, start).targetEnd).toBe(start + 14 * 86400000);
+  const stopwatch = startStopwatchState(initialTimerState, subject, year, start);
+  const finished = finishTimerState(stopwatch, start + 5 * 86400000);
+  expect(completedSession(finished, finished.finishedAt!)?.focusIntervals).toEqual([
+    { startTime: start, endTime: start + 5 * 86400000 },
+  ]);
+});

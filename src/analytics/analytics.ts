@@ -1,4 +1,4 @@
-import { dailyFocusAllocations, exactFocusInRange, hasExactFocusTiming } from "../sessionAllocation";
+import { dailyFocusAllocations, exactFocusInRange, exactFocusIntervals } from "../sessionAllocation";
 import type { AcademicYear, FocusSession, Subject } from "../types";
 
 export type AnalyticsFilters = { academicYearId?: string; subjectId?: string; start?: number; end?: number };
@@ -253,7 +253,7 @@ export function weekdayTotals(sessions: FocusSession[], period?: { start: number
 export function timeOfDayMatrix(sessions: FocusSession[], period?: { start: number; end: number }) {
   const matrix = Array.from({ length: 7 }, () => Array(8).fill(0) as number[]);
   for (const s of sessions) {
-    if (!hasExactFocusTiming(s)) continue;
+    if (s.manual !== true && !exactFocusIntervals(s)) continue;
     let cursor = Math.max(s.startTime, period?.start ?? -Infinity);
     while (cursor < Math.min(s.endTime, period?.end ?? Infinity)) {
       const d = new Date(cursor),
@@ -269,17 +269,4 @@ export function timeOfDayMatrix(sessions: FocusSession[], period?: { start: numb
     }
   }
   return matrix;
-}
-
-export function sessionsWithoutExactTimeOfDay(sessions: FocusSession[], period?: { start: number; end: number }) {
-  return sessions.filter(
-    (session) =>
-      !hasExactFocusTiming(session) &&
-      dailyFocusAllocations(session).some(
-        (day) =>
-          day.seconds > 0 &&
-          (!period ||
-            (Math.min(day.end, session.endTime) > period.start && Math.max(day.start, session.startTime) < period.end)),
-      ),
-  );
 }

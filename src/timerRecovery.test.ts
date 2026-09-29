@@ -48,7 +48,7 @@ it("persists transitions, survives failed saves and recovers a save-before-clean
     const recovered = readTimerRecovery(storage);
     await saveFocusSession(completedSession(recovered, recovered.finishedAt!)!, false, database);
     expect(await database.sessions.count()).toBe(1);
-    expect((await database.sessions.get(session.id))?.focusIntervals).toBeUndefined();
+    expect((await database.sessions.get(session.id))?.focusIntervals).toEqual(state.focusIntervals);
     persistTimerRecovery(idleTimerState(recovered), storage);
     expect(values.size).toBe(0);
   } finally {

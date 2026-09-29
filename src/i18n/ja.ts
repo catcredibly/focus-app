@@ -501,17 +501,10 @@ const ja: Record<keyof typeof en, string> = {
   HH: "時",
   MM: "分",
   SS: "秒",
-  "Unlock duration": "時間のロックを解除",
-  "Lock duration": "時間をロック",
   "Choose an Academic Year.": "学年を選択してください。",
   "Choose a Subject from the selected Academic Year.": "選択した学年の科目を選択してください。",
   "End time must be after start time.": "終了時刻は開始時刻より後にしてください。",
   "Duration must be greater than zero.": "時間は0より大きくしてください。",
-  "Duration cannot exceed the available Start and End span.":
-    "時間は開始時刻から終了時刻までの範囲を超えることはできません。",
-  "Reconnect Duration to Start and End?": "時間を開始時刻と終了時刻に再接続しますか？",
-  "Duration will change from {{current}} to {{next}}.": "時間は {{current}} から {{next}} に変更されます。",
-  "Lock and update": "ロックして更新",
   "Session not found.": "セッションが見つかりません。",
   "Invalid session": "無効なセッション",
   "Accent color": "アクセントカラー",
@@ -673,9 +666,6 @@ const ja: Record<keyof typeof en, string> = {
   "Sessions by weekday": "曜日別のセッション数",
   "Average session by weekday": "曜日別の平均セッション時間",
   "Match case": "大文字と小文字を区別",
-  "Exact focus timing will be removed": "正確な集中時間の記録が削除されます",
-  "Changing this Session's start time, end time, or focused duration will remove its recorded pause/resume timing. Analytics will use proportional time allocation instead.":
-    "このセッションの開始時刻、終了時刻、または集中時間を変更すると、記録された一時停止・再開のタイミングが削除されます。分析では代わりに時間を比例配分します。",
   "No academic years": "学年がありません",
   "Select a specific academic year to filter by subject.": "科目で絞り込むには、特定の学年を選択してください。",
   "By day": "日別",
@@ -692,6 +682,8 @@ const ja: Record<keyof typeof en, string> = {
   "Cumulative focus by Academic Year": "学年別の累積集中時間",
   "Active-day rate": "学習日の割合",
   days: "日",
+  "End day offset": "終了日の差",
+  "+{{count}} days": "+{{count}}日",
 };
 
 export default ja;

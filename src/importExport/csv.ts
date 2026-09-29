@@ -1,5 +1,4 @@
 import { sessionInvalidReason } from "../sessionValidity";
-import { reconstructSessionFields } from "../sessionAllocation";
 import { normalizeNote } from "../notes";
 import { db, type FocusDatabase } from "../db";
 import { makeId } from "../data";
@@ -17,7 +16,10 @@ export const FOCUS_CSV_HEADERS = [
   "Focused Minutes",
   "Archived",
   "Note",
-  "Focused After Midnight Seconds",
+  "Manual",
+  "Focus Intervals",
+  "Start DateTime",
+  "End DateTime",
 ];
 const pad = (value: number) => String(value).padStart(2, "0");
 const localParts = (stamp: number) => {
@@ -49,7 +51,10 @@ export function exportSessionsCsv(sessions: FocusSession[]) {
         session.focusedDurationSeconds / 60,
         session.archived,
         session.note ?? "",
-        session.focusedAfterMidnightSeconds ?? "",
+        session.manual === true ? "true" : "",
+        session.focusIntervals === undefined ? "" : JSON.stringify(session.focusIntervals),
+        new Date(session.startTime).toISOString(),
+        new Date(session.endTime).toISOString(),
       ]
         .map(escapeCsv)
         .join(","),
@@ -195,7 +200,7 @@ export async function previewCsv(
     let duplicate = false;
     if (!errors.length && year && subject) {
       const id = (mapping.sessionId && record[mapping.sessionId]?.trim()) || makeId();
-      session = reconstructSessionFields({
+      session = {
         id,
         academicYearId: year.id,
         academicYearName: year.name,
@@ -204,12 +209,17 @@ export async function previewCsv(
         startTime,
         endTime,
         focusedDurationSeconds: Number.isFinite(minutes) ? minutes * 60 : (endTime - startTime) / 1000,
-        focusedAfterMidnightSeconds: record["Focused After Midnight Seconds"]?.trim()
-          ? Number(record["Focused After Midnight Seconds"])
-          : undefined,
         archived: mapping.archived ? bool(record[mapping.archived]) : false,
         note: mapping.note ? normalizeNote(record[mapping.note] ?? "") || undefined : undefined,
-      });
+      };
+      if (record["Manual"] === "true") session.manual = true;
+      if (record["Focus Intervals"]?.trim()) {
+        try {
+          session.focusIntervals = JSON.parse(record["Focus Intervals"]);
+        } catch {
+          errors.push("Invalid session");
+        }
+      }
       const existing = existingIds.get(id);
       duplicate = existing
         ? JSON.stringify(existing) === JSON.stringify(session)

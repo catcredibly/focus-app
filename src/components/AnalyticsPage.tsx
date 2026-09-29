@@ -1,3 +1,11 @@
+import {
+  initialAnalyticsYear,
+  groupedByArchive,
+  subjectsForYear,
+  DEFAULT_WEEKDAY_METRIC,
+  availableGoalMode,
+  compatibleGoalGrouping,
+} from "../analytics/controls";
 import { goalAchievement } from "../analytics/goalAchievement";
 import { academicYearProgress } from "../analytics/yearProgress";
 import { dailyFocusAllocations } from "../sessionAllocation";
@@ -110,7 +118,7 @@ export function AnalyticsPage() {
   useEffect(() => {
     if (initialized.current || !years || currentYear === undefined) return;
     initialized.current = true;
-    setYearId(years.some((year) => year.id === currentYear && !year.archived) ? currentYear : "__unselected");
+    setYearId(initialAnalyticsYear(years, currentYear));
   }, [years, currentYear]);
   const [subjectId, setSubjectId] = useState("");
   const [range, setRange] = useState<AnalyticsRange>("All");
@@ -193,9 +201,7 @@ export function AnalyticsPage() {
                 ? [{ value: "__unselected", label: t(years.length ? "No current academic year" : "No academic years") }]
                 : []),
               { value: "", label: t("All Years") },
-              ...[...years]
-                .sort((a, b) => Number(a.archived) - Number(b.archived))
-                .map((year) => ({ value: year.id, label: year.name, archived: year.archived })),
+              ...groupedByArchive(years).map((year) => ({ value: year.id, label: year.name, archived: year.archived })),
             ]}
           />
           <FilterSelect
@@ -206,10 +212,11 @@ export function AnalyticsPage() {
             onChange={setSubjectId}
             options={[
               { value: "", label: t("All Subjects") },
-              ...subjects
-                .filter((subject) => subject.academicYearId === yearId)
-                .sort((a, b) => Number(a.archived) - Number(b.archived))
-                .map((subject) => ({ value: subject.id, label: subject.name, archived: subject.archived })),
+              ...subjectsForYear(subjects, yearId).map((subject) => ({
+                value: subject.id,
+                label: subject.name,
+                archived: subject.archived,
+              })),
             ]}
           />
           <div className="custom-range-wrap">
@@ -585,7 +592,13 @@ function SubjectsAnalytics({
               wrapperStyle={{ pointerEvents: "auto" }}
               content={(props) => (
                 <div onMouseEnter={interactive.enter} onMouseLeave={interactive.leave}>
-                  <ChartTooltip {...props} kind="percent" />
+                  <ChartTooltip
+                    {...props}
+                    kind="percent"
+                    colors={Object.fromEntries(
+                      shareRows.map((row) => [shareNames.get(row.subjectId) ?? row.name, row.color]),
+                    )}
+                  />
                 </div>
               )}
             />
@@ -651,11 +664,13 @@ function YearsAnalytics({ sessions, history, years, subjects }: DataProps & { hi
       <Panel title={t("Academic Year summary")}>
         <div className="analytics-table year-summary-table" role="table">
           <div className="analytics-table-head" role="row">
-            {["Academic Year", "Sessions", "Subjects", "Active days", "Average Session"].map((label) => (
-              <span role="columnheader" key={label}>
-                {t(label)}
-              </span>
-            ))}
+            {["Academic Year", "Sessions", "Subjects", "Active days", "Active-day rate", "Average Session"].map(
+              (label) => (
+                <span role="columnheader" key={label}>
+                  {t(label)}
+                </span>
+              ),
+            )}
           </div>
           {rows.map((row) => (
             <div className="analytics-table-row" role="row" key={row.academicYearId}>
@@ -663,6 +678,12 @@ function YearsAnalytics({ sessions, history, years, subjects }: DataProps & { hi
               <span role="cell">{number(row.sessions)}</span>
               <span role="cell">{number(row.subjects)}</span>
               <span role="cell">{number(row.activeDays)}</span>
+              <span role="cell">
+                {percent(
+                  (academicYearProgress(years, history).find((item) => item.year.id === row.academicYearId)
+                    ?.activeDayRate ?? 0) * 100,
+                )}
+              </span>
               <span role="cell">{formatDuration(row.averageSessionSeconds)}</span>
             </div>
           ))}
@@ -684,11 +705,11 @@ function TimeTrends({ sessions, history, period, range }: TimelineProps) {
   const dailyAvailable = settings.dailyGoalEnabled && settings.dailyGoalSeconds > 0;
   const weeklyAvailable = settings.weeklyGoalEnabled && settings.weeklyGoalSeconds > 0;
   const [chosenGoal, setChosenGoal] = useState<"daily" | "weekly">("daily");
-  const goalMode = dailyAvailable && weeklyAvailable ? chosenGoal : weeklyAvailable ? "weekly" : "daily";
+  const goalMode = availableGoalMode(dailyAvailable, weeklyAvailable, chosenGoal);
   useEffect(() => {
     if (!(dailyAvailable && weeklyAvailable)) setChosenGoal(weeklyAvailable ? "weekly" : "daily");
   }, [dailyAvailable, weeklyAvailable]);
-  const grouping = goalMode === "weekly" && goalAggregation === "daily" ? "weekly" : goalAggregation;
+  const grouping = compatibleGoalGrouping(goalMode, goalAggregation);
   useEffect(() => {
     if (goalMode === "weekly" && goalAggregation === "daily") setGoalAggregation("weekly");
   }, [goalMode, goalAggregation]);
@@ -828,7 +849,7 @@ function RollingChart({ history, period, bars = false }: { history: FocusSession
 
 function StudyPatterns({ sessions, history, period, range }: TimelineProps) {
   const { t } = useTranslation();
-  const [weekdayMetric, setWeekdayMetric] = useState("seconds");
+  const [weekdayMetric, setWeekdayMetric] = useState(DEFAULT_WEEKDAY_METRIC);
   const values = summaryMetrics(sessions),
     matrix = averageStudyPattern(history, period),
     max = Math.max(1, ...matrix.flat());
@@ -1111,7 +1132,12 @@ function ChartTooltip({
   label,
   kind = "duration",
   total = 0,
-}: ChartTooltipProps & { kind?: "duration" | "count" | "percent" | "pie"; total?: number }) {
+  colors,
+}: ChartTooltipProps & {
+  kind?: "duration" | "count" | "percent" | "pie";
+  total?: number;
+  colors?: Record<string, string>;
+}) {
   if (!active || !payload?.length) return null;
   return (
     <div className="chart-tooltip">
@@ -1121,7 +1147,7 @@ function ChartTooltip({
         : payload
       ).map((item, index) => (
         <span key={`${item.dataKey}-${index}`}>
-          <i style={{ background: item.color ?? item.payload?.fill }} />
+          <i style={{ background: colors?.[String(item.name)] ?? item.color ?? item.fill ?? item.payload?.fill }} />
           <em>{item.name}</em>
           <b>
             {kind === "count"
@@ -1228,16 +1254,6 @@ function YearProgressChart({ years, sessions }: { years: AcademicYear[]; session
           </LineChart>
         </ScrollChart>
       )}
-      <div className="chart-legend">
-        {years.map((year) => {
-          const row = rows.find((row) => row.year.id === year.id);
-          return (
-            <span key={year.id}>
-              {year.name} · {t("Active-day rate")}: {row ? percent(row.activeDayRate * 100) : "—"}
-            </span>
-          );
-        })}
-      </div>
     </Panel>
   );
 }

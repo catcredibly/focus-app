@@ -1,5 +1,4 @@
 import { sessionInvalidReason } from "../sessionValidity";
-import { reconstructSessionFields } from "../sessionAllocation";
 import { normalizeNote } from "../notes";
 import packageMetadata from "../../package.json";
 import { db, type FocusDatabase } from "../db";
@@ -125,7 +124,7 @@ export async function analyzeBackup(backup: FocusBackup, database: FocusDatabase
     [database.sessions, backup.data.sessions],
   ] as const) {
     for (const row of rows) {
-      const comparable = table === database.sessions ? reconstructSessionFields(row as FocusSession) : row;
+      const comparable = row;
       const existing = await table.get(row.id);
       if (existing) equivalent(existing, comparable) ? duplicates++ : conflicts++;
     }
@@ -196,12 +195,10 @@ export async function restoreBackup(
       await apply(database.subjects, backup.data.subjects, "subjectsCreated");
       await apply(
         database.sessions,
-        backup.data.sessions.map((session) =>
-          reconstructSessionFields({
-            ...session,
-            note: typeof session.note === "string" ? normalizeNote(session.note) : undefined,
-          }),
-        ),
+        backup.data.sessions.map((session) => ({
+          ...session,
+          note: typeof session.note === "string" ? normalizeNote(session.note) : undefined,
+        })),
         "sessionsImported",
       );
       for (const setting of backup.data.settings) {

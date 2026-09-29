@@ -1,4 +1,5 @@
 import "fake-indexeddb/auto";
+import { createSession } from "./data";
 import Dexie from "dexie";
 import { afterEach, describe, expect, it } from "vitest";
 import { FocusDatabase } from "./db";
@@ -241,213 +242,75 @@ describe("management archive and deletion integrity", () => {
     });
     await expect(moveSessions(["one"], "archived", testDb)).rejects.toThrow("active Subject");
   });
-
-  it("updates Session relationships and preserves an unlocked focused duration", async () => {
-    const testDb = database();
-    await testDb.academicYears.bulkAdd([
-      { id: "old-year", name: "Old Year", archived: false },
-      { id: "new-year", name: "New Year", archived: false },
-    ]);
-    await testDb.subjects.bulkAdd([
-      { id: "old", academicYearId: "old-year", name: "Old", color: "#fff", archived: false },
-      { id: "new", academicYearId: "new-year", name: "New", color: "#fff", archived: false },
-    ]);
-    await testDb.sessions.add({
-      id: "session",
-      subjectId: "old",
-      subjectName: "Old",
-      academicYearId: "old-year",
-      academicYearName: "Old Year",
-      startTime: 0,
-      endTime: 7200000,
-      focusedDurationSeconds: 5400,
-      archived: false,
-    });
-    await updateSessionDetails(
-      "session",
-      {
-        academicYearId: "new-year",
-        subjectId: "new",
-        startTime: 1800000,
-        endTime: 7200000,
-        focusedDurationSeconds: 4500,
-        durationMode: "unlocked",
-        note: "Updated",
-      },
-      testDb,
-    );
-    expect(await testDb.sessions.get("session")).toMatchObject({
-      subjectId: "new",
-      subjectName: "New",
-      academicYearId: "new-year",
-      academicYearName: "New Year",
-      startTime: 1800000,
-      endTime: 7200000,
-      focusedDurationSeconds: 4500,
-      durationMode: "unlocked",
-      note: "Updated",
-    });
-  });
-
-  it("rejects an unlocked duration longer than the Session span", async () => {
-    const testDb = database();
-    await testDb.academicYears.add({ id: "year", name: "Year", archived: false });
-    await testDb.subjects.add({
-      id: "subject",
-      academicYearId: "year",
-      name: "Subject",
-      color: "#fff",
-      archived: false,
-    });
-    await testDb.sessions.add({
-      id: "session",
-      subjectId: "subject",
-      subjectName: "Subject",
-      academicYearId: "year",
-      academicYearName: "Year",
-      startTime: 0,
-      endTime: 3600000,
-      focusedDurationSeconds: 3600,
-      archived: false,
-    });
-    await expect(
-      updateSessionDetails(
-        "session",
-        {
-          academicYearId: "year",
-          subjectId: "subject",
-          startTime: 0,
-          endTime: 3600000,
-          focusedDurationSeconds: 5400,
-          durationMode: "unlocked",
-        },
-        testDb,
-      ),
-    ).rejects.toThrow("cannot exceed");
-    expect((await testDb.sessions.get("session"))?.focusedDurationSeconds).toBe(3600);
-  });
 });
-
-it("corrects an invalid overnight Session only after a valid explicit split is saved", async () => {
+it("relocates timer timing without losing intervals and warns only on year boundaries", async () => {
   const testDb = database();
-  await testDb.academicYears.add({ id: "year", name: "Year", archived: false });
-  await testDb.subjects.add({
-    id: "subject",
-    academicYearId: "year",
-    name: "Subject",
-    color: "#fff",
-    archived: false,
-  });
-  const startTime = new Date(2026, 8, 21, 23).getTime();
-  const input = {
-    academicYearId: "year",
-    subjectId: "subject",
-    startTime,
-    endTime: startTime + 7200_000,
-    focusedDurationSeconds: 3600,
-    focusedAfterMidnightSeconds: 1800,
-    durationMode: "unlocked" as const,
-  };
-  await testDb.sessions.add({
-    id: "legacy",
-    ...input,
-    focusedAfterMidnightSeconds: undefined,
-    subjectName: "Subject",
-    academicYearName: "Year",
-    archived: false,
-  });
-  await expect(updateSessionDetails("legacy", { ...input, focusedAfterMidnightSeconds: 4000 }, testDb)).rejects.toThrow(
-    /fit within/,
-  );
-  expect(await saveSessionEdit("legacy", input, {}, testDb)).toBe("saved");
-  expect((await testDb.sessions.get("legacy"))?.focusedAfterMidnightSeconds).toBe(1800);
-});
-
-it("preserves exact intervals for unrelated edits and removes them for timing edits", async () => {
-  const testDb = database();
-  await testDb.academicYears.add({ id: "y", name: "Year", archived: false });
-  await testDb.subjects.add({ id: "s", academicYearId: "y", name: "Subject", color: "#fff", archived: false });
-  const intervals = [
-    { startTime: 1001, endTime: 61001 },
-    { startTime: 63001, endTime: 123001 },
-  ];
-  await testDb.sessions.add({
-    id: "session",
-    academicYearId: "y",
-    academicYearName: "Year",
-    subjectId: "s",
-    subjectName: "Subject",
-    startTime: 1001,
-    endTime: 123001,
-    focusedDurationSeconds: 120,
-    focusIntervals: intervals,
-    archived: false,
-  });
-  const input = {
-    academicYearId: "y",
-    subjectId: "s",
-    startTime: 1001,
-    endTime: 123001,
-    focusedDurationSeconds: 120,
-    durationMode: "unlocked" as const,
-    note: "Updated note",
-  };
-  await updateSessionDetails("session", input, testDb);
-  expect((await testDb.sessions.get("session"))?.focusIntervals).toEqual(intervals);
-  await updateSessionDetails("session", { ...input, endTime: 124001 }, testDb);
-  expect((await testDb.sessions.get("session"))?.focusIntervals).toBeUndefined();
-});
-
-it("gates destructive timing edits and year-boundary edits before persistence", async () => {
-  const databaseUnderTest = database();
-  const year = { id: "y", name: "Year", archived: false, startDate: "2026-09-01", endDate: "2026-09-30" };
-  await databaseUnderTest.academicYears.bulkAdd([year, { ...year, id: "other" }]);
-  await databaseUnderTest.subjects.bulkAdd([
-    { id: "s", academicYearId: "y", name: "Subject", color: "#fff", archived: false },
-    { id: "s2", academicYearId: "y", name: "Second", color: "#fff", archived: false },
-    { id: "s3", academicYearId: "other", name: "Subject", color: "#fff", archived: false },
-  ]);
-  const start = new Date(2026, 8, 15, 23).getTime(),
-    end = start + 7200000;
+  const year = { id: "y", name: "Y", archived: false, startDate: "2026-09-01", endDate: "2026-09-30" };
+  await testDb.academicYears.add(year);
+  await testDb.subjects.add({ id: "s", name: "S", academicYearId: "y", color: "#fff", archived: false });
+  const start = new Date(2026, 8, 15, 23).getTime();
   const original = {
     id: "s",
-    academicYearId: "y",
-    academicYearName: "Year",
     subjectId: "s",
-    subjectName: "Subject",
+    subjectName: "S",
+    academicYearId: "y",
+    academicYearName: "Y",
+    archived: false,
     startTime: start,
-    endTime: end,
+    endTime: start + 7200000,
     focusedDurationSeconds: 3600,
-    durationMode: "unlocked" as const,
-    archived: true,
     focusIntervals: [{ startTime: start, endTime: start + 3600000 }],
   };
-  await databaseUnderTest.sessions.add(original);
-  const input = { ...original, focusedAfterMidnightSeconds: 0, note: "new" };
-  for (const change of [{ note: "changed" }, { subjectId: "s2" }, { academicYearId: "other", subjectId: "s3" }]) {
-    await databaseUnderTest.sessions.put(original);
-    expect(await saveSessionEdit("s", { ...input, ...change }, {}, databaseUnderTest)).toBe("saved");
-    expect((await databaseUnderTest.sessions.get("s"))?.focusIntervals).toEqual(original.focusIntervals);
-  }
-  for (const change of [{ startTime: start - 1000 }, { endTime: end + 1000 }, { focusedDurationSeconds: 3500 }]) {
-    await databaseUnderTest.sessions.put(original);
-    expect(await saveSessionEdit("s", { ...input, ...change }, {}, databaseUnderTest)).toBe("timing");
-    expect(await databaseUnderTest.sessions.get("s")).toEqual(original); // Cancel means no save call.
-    expect(await saveSessionEdit("s", { ...input, ...change }, { timing: true }, databaseUnderTest)).toBe("saved");
-    expect((await databaseUnderTest.sessions.get("s"))?.focusIntervals).toBeUndefined();
-    expect(await saveSessionEdit("s", { ...input, ...change }, {}, databaseUnderTest)).toBe("saved");
-  }
-  await databaseUnderTest.sessions.put(original);
-  expect(await saveSessionEdit("s", input, {}, databaseUnderTest)).toBe("saved"); // Restored timing, no warning.
-  await databaseUnderTest.sessions.add({
-    ...original,
-    id: "already-invalid",
-    startTime: new Date(2026, 7, 30).getTime(),
+  await testDb.sessions.add(original);
+  const moved = {
+    academicYearId: "y",
+    subjectId: "s",
+    startTime: new Date(2026, 7, 30, 23).getTime(),
+    endTime: 1,
+    note: "moved",
+  };
+  expect(await saveSessionEdit("s", moved, {}, testDb)).toBe("invalid");
+  expect(await testDb.sessions.get("s")).toEqual(original);
+  expect(await saveSessionEdit("s", moved, { invalid: true }, testDb)).toBe("saved");
+  expect(await testDb.sessions.get("s")).toMatchObject({
+    endTime: moved.startTime + 7200000,
+    focusedDurationSeconds: 3600,
+    focusIntervals: [{ startTime: moved.startTime, endTime: moved.startTime + 3600000 }],
   });
-  const narrow = { ...year, endDate: "2026-09-14" };
-  expect(await saveAcademicYearEdit(narrow, false, databaseUnderTest)).toBe(1);
-  expect(await databaseUnderTest.academicYears.get("y")).toEqual(year);
-  expect((await databaseUnderTest.sessions.get("s"))?.archived).toBe(true);
-  expect(await saveAcademicYearEdit(narrow, true, databaseUnderTest)).toBe(0);
-  expect(await saveAcademicYearEdit(year, false, databaseUnderTest)).toBe(0);
+  await saveSessionEdit("s", { ...moved, startTime: start }, {}, testDb);
+  expect(await saveAcademicYearEdit({ ...year, endDate: "2026-09-14" }, false, testDb)).toBe(1);
+  expect(await testDb.academicYears.get("y")).toEqual(year);
+});
+it("derives manual duration across multiple dates without a focus-time limit", async () => {
+  const testDb = database();
+  await testDb.academicYears.add({ id: "y", name: "Y", archived: false });
+  await testDb.subjects.add({ id: "s", name: "S", academicYearId: "y", color: "#fff", archived: false });
+  await testDb.sessions.add({
+    id: "s",
+    subjectId: "s",
+    subjectName: "S",
+    academicYearId: "y",
+    academicYearName: "Y",
+    archived: false,
+    manual: true,
+    startTime: 1000,
+    endTime: 2000,
+    focusedDurationSeconds: 1,
+  });
+  await updateSessionDetails(
+    "s",
+    { academicYearId: "y", subjectId: "s", startTime: 1000, endTime: 1000 + 7 * 86400000 },
+    testDb,
+  );
+  expect((await testDb.sessions.get("s"))?.focusedDurationSeconds).toBe(7 * 86400);
+});
+
+it("Add Session explicitly stores manual true and derives continuous focus", async () => {
+  const testDb = database();
+  const subject = { id: "s", name: "S", academicYearId: "y", color: "#fff", archived: false };
+  const academicYear = { id: "y", name: "Y", archived: false };
+  const session = await createSession({ subject, academicYear, startTime: 1000, endTime: 1000 + 4 * 86400000 }, testDb);
+  expect(session.manual).toBe(true);
+  expect(session.focusedDurationSeconds).toBe(4 * 86400);
+  expect((await testDb.sessions.get(session.id))?.manual).toBe(true);
 });

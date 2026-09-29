@@ -502,17 +502,10 @@ const en = {
   HH: "HH",
   MM: "MM",
   SS: "SS",
-  "Unlock duration": "Unlock duration",
-  "Lock duration": "Lock duration",
   "Choose an Academic Year.": "Choose an Academic Year.",
   "Choose a Subject from the selected Academic Year.": "Choose a Subject from the selected Academic Year.",
   "End time must be after start time.": "End time must be after start time.",
   "Duration must be greater than zero.": "Duration must be greater than zero.",
-  "Duration cannot exceed the available Start and End span.":
-    "Duration cannot exceed the available Start and End span.",
-  "Reconnect Duration to Start and End?": "Reconnect Duration to Start and End?",
-  "Duration will change from {{current}} to {{next}}.": "Duration will change from {{current}} to {{next}}.",
-  "Lock and update": "Lock and update",
   "Session not found.": "Session not found.",
   "Invalid session": "Invalid session",
   "Accent color": "Accent color",
@@ -673,9 +666,6 @@ const en = {
   "Sessions by weekday": "Sessions by weekday",
   "Average session by weekday": "Average session by weekday",
   "Match case": "Match case",
-  "Exact focus timing will be removed": "Exact focus timing will be removed",
-  "Changing this Session's start time, end time, or focused duration will remove its recorded pause/resume timing. Analytics will use proportional time allocation instead.":
-    "Changing this Session's start time, end time, or focused duration will remove its recorded pause/resume timing. Analytics will use proportional time allocation instead.",
   "No academic years": "No academic years",
   "Select a specific academic year to filter by subject.": "Select a specific academic year to filter by subject.",
   "By day": "By day",
@@ -691,6 +681,8 @@ const en = {
   "Cumulative focus by Academic Year": "Cumulative focus by Academic Year",
   "Active-day rate": "Active-day rate",
   days: "days",
+  "End day offset": "End day offset",
+  "+{{count}} days": "+{{count}} days",
 } as const;
 
 export default en;

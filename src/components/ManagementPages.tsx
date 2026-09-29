@@ -1,5 +1,5 @@
-import { removesExactFocusTiming } from "../sessionAllocation";
-import { sessionInvalidReason, invalidReasonText, newlyInvalidCount } from "../sessionValidity";
+import { inHistoryScope, historyStatusAfterScope, matchesHistoryStatus } from "../historyFilters";
+import { sessionInvalidReason, invalidReasonText } from "../sessionValidity";
 import { historyPagination, enteredHistoryPage } from "../historyPagination";
 import { NoteViewer, NoteSnippet } from "./HistoryNotes";
 import { NoteEditor } from "./NoteEditor";
@@ -16,8 +16,6 @@ import {
   Archive,
   CalendarDays,
   Check,
-  Lock,
-  LockOpen,
   Pencil,
   Plus,
   RotateCcw,
@@ -36,19 +34,19 @@ import {
   isSessionEffectivelyArchived,
   moveSessions,
   setAcademicYearArchived,
-  updateSessionDetails,
+  saveSessionEdit,
+  saveAcademicYearEdit,
 } from "../management";
 import { managementViewState } from "../managementViewState";
 import { useSettings } from "../hooks/useSettings";
 import { useTranslation } from "react-i18next";
 import { localeCode } from "../i18n";
 import {
+  editedSessionTimes,
+  sessionDayOffset,
+  sessionEditTiming,
   durationParts,
-  formatClockDuration,
-  inferDurationMode,
-  normalizeDurationParts,
   sessionSpanSeconds,
-  type DurationMode,
 } from "../sessionDuration";
 
 const activeTimerRelationship = () => {
@@ -213,12 +211,11 @@ export function AcademicYearsPage() {
       endDate: String(form.get("endDate") || "") || undefined,
       archived: editing?.archived ?? false,
     };
-    const count = editing ? newlyInvalidCount(sessions, editing, year) : 0;
+    const count = await saveAcademicYearEdit(year);
     if (count) {
       setPendingYear({ year, count });
       return;
     }
-    await db.academicYears.put(year);
     if (!currentId && !year.archived) await setCurrentAcademicYear(year.id);
     setEditing(undefined);
   };
@@ -400,7 +397,7 @@ export function AcademicYearsPage() {
           )}
           onCancel={() => setPendingYear(undefined)}
           onConfirm={async () => {
-            await db.academicYears.put(pendingYear.year);
+            await saveAcademicYearEdit(pendingYear.year, true);
             if (!currentId && !pendingYear.year.archived) await setCurrentAcademicYear(pendingYear.year.id);
             setPendingYear(undefined);
             setEditing(undefined);
@@ -636,21 +633,17 @@ function SessionEditor({
   const initialEnd = session?.endTime ?? openedAt;
   // This editor has one date field; keep the suggested start on that same day.
   const initialStart = session?.startTime ?? Math.max(new Date(openedAt).setHours(0, 0, 0, 0), openedAt - 3_600_000);
-  const initialMode = session ? inferDurationMode(session) : "locked";
+  const manual = !session || session.manual === true;
   const [academicYearId, setAcademicYearId] = useState(initialYearId);
   const [subjectId, setSubjectId] = useState(initialSubjectId);
   const [date, setDate] = useState(localDateInputValue(initialStart));
   const [start, setStart] = useState(timeInputValue(initialStart));
   const [end, setEnd] = useState(timeInputValue(initialEnd));
-  const [mode, setMode] = useState<DurationMode>(initialMode);
-  const [duration, setDuration] = useState(() =>
-    durationInputFields(session?.focusedDurationSeconds ?? sessionSpanSeconds(initialStart, initialEnd)),
+  const [dayOffset, setDayOffset] = useState(() =>
+    session ? sessionDayOffset(session.startTime, session.endTime) : 0,
   );
-  const [preserveStoredDuration, setPreserveStoredDuration] = useState(Boolean(session && initialMode === "unlocked"));
   const [note, setNote] = useState(session?.note ?? "");
-  const [timingPending, setTimingPending] = useState(false);
   const [invalidPending, setInvalidPending] = useState(false);
-  const [relockPending, setRelockPending] = useState(false);
   const [saveError, setSaveError] = useState("");
   const availableSubjects = subjects.filter(
     (subject) => subject.academicYearId === academicYearId && (session || !subject.archived),
@@ -661,60 +654,21 @@ function SessionEditor({
       setSubjectId("");
     }
   }, [session, academicYearId, currentYearId]);
-  const startTime =
-    session && date === localDateInputValue(initialStart) && start === timeInputValue(initialStart)
-      ? session.startTime
-      : new Date(`${date}T${start}`).getTime();
-  const endDate = new Date(`${date}T${end}`);
-  if (end < start) endDate.setDate(endDate.getDate() + 1);
-  const endTime =
-    session &&
-    date === localDateInputValue(initialStart) &&
-    end === timeInputValue(initialEnd) &&
-    start === timeInputValue(initialStart)
-      ? session.endTime
-      : endDate.getTime();
-  const validSpan = Number.isFinite(startTime) && Number.isFinite(endTime) && endTime > startTime;
-  const spanSeconds = validSpan ? sessionSpanSeconds(startTime, endTime) : 0;
-  const normalizedDuration = normalizeDurationParts(Number(duration.hours), Number(duration.minutes), 0);
-  const focusedDurationSeconds =
-    mode === "locked"
-      ? spanSeconds
-      : session &&
-          (preserveStoredDuration ||
-            (duration.hours === durationInputFields(session.focusedDurationSeconds).hours &&
-              duration.minutes === durationInputFields(session.focusedDurationSeconds).minutes))
-        ? session.focusedDurationSeconds
-        : normalizedDuration.totalSeconds;
+  const entered = editedSessionTimes(date, start, end, session ?? undefined, dayOffset);
+  const { startTime, endTime } =
+    session && !manual ? sessionEditTiming(session, entered.startTime, entered.endTime) : entered;
+  const validSpan =
+    Number.isFinite(startTime) &&
+    Number.isFinite(endTime) &&
+    endTime > startTime &&
+    Number.isInteger(dayOffset) &&
+    dayOffset >= 0;
+  const focusedDurationSeconds = manual ? sessionSpanSeconds(startTime, endTime) : session!.focusedDurationSeconds;
+  const duration = durationInputFields(focusedDurationSeconds);
   const relationshipValid = Boolean(
     academicYearId && subjectId && availableSubjects.some((subject) => subject.id === subjectId),
   );
-  const durationError =
-    mode === "unlocked" && focusedDurationSeconds <= 0
-      ? t("Duration must be greater than zero.")
-      : mode === "unlocked" && focusedDurationSeconds > spanSeconds
-        ? t("Duration cannot exceed the available Start and End span.")
-        : "";
-
-  useEffect(() => {
-    if (mode === "locked" && validSpan) {
-      setDuration(durationInputFields(spanSeconds));
-      setPreserveStoredDuration(false);
-    }
-  }, [date, start, end, mode, spanSeconds, validSpan]);
-
-  const normalizeDuration = () => setDuration(durationInputFields(normalizedDuration.totalSeconds));
-  const requestModeToggle = () => {
-    setSaveError("");
-    if (mode === "locked") {
-      setPreserveStoredDuration(false);
-      setMode("unlocked");
-      return;
-    }
-    if (focusedDurationSeconds !== spanSeconds) setRelockPending(true);
-    else setMode("locked");
-  };
-  const save = async (event?: React.FormEvent<HTMLFormElement>, confirmed = false, timingConfirmed = false) => {
+  const save = async (event?: React.FormEvent<HTMLFormElement>, confirmed = false) => {
     event?.preventDefault();
     setSaveError("");
     if (!academicYearId) {
@@ -729,7 +683,7 @@ function SessionEditor({
       setSaveError(t("End time must be after start time."));
       return;
     }
-    if (durationError || !noteMetrics(note).valid) return;
+    if (!noteMetrics(note).valid) return;
     const reason = sessionInvalidReason(
       { startTime, endTime },
       years.find((year) => year.id === academicYearId),
@@ -744,29 +698,26 @@ function SessionEditor({
       setInvalidPending(true);
       return;
     }
-    if (
-      !timingConfirmed &&
-      session &&
-      removesExactFocusTiming(session, { startTime, endTime, focusedDurationSeconds })
-    ) {
-      setInvalidPending(false);
-      setTimingPending(true);
-      return;
-    }
     setInvalidPending(false);
-    setTimingPending(false);
     try {
-      if (session)
-        await updateSessionDetails(session.id, {
-          academicYearId,
-          subjectId,
-          startTime,
-          endTime,
-          focusedDurationSeconds,
-          durationMode: mode,
-          note,
-        });
-      else {
+      if (session) {
+        const result = await saveSessionEdit(
+          session.id,
+          {
+            academicYearId,
+            subjectId,
+            startTime,
+            endTime,
+
+            note,
+          },
+          { invalid: confirmed },
+        );
+        if (result !== "saved") {
+          if (result === "invalid") setInvalidPending(true);
+          return;
+        }
+      } else {
         const subject = subjects.find((item) => item.id === subjectId)!;
         const academicYear = years.find((item) => item.id === academicYearId)!;
         await createSession({
@@ -774,8 +725,7 @@ function SessionEditor({
           academicYear,
           startTime,
           endTime,
-          focusedDurationSeconds,
-          durationMode: mode,
+
           note,
         });
       }
@@ -794,16 +744,6 @@ function SessionEditor({
           )}
           onCancel={() => setInvalidPending(false)}
           onConfirm={() => save(undefined, true)}
-        />
-      )}
-      {timingPending && (
-        <InvalidConfirmation
-          title="Exact focus timing will be removed"
-          message={t(
-            "Changing this Session's start time, end time, or focused duration will remove its recorded pause/resume timing. Analytics will use proportional time allocation instead.",
-          )}
-          onCancel={() => setTimingPending(false)}
-          onConfirm={() => save(undefined, true, true)}
         />
       )}
       <form onSubmit={save} className="form session-editor">
@@ -856,52 +796,50 @@ function SessionEditor({
             <input type="time" value={start} onChange={(event) => setStart(event.target.value)} required />
           </label>
           <label>
-            {t("End")} {end < start && <small>{t("+1 day")}</small>}
+            {t("End")}
             <input
               className={!validSpan ? "input-error" : ""}
               type="time"
-              value={end}
+              value={manual ? end : timeInputValue(endTime)}
+              readOnly={!manual}
               onChange={(event) => setEnd(event.target.value)}
               required
             />
+            {manual ? (
+              <span className="end-day-offset">
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={dayOffset}
+                  aria-label={t("End day offset")}
+                  onChange={(event) => setDayOffset(Number(event.target.value))}
+                />
+                <small className="muted">
+                  {t(dayOffset === 1 ? "+1 day" : "+{{count}} days", { count: dayOffset })}
+                </small>
+              </span>
+            ) : (
+              sessionDayOffset(startTime, endTime) > 0 && (
+                <small className="muted">{t("+{{count}} days", { count: sessionDayOffset(startTime, endTime) })}</small>
+              )
+            )}
           </label>
         </div>
         {!validSpan && <p className="field-error">{t("End time must be after start time.")}</p>}
-        <div className="duration-field">
-          <span className="field-label">{t("Duration")}</span>
-          <div
-            className={`duration-editor-fields ${durationError ? "has-error" : ""} ${mode === "locked" ? "is-locked" : ""}`}
-          >
-            {(["hours", "minutes"] as const).map((part, index) => (
-              <div className="duration-part" key={part}>
-                <input
-                  aria-label={t(part === "hours" ? "Hours" : "Minutes")}
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={duration[part]}
-                  readOnly={mode === "locked"}
-                  onChange={(event) => {
-                    setPreserveStoredDuration(false);
-                    setDuration((current) => ({ ...current, [part]: event.target.value.replace(/\D/g, "") }));
-                  }}
-                  onBlur={normalizeDuration}
-                />
-                <small>{t(part === "hours" ? "HH" : "MM")}</small>
-                {index === 0 && <b aria-hidden="true">:</b>}
-              </div>
-            ))}
-            <button
-              type="button"
-              className="duration-lock tooltip-button"
-              aria-label={t(mode === "locked" ? "Unlock duration" : "Lock duration")}
-              data-tooltip={t(mode === "locked" ? "Unlock duration" : "Lock duration")}
-              onClick={requestModeToggle}
-            >
-              {mode === "locked" ? <Lock /> : <LockOpen />}
-            </button>
+        {!manual && (
+          <div className="duration-field">
+            <span className="field-label">{t("Focus time")}</span>
+            <div className="duration-editor-fields is-locked">
+              {(["hours", "minutes"] as const).map((part) => (
+                <div className="duration-part" key={part}>
+                  <input aria-label={t(part === "hours" ? "Hours" : "Minutes")} value={duration[part]} readOnly />
+                  <small>{t(part === "hours" ? "HH" : "MM")}</small>
+                </div>
+              ))}
+            </div>
           </div>
-          {durationError && <p className="field-error">{durationError}</p>}
-        </div>
+        )}
         <label>
           {t("Note")}
           <NoteEditor value={note} onChange={setNote} />
@@ -911,41 +849,11 @@ function SessionEditor({
           <button type="button" data-note-exit onClick={onClose}>
             {t("Cancel")}
           </button>
-          <button
-            className="primary-action"
-            disabled={!noteMetrics(note).valid || !relationshipValid || !validSpan || Boolean(durationError)}
-          >
+          <button className="primary-action" disabled={!noteMetrics(note).valid || !relationshipValid || !validSpan}>
             {t("Save")}
           </button>
         </div>
       </form>
-      {relockPending && (
-        <Modal title={t("Reconnect Duration to Start and End?")} onClose={() => setRelockPending(false)}>
-          <p className="modal-copy">
-            {t("Duration will change from {{current}} to {{next}}.", {
-              current: formatClockDuration(focusedDurationSeconds),
-              next: formatClockDuration(spanSeconds),
-            })}
-          </p>
-          <div className="modal-actions">
-            <button type="button" onClick={() => setRelockPending(false)}>
-              {t("Cancel")}
-            </button>
-            <button
-              type="button"
-              className="primary-action"
-              onClick={() => {
-                setDuration(durationInputFields(spanSeconds));
-                setPreserveStoredDuration(false);
-                setMode("locked");
-                setRelockPending(false);
-              }}
-            >
-              {t("Lock and update")}
-            </button>
-          </div>
-        </Modal>
-      )}
     </>
   );
 }
@@ -1025,7 +933,7 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
       setSubjectId("");
   }, [yearId, subjectId, subjects]);
   useEffect(() => {
-    if (loadedYears && loadedSessions && status === "invalid" && !invalidCount) {
+    if (loadedYears && loadedSessions && historyStatusAfterScope(status, invalidCount) !== status) {
       setStatus("all");
       setPage(0);
     }
@@ -1034,13 +942,12 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
     () =>
       sessions.filter(
         (session) =>
-          (status === "all" ||
-            (status === "invalid"
-              ? Boolean(invalid.get(session.id))
-              : !invalid.get(session.id) &&
-                isSessionEffectivelyArchived(session, subjects, years) === (status === "archived"))) &&
-          (!yearId || session.academicYearId === yearId) &&
-          (!subjectId || session.subjectId === subjectId) &&
+          matchesHistoryStatus(
+            status,
+            Boolean(invalid.get(session.id)),
+            isSessionEffectivelyArchived(session, subjects, years),
+          ) &&
+          inHistoryScope(session, { yearId, subjectId }) &&
           terms.every((term) => readable.get(session.id)?.includes(term)),
       ),
     [sessions, status, yearId, subjectId, subjects, years, terms, readable, invalid],
@@ -1271,7 +1178,12 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
                 minute: "2-digit",
               })}
               {localDateInputValue(s.endTime) !== localDateInputValue(s.startTime) && (
-                <small className="overnight-label"> {t("+1 day")}</small>
+                <small className="overnight-label">
+                  {" "}
+                  {sessionDayOffset(s.startTime, s.endTime) > 1
+                    ? new Date(s.endTime).toLocaleDateString(localeCode())
+                    : t("+1 day")}
+                </small>
               )}
             </span>
             <strong>{formatDuration(s.focusedDurationSeconds)}</strong>
@@ -1279,6 +1191,8 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
             <TruncatedValue value={s.academicYearName} />
             <span
               title={invalid.get(s.id) ? t(invalidReasonText[invalid.get(s.id)!]) : undefined}
+              tabIndex={invalid.get(s.id) ? 0 : undefined}
+              aria-label={invalid.get(s.id) ? t(invalidReasonText[invalid.get(s.id)!]) : undefined}
               className={`badge ${invalid.get(s.id) ? "badge--invalid" : isSessionEffectivelyArchived(s, subjects, years) ? "badge--archived" : ""}`}
             >
               {t(

@@ -30,7 +30,7 @@ describe("analytics refinements", () => {
       ...row(20, 7200),
       startTime: at(20, 23),
       endTime: at(21, 1),
-      focusedAfterMidnightSeconds: 3600,
+      manual: true as const,
     };
     const points = calendarBuckets([overnight], { start: at(20), end: at(22) }, "daily");
     expect(points.map((point) => [point.seconds, point.sessionCount, point.averageSeconds])).toEqual([
@@ -95,7 +95,7 @@ it.each(["7D", "30D", "90D", "1Y"] as const)("anchors %s historical, ongoing and
   expect(analyticsPeriod("Custom", [], at(29), custom, year)).toEqual(custom);
 });
 it("keeps weekday count and whole-session averages separate from overnight calendar allocation", () => {
-  const overnight = { ...row(20, 7200), startTime: at(20, 23), endTime: at(21, 1), focusedAfterMidnightSeconds: 3600 };
+  const overnight = { ...row(20, 7200), startTime: at(20, 23), endTime: at(21, 1), manual: true as const };
   const values = weekdayTotals([overnight], { start: at(20), end: at(22) });
   expect(values.map((value) => value.label)).toEqual(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
   expect(values[6]).toMatchObject({ count: 1, sessionSeconds: 7200, seconds: 3600 });

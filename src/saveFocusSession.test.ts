@@ -29,7 +29,7 @@ async function goals() {
   );
 }
 afterEach(() => database.delete());
-it("retains exact retry data after a failed save and stores only the final day split", async () => {
+it("retains exact retry data after a failed save and stores permanent focus intervals", async () => {
   const start = new Date(2026, 8, 24, 23).getTime();
   const source = {
     ...session("retry"),
@@ -49,8 +49,7 @@ it("retains exact retry data after a failed save and stores only the final day s
   add.mockRestore();
   await saveFocusSession(source, false, database);
   const saved = await database.sessions.get(source.id);
-  expect(saved?.focusIntervals).toBeUndefined();
-  expect(saved?.focusedAfterMidnightSeconds).toBe(5400);
+  expect(saved?.focusIntervals).toEqual(source.focusIntervals);
   expect(saved?.focusedDurationSeconds).toBe(7200);
   expect(source).toEqual(original);
 });

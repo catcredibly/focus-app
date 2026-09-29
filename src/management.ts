@@ -1,12 +1,9 @@
-import { followingMidnight, sessionMaximumEnd, overnightAllocationValid } from "./sessionBoundary";
-import { removesExactFocusTiming } from "./sessionAllocation";
 import { sessionInvalidReason, newlyInvalidCount } from "./sessionValidity";
 import { noteMetrics } from "./notes";
 import { db, type FocusDatabase } from "./db";
 import { CURRENT_YEAR_KEY } from "./data";
 import type { AcademicYear, FocusSession, Subject } from "./types";
-import type { DurationMode } from "./sessionDuration";
-import { sessionSpanSeconds } from "./sessionDuration";
+import { sessionEditTiming } from "./sessionDuration";
 
 export function isSessionEffectivelyArchived(session: FocusSession, subjects: Subject[], years: AcademicYear[]) {
   const subject = subjects.find((item) => item.id === session.subjectId);
@@ -77,9 +74,6 @@ export async function updateSessionDetails(
     subjectId: string;
     startTime: number;
     endTime: number;
-    focusedDurationSeconds: number;
-    focusedAfterMidnightSeconds?: number;
-    durationMode: DurationMode;
     note?: string;
   },
   database: FocusDatabase = db,
@@ -92,41 +86,15 @@ export async function updateSessionDetails(
     if (!session) throw new Error("Session not found.");
     if (!subject || !academicYear || subject.academicYearId !== academicYear.id)
       throw new Error("Choose a Subject from the selected Academic Year.");
-    if (!Number.isFinite(input.startTime) || !Number.isFinite(input.endTime) || input.endTime <= input.startTime)
+    const timing = sessionEditTiming(session, input.startTime, input.endTime);
+    if (!Number.isFinite(timing.startTime) || !Number.isFinite(timing.endTime) || timing.endTime <= timing.startTime)
       throw new Error("End time must be after start time.");
-    const spanSeconds = sessionSpanSeconds(input.startTime, input.endTime);
-    const focusedDurationSeconds = input.durationMode === "locked" ? spanSeconds : input.focusedDurationSeconds;
-    if (focusedDurationSeconds <= 0) throw new Error("Duration must be greater than zero.");
-    if (focusedDurationSeconds > spanSeconds)
-      throw new Error("Duration cannot exceed the available Start and End span.");
-    const midnight = followingMidnight(input.startTime);
-    const focusedAfterMidnightSeconds =
-      input.endTime < midnight
-        ? undefined
-        : input.durationMode === "unlocked"
-          ? input.focusedAfterMidnightSeconds
-          : (input.endTime - midnight) / 1000;
-    if (input.endTime > sessionMaximumEnd(input.startTime))
-      throw new Error("Sessions cannot extend beyond the following day.");
-    if (!overnightAllocationValid(input.startTime, input.endTime, focusedDurationSeconds, focusedAfterMidnightSeconds))
-      throw new Error("Focused time must fit within each calendar day’s available Session span.");
     await database.sessions.update(id, {
       subjectId: subject.id,
       subjectName: subject.name,
       academicYearId: academicYear.id,
       academicYearName: academicYear.name,
-      startTime: input.startTime,
-      endTime: input.endTime,
-      focusedDurationSeconds,
-      focusedAfterMidnightSeconds,
-      durationMode: input.durationMode,
-      // Recorded intervals describe the original timer, not manually edited timing.
-      focusIntervals:
-        session.startTime === input.startTime &&
-        session.endTime === input.endTime &&
-        session.focusedDurationSeconds === focusedDurationSeconds
-          ? session.focusIntervals
-          : undefined,
+      ...timing,
       note: input.note?.trim() ? input.note : undefined,
     });
   });
@@ -140,23 +108,16 @@ export function canDeleteManagedRecord(archived: boolean, allowDirectActiveDelet
 export async function saveSessionEdit(
   id: string,
   input: Parameters<typeof updateSessionDetails>[1],
-  confirmed: { invalid?: boolean; timing?: boolean } = {},
+  confirmed: { invalid?: boolean } = {},
   database: FocusDatabase = db,
 ) {
   return database.transaction("rw", database.academicYears, database.subjects, database.sessions, async () => {
     const original = await database.sessions.get(id);
     if (!original) throw new Error("Session not found.");
-    const next = {
-      ...input,
-      focusedDurationSeconds:
-        input.durationMode === "locked"
-          ? sessionSpanSeconds(input.startTime, input.endTime)
-          : input.focusedDurationSeconds,
-    };
+    const next = sessionEditTiming(original, input.startTime, input.endTime);
     const reason = sessionInvalidReason(next, await database.academicYears.get(input.academicYearId));
     const previousReason = sessionInvalidReason(original, await database.academicYears.get(original.academicYearId));
     if (reason && reason !== previousReason && !confirmed.invalid) return "invalid" as const;
-    if (removesExactFocusTiming(original, next) && !confirmed.timing) return "timing" as const;
     await updateSessionDetails(id, input, database);
     return "saved" as const;
   });

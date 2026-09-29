@@ -252,34 +252,6 @@ it("normalizes oversized notes once when upgrading an older database", async () 
   expect((await migrated.sessions.get("valid"))!.note).toBe("\n**Keep**\n");
 });
 
-it("migrates only an exactly reconstructable legacy overnight split", async () => {
-  const name = `session-split-migration-${crypto.randomUUID()}`;
-  const old = new Dexie(name);
-  old.version(3).stores({ academicYears: "id", subjects: "id", sessions: "id", settings: "key" });
-  const start = new Date(2026, 8, 21, 23, 30).getTime();
-  const exact = {
-    id: "exact",
-    subjectId: "subject",
-    subjectName: "Subject",
-    academicYearId: "year",
-    academicYearName: "Year",
-    startTime: start,
-    endTime: start + 7200_000,
-    focusedDurationSeconds: 3600,
-    archived: false,
-    focusIntervals: [
-      { startTime: start, endTime: start + 1800_000 },
-      { startTime: start + 5400_000, endTime: start + 7200_000 },
-    ],
-  };
-  await old.table("sessions").bulkPut([exact, { ...exact, id: "unknown", focusIntervals: undefined }]);
-  old.close();
-  const migrated = new FocusDatabase(name);
-  opened.push(migrated);
-  expect((await migrated.sessions.get("exact"))?.focusedAfterMidnightSeconds).toBe(1800);
-  expect((await migrated.sessions.get("unknown"))?.focusedAfterMidnightSeconds).toBeUndefined();
-});
-
 it("normalizes oversized CSV notes without rejecting their Sessions", async () => {
   const source = await seeded();
   const rows = await source.sessions.toArray();
@@ -320,22 +292,37 @@ it("imports malformed optional intervals without crashing Analytics and preserve
     const target = database();
     await restoreBackup(backup, "replace", "use-imported", target);
     const imported = (await target.sessions.toArray())[0];
-    expect(dailyFocusAllocations(imported).reduce((sum, part) => sum + part.seconds, 0)).toBe(
-      Array.isArray(intervals) && intervals[0] !== null ? 2700 : 0,
-    );
+    expect(dailyFocusAllocations(imported).reduce((sum, part) => sum + part.seconds, 0)).toBe(2700);
     expect(imported.focusIntervals).toEqual(intervals);
   }
 });
 
-it("preserves explicit overnight summaries and focused duration through CSV", async () => {
+it("round-trips permanent timer intervals and manual markers in CSV and JSON", async () => {
   const source = await seeded();
-  await source.sessions.update("session", { focusedDurationSeconds: 1200, focusedAfterMidnightSeconds: 600 });
-  const target = database();
-  const preview = await previewCsv(exportSessionsCsv(await source.sessions.toArray()), undefined, undefined, target);
-  const result = await importCsvPreview(preview, target);
-  expect(result.invalidSessionsImported ?? 0).toBe(0);
-  expect(await target.sessions.get("session")).toMatchObject({
-    focusedDurationSeconds: 1200,
-    focusedAfterMidnightSeconds: 600,
+  await source.sessions.update("session", {
+    startTime: new Date(2026, 8, 21, 23, 45, 0, 123).getTime(),
+    endTime: new Date(2026, 8, 22, 0, 30, 0, 789).getTime(),
   });
+  const row = (await source.sessions.get("session"))!;
+  const focusIntervals = [
+    { startTime: row.startTime, endTime: row.startTime + 600000 },
+    { startTime: row.endTime - 600000, endTime: row.endTime },
+  ];
+  await source.sessions.update("session", { focusedDurationSeconds: 1200, focusIntervals });
+  await source.sessions.add({ ...row, id: "manual", manual: true });
+  for (const csv of [false, true]) {
+    const target = database();
+    if (csv)
+      await importCsvPreview(
+        await previewCsv(exportSessionsCsv(await source.sessions.toArray()), undefined, undefined, target),
+        target,
+      );
+    else await restoreBackup(await createBackup(source), "replace", "use-imported", target);
+    expect((await target.sessions.get("session"))?.focusIntervals).toEqual(focusIntervals);
+    expect((await target.sessions.get("session"))?.focusedDurationSeconds).toBe(1200);
+    expect((await target.sessions.get("session"))?.manual).toBeUndefined();
+    expect((await target.sessions.get("session"))?.startTime).toBe(row.startTime);
+    expect((await target.sessions.get("session"))?.endTime).toBe(row.endTime);
+    expect((await target.sessions.get("manual"))?.manual).toBe(true);
+  }
 });

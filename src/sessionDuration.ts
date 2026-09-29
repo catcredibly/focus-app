@@ -1,21 +1,9 @@
 import type { FocusSession } from "./types";
 
-export type DurationMode = "locked" | "unlocked";
 export type DurationParts = { hours: number; minutes: number; seconds: number };
-
 export function sessionSpanSeconds(startTime: number, endTime: number) {
   return Math.max(0, (endTime - startTime) / 1000);
 }
-
-export function inferDurationMode(
-  session: Pick<FocusSession, "startTime" | "endTime" | "focusedDurationSeconds" | "durationMode">,
-): DurationMode {
-  return (
-    session.durationMode ??
-    (session.focusedDurationSeconds === sessionSpanSeconds(session.startTime, session.endTime) ? "locked" : "unlocked")
-  );
-}
-
 export function durationParts(totalSeconds: number): DurationParts {
   const total = Math.max(0, Math.round(totalSeconds));
   return {
@@ -25,25 +13,13 @@ export function durationParts(totalSeconds: number): DurationParts {
   };
 }
 
-export function normalizeDurationParts(hours: number, minutes: number, seconds: number) {
-  const totalSeconds = Math.max(
-    0,
-    Math.trunc(hours || 0) * 3600 + Math.trunc(minutes || 0) * 60 + Math.trunc(seconds || 0),
-  );
-  return { totalSeconds, parts: durationParts(totalSeconds) };
-}
-
-export function formatClockDuration(totalSeconds: number) {
-  const parts = durationParts(totalSeconds);
-  return `${String(parts.hours).padStart(2, "0")}:${String(parts.minutes).padStart(2, "0")}`;
-}
-
 /** Resolve the editor's local date/time fields without losing untouched timer precision. */
 export function editedSessionTimes(
   date: string,
   start: string,
   end: string,
   original?: Pick<FocusSession, "startTime" | "endTime">,
+  offset = 0,
 ) {
   const localDate = (stamp: number) => {
     const d = new Date(stamp);
@@ -53,7 +29,37 @@ export function editedSessionTimes(
   const sameStart = original && date === localDate(original.startTime) && start === time(original.startTime);
   const startTime = sameStart ? original.startTime : new Date(date + "T" + start).getTime();
   const endDate = new Date(date + "T" + end);
-  if (end < start) endDate.setDate(endDate.getDate() + 1);
-  const endTime = sameStart && end === time(original.endTime) ? original.endTime : endDate.getTime();
+  endDate.setDate(endDate.getDate() + offset);
+  const endTime =
+    sameStart && end === time(original.endTime) && offset === sessionDayOffset(original.startTime, original.endTime)
+      ? original.endTime
+      : endDate.getTime();
   return { startTime, endTime };
+}
+
+export function sessionDayOffset(start: number, end: number) {
+  const date = (stamp: number) => {
+    const d = new Date(stamp);
+    return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  };
+  return Math.max(0, Math.round((date(end) - date(start)) / 86400000));
+}
+export function sessionEditTiming(session: FocusSession, startTime: number, manualEnd: number) {
+  if (session.manual === true)
+    return { startTime, endTime: manualEnd, focusedDurationSeconds: (manualEnd - startTime) / 1000 };
+  const delta = startTime - session.startTime;
+  return {
+    startTime,
+    endTime: session.endTime + delta,
+    focusedDurationSeconds: session.focusedDurationSeconds,
+    ...(Array.isArray(session.focusIntervals)
+      ? {
+          focusIntervals: session.focusIntervals.map((interval) => ({
+            ...interval,
+            startTime: interval.startTime + delta,
+            endTime: interval.endTime + delta,
+          })),
+        }
+      : {}),
+  };
 }

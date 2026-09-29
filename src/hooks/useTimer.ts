@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { db } from "../db";
 import type { AcademicYear, Subject } from "../types";
 import {
-  ACTIVE_TIMER_STORAGE_KEY,
   timerStateAt as stateAt,
   toggleTimerPause,
   closeRunningInterval,
@@ -13,7 +12,6 @@ import {
   finishTimerState,
   focusedSecondsAt,
   idleTimerState,
-  initialTimerState,
   normalizeTimerState,
   startTimerState,
   startStopwatchState,
@@ -24,18 +22,10 @@ import { handleTimerCompletion } from "../timerCompletion";
 import { saveFocusSession } from "../saveFocusSession";
 import { showToast } from "../toasts";
 import { TIMER_STATE_CHANGED } from "../popoutLifecycle";
+import { readTimerRecovery as readStored, persistTimerRecovery } from "../timerRecovery";
 
 const CHANNEL = "focus-timer";
 const TIMER_INITIALIZED_KEY = "focus.timerInitialized";
-
-function readStored(): TimerState {
-  try {
-    const raw = localStorage.getItem(ACTIVE_TIMER_STORAGE_KEY);
-    return raw ? normalizeTimerState(JSON.parse(raw)) : initialTimerState;
-  } catch {
-    return initialTimerState;
-  }
-}
 
 export type TimerRecovery = "checking" | "running" | "relationship" | "save-failed" | null;
 
@@ -60,8 +50,7 @@ export function useTimer() {
   );
 
   const persist = useCallback((next: TimerState) => {
-    if (next.running) localStorage.setItem(ACTIVE_TIMER_STORAGE_KEY, JSON.stringify(next));
-    else localStorage.removeItem(ACTIVE_TIMER_STORAGE_KEY);
+    persistTimerRecovery(next);
     window.dispatchEvent(new Event(TIMER_STATE_CHANGED));
   }, []);
 
@@ -174,7 +163,8 @@ export function useTimer() {
 
   const reconcile = useCallback(() => {
     const current = stateRef.current;
-    if (recovery || !current.running || current.paused || current.finished) return;
+    if (!current.running || current.finished) return;
+    if (recovery || current.paused) return;
     if (current.mode === "stopwatch") {
       setState(stateAt(current));
       return;
@@ -226,7 +216,10 @@ export function useTimer() {
         now > current.runningSince
           ? [
               ...current.focusIntervals,
-              { startTime: current.runningSince, endTime: Math.min(now, current.targetEnd ?? now) },
+              {
+                startTime: current.runningSince,
+                endTime: Math.min(now, current.targetEnd ?? now),
+              },
             ]
           : current.focusIntervals;
       commit({
@@ -369,7 +362,7 @@ export function useTimer() {
   );
 
   const display = useMemo(() => {
-    const total = Math.max(0, state.remainingSeconds);
+    const total = Math.max(0, Math.floor(state.remainingSeconds));
     return { hours: Math.floor(total / 3600), minutes: Math.floor((total % 3600) / 60), seconds: total % 60 };
   }, [state.remainingSeconds]);
 
