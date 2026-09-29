@@ -36,6 +36,10 @@ Linux releases are available as AppImage and Debian (`.deb`) packages and are cu
 
 Support for additional platforms may be considered in the future.
 
+## Feedback
+
+Found a bug or have an idea for Shihen? [Open an issue](https://github.com/catcredibly/shunhen/issues/new/choose) to report a problem or request a feature.
+
 ## Development
 
 ### Windows prerequisites
