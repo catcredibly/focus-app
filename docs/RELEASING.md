@@ -129,7 +129,7 @@ $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
 $installer = "Shunhen_${version}_x64-setup.exe"
 $dir = "src-tauri\target\release\bundle\nsis"
 
-node tools/generate-updater-manifest.mjs --notes RELEASE_NOTES.md --artifact "$dir\$installer" --repository catcredibly/shunhen
+node tools/generate-updater-manifest.mjs --notes docs\RELEASE_NOTES.md --artifact "$dir\$installer" --repository catcredibly/shunhen
 ```
 
 The helper should:
