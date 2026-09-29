@@ -1,10 +1,20 @@
 import { expect, it } from "vitest";
-import { editedSessionTimes, sessionDayOffset, sessionEditTiming, sessionSpanSeconds } from "./sessionDuration";
-it("requires an explicit calendar offset, allowing equal clock times only on later dates", () => {
+import {
+  editedSessionTimes,
+  sessionDayOffset,
+  sessionEditTiming,
+  sessionSpanSeconds,
+  manualEndOffset,
+} from "./sessionDuration";
+it("infers an overnight offset while respecting explicit multi-day offsets", () => {
   const same = editedSessionTimes("2026-09-20", "23:00", "23:00");
   expect(same.endTime).toBe(same.startTime);
   const backwards = editedSessionTimes("2026-09-20", "23:00", "01:00");
-  expect(backwards.endTime).toBeLessThan(backwards.startTime);
+  expect(sessionDayOffset(backwards.startTime, backwards.endTime)).toBe(1);
+  expect(manualEndOffset("21:00", "02:00")).toBe(1);
+  expect(manualEndOffset("21:00", "23:00")).toBe(0);
+  expect(manualEndOffset("21:00", "23:00", 3)).toBe(3);
+  expect(editedSessionTimes("2026-09-20", "23:00", "01:00", undefined, 0).endTime).toBeLessThan(backwards.startTime);
   const multi = editedSessionTimes("2026-09-20", "23:00", "23:00", undefined, 3);
   expect(sessionDayOffset(multi.startTime, multi.endTime)).toBe(3);
   expect(sessionSpanSeconds(multi.startTime, multi.endTime)).toBe(72 * 3600);

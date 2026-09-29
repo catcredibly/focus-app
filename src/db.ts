@@ -1,3 +1,4 @@
+import { migrateLegacySession } from "./sessionDuration";
 import { normalizeNote } from "./notes";
 import Dexie, { type Table } from "dexie";
 import type { AcademicYear, AppSetting, FocusSession, Subject } from "./types";
@@ -51,6 +52,20 @@ export class FocusDatabase extends Dexie {
       });
     // Keep the schema number for databases already opened by the previous build.
     this.version(4).stores({});
+    this.version(5)
+      .stores({})
+      .upgrade(async (tx) => {
+        await tx
+          .table("sessions")
+          .toCollection()
+          .modify((session: FocusSession) => {
+            const migrated = migrateLegacySession(session);
+            if (migrated !== session) {
+              session.endTime = migrated.endTime;
+              session.legacyContinuous = true;
+            }
+          });
+      });
   }
 }
 

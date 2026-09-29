@@ -1,3 +1,4 @@
+import { migrateLegacySession } from "../sessionDuration";
 import { sessionInvalidReason } from "../sessionValidity";
 import { normalizeNote } from "../notes";
 import packageMetadata from "../../package.json";
@@ -37,6 +38,7 @@ export async function createBackup(database: FocusDatabase = db): Promise<FocusB
     formatVersion: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     appVersion: APP_VERSION,
+    sessionTimingVersion: 1,
     data: { academicYears, subjects, sessions, settings },
   };
 }
@@ -124,7 +126,10 @@ export async function analyzeBackup(backup: FocusBackup, database: FocusDatabase
     [database.sessions, backup.data.sessions],
   ] as const) {
     for (const row of rows) {
-      const comparable = row;
+      const comparable =
+        table === database.sessions && backup.sessionTimingVersion === undefined
+          ? migrateLegacySession(row as FocusSession)
+          : row;
       const existing = await table.get(row.id);
       if (existing) equivalent(existing, comparable) ? duplicates++ : conflicts++;
     }
@@ -196,7 +201,7 @@ export async function restoreBackup(
       await apply(
         database.sessions,
         backup.data.sessions.map((session) => ({
-          ...session,
+          ...(backup.sessionTimingVersion === undefined ? migrateLegacySession(session) : session),
           note: typeof session.note === "string" ? normalizeNote(session.note) : undefined,
         })),
         "sessionsImported",

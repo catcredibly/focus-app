@@ -682,8 +682,10 @@ const ja: Record<keyof typeof en, string> = {
   "Cumulative focus by Academic Year": "学年別の累積集中時間",
   "Active-day rate": "学習日の割合",
   days: "日",
-  "End day offset": "終了日の差",
   "+{{count}} days": "+{{count}}日",
+  "Change end day": "終了日を変更",
+  "Same day": "同じ日",
+  "Previous day": "前の日",
 };
 
 export default ja;

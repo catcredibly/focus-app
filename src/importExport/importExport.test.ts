@@ -326,3 +326,66 @@ it("round-trips permanent timer intervals and manual markers in CSV and JSON", a
     expect((await target.sessions.get("manual"))?.manual).toBe(true);
   }
 });
+
+it("migrates legacy database End once without fabricating intervals or touching current records", async () => {
+  const name = `legacy-end-${crypto.randomUUID()}`;
+  const old = new Dexie(name);
+  old.version(4).stores({ academicYears: "id", subjects: "id", sessions: "id", settings: "key" });
+  const start = new Date(2026, 8, 21, 23).getTime();
+  const legacy: FocusSession = {
+    id: "legacy",
+    subjectId: "s",
+    subjectName: "S",
+    academicYearId: "y",
+    academicYearName: "Y",
+    startTime: start,
+    endTime: start + 4 * 86400000,
+    focusedDurationSeconds: 25 * 3600,
+    archived: false,
+  };
+  const exact = { ...legacy, id: "exact", focusIntervals: [{ startTime: start, endTime: start + 25 * 3600000 }] };
+  await old.table("sessions").bulkAdd([legacy, exact, { ...legacy, id: "manual", manual: true }]);
+  old.close();
+  const upgraded = new FocusDatabase(name);
+  opened.push(upgraded);
+  expect(await upgraded.sessions.get("legacy")).toMatchObject({
+    endTime: start + 25 * 3600000,
+    legacyContinuous: true,
+  });
+  expect((await upgraded.sessions.get("legacy"))?.focusIntervals).toBeUndefined();
+  expect(await upgraded.sessions.get("exact")).toEqual(exact);
+  expect((await upgraded.sessions.get("manual"))?.endTime).toBe(legacy.endTime);
+  await upgraded.sessions.add({ ...legacy, id: "current" });
+  upgraded.close();
+  await upgraded.open();
+  expect((await upgraded.sessions.get("current"))?.endTime).toBe(legacy.endTime);
+  expect((await upgraded.sessions.get("current"))?.legacyContinuous).toBeUndefined();
+  expect((await upgraded.sessions.get("legacy"))?.endTime).toBe(start + 25 * 3600000);
+});
+it("applies End migration only to old-format backups and CSV exports", async () => {
+  const source = await seeded();
+  await source.sessions.update("session", { focusedDurationSeconds: 600 });
+  const current = await createBackup(source);
+  const old = { ...current, sessionTimingVersion: undefined };
+  for (const backup of [old, current]) {
+    const target = database();
+    await restoreBackup(backup, "replace", "use-imported", target);
+    const saved = (await target.sessions.get("session"))!;
+    expect(saved.endTime).toBe(backup === old ? saved.startTime + 600000 : current.data.sessions[0].endTime);
+    expect(saved.legacyContinuous).toBe(backup === old ? true : undefined);
+    const roundtrip = await createBackup(target);
+    await restoreBackup(roundtrip, "replace", "use-imported", target);
+    expect(await target.sessions.get("session")).toEqual(saved);
+  }
+  const csv = parseCsv(exportSessionsCsv(current.data.sessions));
+  const headers = csv.headers.slice(0, 10);
+  const text = [
+    headers.join(","),
+    ...csv.records.map((row) => headers.map((key) => escapeCsv(row[key])).join(",")),
+  ].join("\n");
+  const target = database();
+  await importCsvPreview(await previewCsv(text, undefined, undefined, target), target);
+  const saved = (await target.sessions.get("session"))!;
+  expect(saved.endTime).toBe(saved.startTime + 600000);
+  expect(saved.legacyContinuous).toBe(true);
+});

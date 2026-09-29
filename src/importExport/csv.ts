@@ -1,3 +1,4 @@
+import { migrateLegacySession } from "../sessionDuration";
 import { sessionInvalidReason } from "../sessionValidity";
 import { normalizeNote } from "../notes";
 import { db, type FocusDatabase } from "../db";
@@ -20,6 +21,8 @@ export const FOCUS_CSV_HEADERS = [
   "Focus Intervals",
   "Start DateTime",
   "End DateTime",
+  "Session Timing Version",
+  "Legacy Continuous",
 ];
 const pad = (value: number) => String(value).padStart(2, "0");
 const localParts = (stamp: number) => {
@@ -55,6 +58,8 @@ export function exportSessionsCsv(sessions: FocusSession[]) {
         session.focusIntervals === undefined ? "" : JSON.stringify(session.focusIntervals),
         new Date(session.startTime).toISOString(),
         new Date(session.endTime).toISOString(),
+        "1",
+        session.legacyContinuous === true ? "true" : "",
       ]
         .map(escapeCsv)
         .join(","),
@@ -220,6 +225,11 @@ export async function previewCsv(
           errors.push("Invalid session");
         }
       }
+      if (record["Legacy Continuous"] === "true") session.legacyContinuous = true;
+      const legacyExport =
+        FOCUS_CSV_HEADERS.slice(0, 10).every((header) => parsed.headers.includes(header)) &&
+        !parsed.headers.includes("Session Timing Version");
+      if (legacyExport) session = migrateLegacySession(session);
       const existing = existingIds.get(id);
       duplicate = existing
         ? JSON.stringify(existing) === JSON.stringify(session)

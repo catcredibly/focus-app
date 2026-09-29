@@ -681,8 +681,10 @@ const en = {
   "Cumulative focus by Academic Year": "Cumulative focus by Academic Year",
   "Active-day rate": "Active-day rate",
   days: "days",
-  "End day offset": "End day offset",
   "+{{count}} days": "+{{count}} days",
+  "Change end day": "Change end day",
+  "Same day": "Same day",
+  "Previous day": "Previous day",
 } as const;
 
 export default en;

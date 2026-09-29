@@ -23,8 +23,8 @@ export function exactFocusIntervals(session: FocusSession) {
   return undefined;
 }
 
-function allocationIntervals(session: FocusSession) {
-  return session.manual === true
+export function allocationIntervals(session: FocusSession) {
+  return session.manual === true || session.legacyContinuous === true
     ? [{ startTime: session.startTime, endTime: session.endTime }]
     : exactFocusIntervals(session);
 }

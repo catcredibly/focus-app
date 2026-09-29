@@ -43,6 +43,7 @@ import { useTranslation } from "react-i18next";
 import { localeCode } from "../i18n";
 import {
   editedSessionTimes,
+  manualEndOffset,
   sessionDayOffset,
   sessionEditTiming,
   durationParts,
@@ -610,6 +611,112 @@ const durationInputFields = (seconds: number) => {
   return { hours: String(parts.hours).padStart(2, "0"), minutes: String(parts.minutes).padStart(2, "0") };
 };
 
+function SessionEndField({
+  manual,
+  end,
+  onEnd,
+  offset,
+  onOffset,
+  decrementAllowed,
+  valid,
+}: {
+  manual: boolean;
+  end: string;
+  onEnd: (value: string) => void;
+  offset: number;
+  onOffset: (value: number) => void;
+  decrementAllowed: boolean;
+  valid: boolean;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const host = useRef<HTMLDivElement>(null),
+    trigger = useRef<HTMLButtonElement>(null),
+    increment = useRef<HTMLButtonElement>(null);
+  const label = offset === 0 ? t("Same day") : t(offset === 1 ? "+1 day" : "+{{count}} days", { count: offset });
+  useEffect(() => {
+    if (!open) return;
+    increment.current?.focus();
+    const outside = (event: PointerEvent) => {
+      if (!host.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const key = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        setOpen(false);
+        trigger.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", key, true);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", key, true);
+    };
+  }, [open]);
+  return (
+    <div
+      className="session-end-control"
+      ref={host}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false);
+      }}
+    >
+      <div className="session-end-heading">
+        {manual ? (
+          <button
+            type="button"
+            className="end-day-label tooltip-host"
+            ref={trigger}
+            onClick={() => setOpen(!open)}
+            aria-label={t("Change end day")}
+            aria-haspopup="dialog"
+            aria-expanded={open}
+          >
+            {t("End")}
+            <span className="focus-tooltip" role="tooltip">
+              {t("Change end day")}
+            </span>
+          </button>
+        ) : (
+          <span>{t("End")}</span>
+        )}
+        {offset > 0 && <small className="muted"> · {label}</small>}
+      </div>
+      <input
+        aria-label={t("End")}
+        type="time"
+        value={end}
+        onChange={(event) => onEnd(event.target.value)}
+        readOnly={!manual}
+        tabIndex={manual ? undefined : -1}
+        className={`${!valid ? "input-error" : ""} ${manual ? "" : "session-end-readonly"}`}
+        required
+      />
+      {open && manual && (
+        <div role="dialog" aria-label={t("End date")} className="end-day-popover">
+          <strong>{t("End date")}</strong>
+          <div>
+            <button
+              type="button"
+              disabled={!decrementAllowed}
+              aria-label={t("Previous day")}
+              onClick={() => onOffset(offset - 1)}
+            >
+              −
+            </button>
+            <span aria-live="polite">{label}</span>
+            <button type="button" ref={increment} aria-label={t("Next day")} onClick={() => onOffset(offset + 1)}>
+              +
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SessionEditor({
   session,
   years,
@@ -639,9 +746,14 @@ function SessionEditor({
   const [date, setDate] = useState(localDateInputValue(initialStart));
   const [start, setStart] = useState(timeInputValue(initialStart));
   const [end, setEnd] = useState(timeInputValue(initialEnd));
-  const [dayOffset, setDayOffset] = useState(() =>
-    session ? sessionDayOffset(session.startTime, session.endTime) : 0,
-  );
+  const [explicitOffset, setExplicitOffset] = useState<number | undefined>(() => {
+    if (!session) return undefined;
+    const stored = sessionDayOffset(session.startTime, session.endTime);
+    return stored === manualEndOffset(timeInputValue(session.startTime), timeInputValue(session.endTime))
+      ? undefined
+      : stored;
+  });
+  const dayOffset = manualEndOffset(start, end, explicitOffset);
   const [note, setNote] = useState(session?.note ?? "");
   const [invalidPending, setInvalidPending] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -795,36 +907,17 @@ function SessionEditor({
             {t("Start")}
             <input type="time" value={start} onChange={(event) => setStart(event.target.value)} required />
           </label>
-          <label>
-            {t("End")}
-            <input
-              className={!validSpan ? "input-error" : ""}
-              type="time"
-              value={manual ? end : timeInputValue(endTime)}
-              readOnly={!manual}
-              onChange={(event) => setEnd(event.target.value)}
-              required
-            />
-            {manual ? (
-              <span className="end-day-offset">
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={dayOffset}
-                  aria-label={t("End day offset")}
-                  onChange={(event) => setDayOffset(Number(event.target.value))}
-                />
-                <small className="muted">
-                  {t(dayOffset === 1 ? "+1 day" : "+{{count}} days", { count: dayOffset })}
-                </small>
-              </span>
-            ) : (
-              sessionDayOffset(startTime, endTime) > 0 && (
-                <small className="muted">{t("+{{count}} days", { count: sessionDayOffset(startTime, endTime) })}</small>
-              )
-            )}
-          </label>
+          <SessionEndField
+            manual={manual}
+            end={manual ? end : timeInputValue(endTime)}
+            onEnd={setEnd}
+            offset={manual ? dayOffset : sessionDayOffset(startTime, endTime)}
+            onOffset={setExplicitOffset}
+            decrementAllowed={
+              dayOffset > 0 && editedSessionTimes(date, start, end, undefined, dayOffset - 1).endTime > startTime
+            }
+            valid={validSpan}
+          />
         </div>
         {!validSpan && <p className="field-error">{t("End time must be after start time.")}</p>}
         {!manual && (

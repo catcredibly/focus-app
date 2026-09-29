@@ -102,3 +102,14 @@ it("keeps weekday count and whole-session averages separate from overnight calen
   expect(values[0]).toMatchObject({ count: 0, sessionSeconds: 0, seconds: 3600 });
   expect(values.reduce((sum, value) => sum + value.count, 0)).toBe(1);
 });
+
+it("bounds All to elapsed Academic Year days and preserves ended and custom ranges", () => {
+  const year = { id: "y", name: "Y", archived: false, startDate: "2026-09-22", endDate: "2026-11-13" };
+  expect(analyticsPeriod("All", [], at(29), undefined, year)).toEqual({ start: at(22), end: at(30) });
+  const last = new Date(2026, 10, 13).getTime(),
+    end = new Date(2026, 10, 14).getTime();
+  expect(analyticsPeriod("All", [], last, undefined, year).end).toBe(end);
+  expect(analyticsPeriod("All", [], end + 86400000, undefined, year).end).toBe(end);
+  const custom = { start: at(1), end: new Date(2026, 11, 1).getTime() };
+  expect(analyticsPeriod("Custom", [], at(29), custom, year)).toEqual(custom);
+});

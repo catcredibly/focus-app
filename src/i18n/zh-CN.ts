@@ -663,8 +663,10 @@ const zhCN: Record<keyof typeof en, string> = {
   "Cumulative focus by Academic Year": "按学年累计专注时间",
   "Active-day rate": "活跃天数比例",
   days: "天",
-  "End day offset": "结束日偏移",
   "+{{count}} days": "+{{count}} 天",
+  "Change end day": "更改结束日期",
+  "Same day": "同一天",
+  "Previous day": "前一天",
 };
 
 export default zhCN;

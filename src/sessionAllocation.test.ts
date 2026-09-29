@@ -1,3 +1,6 @@
+import { timeOfDayMatrix, filterSessions } from "./analytics/analytics";
+import { validSessions } from "./sessionValidity";
+import { migrateLegacySession } from "./sessionDuration";
 import { expect, it } from "vitest";
 import { dailyFocusAllocations, exactFocusInRange, allocatedFocusInRange } from "./sessionAllocation";
 import type { FocusSession } from "./types";
@@ -53,6 +56,11 @@ it("allocates continuous manual focus across DST and multiple local dates", () =
       expect(parts).toHaveLength(3);
       expect(parts.reduce((sum, part) => sum + part.seconds, 0)).toBe(hours * 3600);
       expect(exactFocusInRange(s, startTime, endTime)).toBe(hours * 3600);
+      expect(
+        timeOfDayMatrix([s])
+          .flat()
+          .reduce((a, b) => a + b, 0),
+      ).toBe(hours * 3600);
     }
   } finally {
     if (old === undefined) delete process.env.TZ;
@@ -67,3 +75,21 @@ it.each([{}, [null], [{ startTime: start + 1000, endTime: start }]])(
     expect(exactFocusInRange(s, start, row.endTime)).toBe(0);
   },
 );
+
+it("includes migrated legacy timing in weekday/time buckets and respects validity and range filters", () => {
+  const legacy = migrateLegacySession({ ...row, focusedDurationSeconds: 25 * 3600, endTime: start + 3 * 86400000 });
+  expect(legacy.endTime).toBe(start + 25 * 3600000);
+  expect(legacy.focusIntervals).toBeUndefined();
+  expect(
+    timeOfDayMatrix([legacy])
+      .flat()
+      .reduce((a, b) => a + b, 0),
+  ).toBe(25 * 3600);
+  expect(
+    timeOfDayMatrix([legacy], { start: start + 3600000, end: start + 7200000 })
+      .flat()
+      .reduce((a, b) => a + b, 0),
+  ).toBe(3600);
+  expect(filterSessions([legacy], { subjectId: "other" })).toEqual([]);
+  expect(validSessions([legacy], [{ id: "y", name: "Y", archived: false, endDate: "2026-09-20" }])).toEqual([]);
+});

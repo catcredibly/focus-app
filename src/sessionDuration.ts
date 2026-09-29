@@ -19,7 +19,7 @@ export function editedSessionTimes(
   start: string,
   end: string,
   original?: Pick<FocusSession, "startTime" | "endTime">,
-  offset = 0,
+  offset = manualEndOffset(start, end),
 ) {
   const localDate = (stamp: number) => {
     const d = new Date(stamp);
@@ -62,4 +62,23 @@ export function sessionEditTiming(session: FocusSession, startTime: number, manu
         }
       : {}),
   };
+}
+
+/** Only call from a versioned legacy migration/import path. */
+export function migrateLegacySession(session: FocusSession): FocusSession {
+  if (
+    session.manual === true ||
+    session.legacyContinuous === true ||
+    session.focusIntervals !== undefined ||
+    !Number.isFinite(session.startTime) ||
+    !Number.isFinite(session.focusedDurationSeconds) ||
+    session.focusedDurationSeconds <= 0
+  )
+    return session;
+  const endTime = session.startTime + session.focusedDurationSeconds * 1000;
+  if (!Number.isFinite(new Date(endTime).getTime())) return session;
+  return { ...session, endTime, legacyContinuous: true };
+}
+export function manualEndOffset(start: string, end: string, explicit?: number) {
+  return explicit ?? (end < start ? 1 : 0);
 }

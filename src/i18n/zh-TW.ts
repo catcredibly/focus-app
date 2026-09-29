@@ -664,8 +664,10 @@ const zhTW: Record<keyof typeof en, string> = {
   "Cumulative focus by Academic Year": "按學年累計專注時間",
   "Active-day rate": "活躍天數比例",
   days: "天",
-  "End day offset": "結束日偏移",
   "+{{count}} days": "+{{count}} 天",
+  "Change end day": "變更結束日期",
+  "Same day": "同一天",
+  "Previous day": "前一天",
 };
 
 export default zhTW;

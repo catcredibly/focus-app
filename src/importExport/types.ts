@@ -5,6 +5,7 @@ export type FocusBackup = {
   formatVersion: 1;
   exportedAt: string;
   appVersion: string;
+  sessionTimingVersion?: 1;
   data: {
     academicYears: AcademicYear[];
     subjects: Subject[];
