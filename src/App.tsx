@@ -1,3 +1,4 @@
+import { AnalyticsLoading } from "./components/PageSkeletons";
 import { TimerProvider } from "./hooks/TimerContext";
 import { cancelShortcutRevealTimer, reconcileAutoHideSetting, revealTimerFromShortcut } from "./native";
 import { registerRevealShortcut } from "./shortcuts";
@@ -149,13 +150,7 @@ export default function App() {
         <ToastHost />
         {page === "Timer" && <TimerPage onNavigate={setPage} />}
         {page === "Analytics" && (
-          <Suspense
-            fallback={
-              <main className="page">
-                <div className="analytics-loading">{t("Loading analytics...")}</div>
-              </main>
-            }
-          >
+          <Suspense fallback={<AnalyticsLoading />}>
             <AnalyticsPage />
           </Suspense>
         )}

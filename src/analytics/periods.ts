@@ -52,15 +52,15 @@ export function analyticsPeriod(
   if (range === "Custom" && custom) return custom;
   const yearStart = year?.startDate ? new Date(`${year.startDate}T00:00:00`).getTime() : undefined;
   const yearEnd = year?.endDate ? new Date(`${year.endDate}T00:00:00`).getTime() : undefined;
-  if (yearStart !== undefined && yearStart > today) return { start: today, end: today };
+  if (range === "All" && yearStart !== undefined && yearStart > today) return { start: today, end: today };
   const end = addDays(yearEnd !== undefined ? Math.min(yearEnd, today) : today, 1);
   if (range === "All")
     return {
-      start: yearStart ?? sessions.reduce((first, s) => Math.min(first, startOfLocalDay(s.startTime)), today),
+      start: sessions.reduce((first, s) => Math.min(first, startOfLocalDay(s.startTime)), startOfLocalDay(Math.min(today, end - 1))),
       end,
     };
   const days = range === "7D" ? 7 : range === "30D" ? 30 : range === "90D" ? 90 : 365;
-  return { start: Math.max(addDays(end, -days), yearStart ?? -Infinity), end };
+  return { start: addDays(end, -days), end };
 }
 
 export function previousPeriod(period: Period): Period {
@@ -68,7 +68,10 @@ export function previousPeriod(period: Period): Period {
 }
 
 export function defaultAggregation(range: AnalyticsRange, period: Period): Aggregation {
-  if (range === "All") return "monthly";
+  if (range === "All") {
+    const days = calendarDays(period);
+    return days <= 31 ? "daily" : days <= 180 ? "weekly" : "monthly";
+  }
   if (range === "1Y") return "weekly";
   const days = calendarDays(period);
   return days <= 90 ? "daily" : days <= 365 ? "weekly" : "monthly";
@@ -82,7 +85,6 @@ export type CalendarBucket = {
   seconds: number;
   sessionCount: number;
   averageSeconds: number;
-  goalMetDays: number;
   goalPercent: number;
 };
 
@@ -123,7 +125,6 @@ export function calendarBuckets(
         seconds: 0,
         sessionCount: 0,
         averageSeconds: 0,
-        goalMetDays: 0,
         goalPercent: 0,
       };
       result.push(bucket);
@@ -134,10 +135,12 @@ export function calendarBuckets(
     bucket.days++;
     bucket.seconds += day.seconds;
     bucket.sessionCount += day.sessionCount;
-    if (Number.isFinite(dailyGoal) && dailyGoal > 0 && day.seconds >= dailyGoal) bucket.goalMetDays++;
     bucketSessionSeconds += startedTotals.get(day.key)?.seconds ?? 0;
     bucket.averageSeconds = bucket.sessionCount ? bucketSessionSeconds / bucket.sessionCount : 0;
-    if (Number.isFinite(dailyGoal) && dailyGoal > 0) progressTotal += Math.min(1, day.seconds / dailyGoal);
+    if (Number.isFinite(dailyGoal) && dailyGoal > 0) {
+      const progress = day.seconds / dailyGoal;
+      progressTotal += progress;
+    }
     bucket.goalPercent = (progressTotal / bucket.days) * 100;
   }
   return result;

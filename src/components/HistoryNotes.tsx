@@ -1,9 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useId } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ReleaseNotes } from "./ReleaseNotes";
-import { noteSnippet } from "../notes";
+import { noteSnippet, readableNote } from "../notes";
 
 export function NoteSnippet({
   note,
@@ -91,4 +91,61 @@ export function NoteViewer({ note, anchor, onClose }: { note: string; anchor: HT
     </div>,
     document.body,
   );
+}
+
+export function NotePreview({ note }: { note: string }) {
+  const value = readableNote(note);
+  const ref = useRef<HTMLSpanElement>(null);
+  const id = useId();
+  const dismissTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const keepOpen = () => clearTimeout(dismissTimer.current);
+  const dismiss = () => {
+    keepOpen();
+    dismissTimer.current = setTimeout(() => setPosition(undefined), 150);
+  };
+  useEffect(() => () => clearTimeout(dismissTimer.current), []);
+  const [truncated, setTruncated] = useState(false);
+  const [position, setPosition] = useState<{ left: number; top: number }>();
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const measure = () => {
+      setTruncated(element.scrollWidth > element.clientWidth);
+      setPosition(undefined);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [value]);
+  useEffect(() => {
+    if (!position) return;
+    const close = (event?: Event) => {
+      if (event?.target instanceof Element && event.target.closest(".history-note-preview-tooltip")) return;
+      setPosition(undefined);
+    };
+    const key = (event: KeyboardEvent) => { if (event.key === "Escape") close(); };
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    window.addEventListener("keydown", key);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+      window.removeEventListener("keydown", key);
+    };
+  }, [position]);
+  const reveal = () => {
+    keepOpen();
+    if (!truncated || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    setPosition({ left: Math.max(8, Math.min(rect.left, window.innerWidth - 368)), top: Math.max(8, Math.min(rect.bottom + 6, window.innerHeight - 248)) });
+  };
+  return <>
+    <span className="history-note-column history-truncated" ref={ref} tabIndex={truncated ? 0 : undefined}
+      aria-describedby={position ? id : undefined} onMouseEnter={reveal} onFocus={reveal}
+      onMouseLeave={dismiss} onBlur={dismiss}>
+      {value || "—"}
+    </span>
+    {position && createPortal(<div id={id} role="tooltip" tabIndex={0} onMouseEnter={keepOpen} onFocus={keepOpen} onMouseLeave={dismiss} onBlur={dismiss} className="history-note-preview-tooltip" style={position}>{value}</div>, document.body)}
+  </>;
 }

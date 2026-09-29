@@ -3,7 +3,7 @@ import { goalProgress } from "../goals";
 import { dailyTotals, weekdayTotals } from "./analytics";
 import { describe, expect, it } from "vitest";
 import type { FocusSession } from "../types";
-import { goalAchievement } from "./goalAchievement";
+import { goalAchievement, goalAxisMaximum } from "./goalAchievement";
 import { academicYearProgress } from "./yearProgress";
 import { analyticsPeriod, calendarBuckets, rollingTimeline } from "./periods";
 const at = (day: number, hour = 0) => new Date(2026, 8, day, hour).getTime();
@@ -42,14 +42,14 @@ describe("analytics refinements", () => {
     const history = [row(7, 100), row(14, 100), row(21, 50)];
     const period = { start: at(7), end: at(28) };
     const pending = goalAchievement(history, period, "weekly", "monthly", 100, at(23));
-    expect(pending[0]).toMatchObject({ achieved: 2, applicable: 3, pending: 1 });
+    expect(pending[0]).toMatchObject({ periodCount: 3, goalSeconds: 100 });
     expect(pending[0].goalPercent).toBeCloseTo(250 / 3);
     const achieved = goalAchievement([...history, row(22, 50)], period, "weekly", "monthly", 100, at(23));
-    expect(achieved[0]).toMatchObject({ achieved: 3, applicable: 3, pending: 0, goalPercent: 100 });
+    expect(achieved[0]).toMatchObject({ periodCount: 3, goalPercent: 100 });
     const finished = goalAchievement(history, period, "weekly", "monthly", 100, at(28));
     expect(finished[0].goalPercent).toBeCloseTo(250 / 3);
     const daily = goalAchievement([row(21, 100)], { start: at(21), end: at(28) }, "daily", "weekly", 100, at(23, 15));
-    expect(daily[0]).toMatchObject({ applicable: 3, achieved: 1 });
+    expect(daily[0]).toMatchObject({ periodCount: 3, seconds: 100 });
   });
   it("excludes pre-history zero days from all rolling windows", () => {
     const points = rollingTimeline([row(20, 100)], { start: at(19), end: at(22) });
@@ -106,7 +106,7 @@ it("keeps weekday count and whole-session averages separate from overnight calen
 
 it("bounds All to elapsed Academic Year days and preserves ended and custom ranges", () => {
   const year = { id: "y", name: "Y", archived: false, startDate: "2026-09-22", endDate: "2026-11-13" };
-  expect(analyticsPeriod("All", [], at(29), undefined, year)).toEqual({ start: at(22), end: at(30) });
+  expect(analyticsPeriod("All", [row(23, 100)], at(29), undefined, year)).toEqual({ start: at(23), end: at(30) });
   const last = new Date(2026, 10, 13).getTime(),
     end = new Date(2026, 10, 14).getTime();
   expect(analyticsPeriod("All", [], last, undefined, year).end).toBe(end);
@@ -115,12 +115,30 @@ it("bounds All to elapsed Academic Year days and preserves ended and custom rang
   expect(analyticsPeriod("Custom", [], at(29), custom, year)).toEqual(custom);
 });
 
-it("averages capped daily progress, including empty days and multi-day focus", () => {
+it("averages uncapped daily progress for grouped periods, including empty days and multi-day focus", () => {
   const session = { ...row(20, 54 * 3600), manual: true as const, startTime: at(20, 20), endTime: at(23, 2) };
   const daily = goalAchievement([session], { start: at(20), end: at(25) }, "daily", "daily", 8 * 3600, at(26));
-  expect(daily.map((p) => p.goalPercent)).toEqual([50, 100, 100, 25, 0]);
+  expect(daily.map((p) => p.goalPercent)).toEqual([50, 300, 300, 25, 0]);
   const month = goalAchievement([session], { start: at(20), end: at(25) }, "daily", "monthly", 8 * 3600, at(26));
-  expect(month[0].goalPercent).toBeCloseTo(55);
+  expect(month[0].goalPercent).toBeCloseTo(135);
   const weeks = goalAchievement([session], { start: at(20), end: at(28) }, "weekly", "weekly", 100 * 3600, at(28));
   expect(weeks.map((p) => p.goalPercent)).toEqual([4, 50]);
+});
+
+it("keeps fixed and custom ranges independent of sparse data", () => {
+  const year = { id: "y", name: "Y", archived: false, startDate: "2026-09-22", endDate: "2026-11-13" };
+  const period = analyticsPeriod("30D", [row(28, 100)], at(29), undefined, year);
+  expect(period).toEqual({ start: new Date(2026, 7, 31).getTime(), end: at(30) });
+  const custom = { start: at(1), end: at(30) };
+  expect(analyticsPeriod("Custom", [], at(29), custom, year)).toEqual(custom);
+});
+it("keeps daily and weekly overachievement and rounded chart headroom", () => {
+  const daily = goalAchievement([row(21, 20100)], { start: at(21), end: at(22) }, "daily", "daily", 18000, at(23));
+  expect(daily[0].goalPercent).toBeCloseTo(111.6666667);
+  const weekly = goalAchievement([row(21, 80400)], { start: at(21), end: at(28) }, "weekly", "weekly", 72000, at(29));
+  expect(weekly[0].goalPercent).toBeCloseTo(111.6666667);
+  const monthly = goalAchievement([row(7, 200), row(14, 100)], { start: at(7), end: at(21) }, "weekly", "monthly", 100, at(22));
+  expect(monthly[0].goalPercent).toBe(150);
+  expect(goalAxisMaximum([{ goalPercent: 50 }])).toBe(100);
+  expect(goalAxisMaximum(daily)).toBeGreaterThan(daily[0].goalPercent);
 });

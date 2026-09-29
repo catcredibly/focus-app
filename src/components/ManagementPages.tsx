@@ -1,7 +1,8 @@
+import { HistoryLoading } from "./PageSkeletons";
 import { inHistoryScope, historyStatusAfterScope, matchesHistoryStatus } from "../historyFilters";
 import { sessionInvalidReason, invalidReasonText } from "../sessionValidity";
 import { historyPagination, enteredHistoryPage } from "../historyPagination";
-import { NoteViewer, NoteSnippet } from "./HistoryNotes";
+import { NoteViewer, NoteSnippet, NotePreview } from "./HistoryNotes";
 import { NoteEditor } from "./NoteEditor";
 import { readableNote, noteSearchTerms, noteMetrics } from "../notes";
 import { nextSubjectColor } from "../subjectColors";
@@ -960,12 +961,24 @@ function SessionEditor({
 export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boolean }) {
   const currentId = useLiveQuery(async () => (await db.settings.get(CURRENT_YEAR_KEY))?.value ?? "", []) ?? "";
   const { t } = useTranslation();
-  const { settings, setSetting } = useSettings();
-  const loadedYears = useLiveQuery(() => db.academicYears.toArray(), []);
-  const years = loadedYears ?? [];
-  const subjects = useLiveQuery(() => db.subjects.toArray(), []) ?? [];
-  const loadedSessions = useLiveQuery(() => db.sessions.orderBy("startTime").reverse().toArray(), []);
-  const sessions = loadedSessions ?? [];
+  const { settings, loaded: settingsLoaded, setSetting } = useSettings();
+  const snapshot = useLiveQuery(async () => {
+    if (!settingsLoaded) return;
+    return db.transaction("r", [db.academicYears, db.subjects, db.sessions], async () => {
+      const [years, subjects, sessions] = await Promise.all([
+        db.academicYears.toArray(),
+        db.subjects.toArray(),
+        db.sessions.orderBy("startTime").reverse().toArray(),
+      ]);
+      return { years, subjects, sessions };
+    });
+  }, [settingsLoaded]);
+  const loadedYears = snapshot?.years,
+    loadedSubjects = snapshot?.subjects,
+    loadedSessions = snapshot?.sessions;
+  const years = loadedYears ?? [],
+    subjects = loadedSubjects ?? [],
+    sessions = loadedSessions ?? [];
   const [status, setStatusState] = useState(initialInvalid ? "invalid" : managementViewState.historyStatus);
   const setStatus = (value: string) => {
     managementViewState.historyStatus = value;
@@ -1051,6 +1064,13 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
       ),
     [sessions, status, yearId, subjectId, subjects, years, terms, readable, invalid],
   );
+  const initialViewShown = useRef(false);
+  const dataReady =
+    settingsLoaded && loadedYears !== undefined && loadedSubjects !== undefined && loadedSessions !== undefined;
+  const ready = dataReady && (initialViewShown.current || historyStatusAfterScope(status, invalidCount) === status);
+  useEffect(() => {
+    if (ready) initialViewShown.current = true;
+  }, [ready]);
   const pagination = historyPagination(filtered.length, pageSize, page);
   const [pageDraft, setPageDraft] = useState("1");
   useEffect(() => {
@@ -1062,6 +1082,7 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
     setPage(next);
     setPageDraft(String(next + 1));
   };
+  if (!ready) return <HistoryLoading searchOpen={searchOpen} />;
   return (
     <main className="page">
       <PageHeader
@@ -1239,6 +1260,7 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
           <span>{t("Duration")}</span>
           <span>{t("Subject")}</span>
           <span>{t("Academic Year")}</span>
+          <span className="history-note-column">{t("Notes")}</span>
           <span>{t("Status")}</span>
           <span />
         </div>
@@ -1298,6 +1320,7 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
             <strong>{formatDuration(s.focusedDurationSeconds)}</strong>
             <TruncatedValue value={s.subjectName} />
             <TruncatedValue value={s.academicYearName} />
+            <NotePreview note={s.note ?? ""} />
             <span
               title={invalid.get(s.id) ? t(invalidReasonText[invalid.get(s.id)!]) : undefined}
               tabIndex={invalid.get(s.id) ? 0 : undefined}

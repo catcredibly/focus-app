@@ -1,3 +1,7 @@
+import { ValueTooltip } from "./ValueTooltip";
+import { AnalyticsLoading } from "./PageSkeletons";
+import type { FocusSettings } from "../settings";
+import { GoalProgressTooltip } from "./GoalProgressTooltip";
 import {
   initialAnalyticsYear,
   groupedByArchive,
@@ -5,7 +9,7 @@ import {
   DEFAULT_WEEKDAY_METRIC,
   availableGoalMode,
 } from "../analytics/controls";
-import { goalAchievement } from "../analytics/goalAchievement";
+import { goalAchievement, goalAxisMaximum } from "../analytics/goalAchievement";
 import { academicYearProgress } from "../analytics/yearProgress";
 import { dailyFocusAllocations } from "../sessionAllocation";
 import { validSessions } from "../sessionValidity";
@@ -100,27 +104,43 @@ const exactDuration = (seconds: number) => {
 };
 const inputDay = (value: string) => new Date(`${value}T00:00:00`).getTime();
 type DataProps = { sessions: FocusSession[]; subjects: Subject[]; years: AcademicYear[] };
-type TimelineProps = { sessions: FocusSession[]; history: FocusSession[]; period: Period; range: AnalyticsRange };
+type TimelineProps = {
+  sessions: FocusSession[];
+  history: FocusSession[];
+  period: Period;
+  range: AnalyticsRange;
+  settings: FocusSettings;
+};
 
 export function AnalyticsPage() {
   const { t } = useTranslation();
-  const storedYears = useLiveQuery(() => db.academicYears.toArray(), []);
-  const storedSubjects = useLiveQuery(() => db.subjects.toArray(), []);
-  const storedSessions = useLiveQuery(() => db.sessions.orderBy("startTime").toArray(), []);
+  const { settings, loaded: settingsLoaded } = useSettings();
+  const snapshot = useLiveQuery(async () => {
+    if (!settingsLoaded) return;
+    return db.transaction("r", [db.academicYears, db.subjects, db.sessions, db.settings], async () => {
+      const [years, subjects, sessions, current] = await Promise.all([
+        db.academicYears.toArray(),
+        db.subjects.toArray(),
+        db.sessions.orderBy("startTime").toArray(),
+        db.settings.get(CURRENT_YEAR_KEY),
+      ]);
+      return { years, subjects, sessions, currentYear: current?.value ?? "" };
+    });
+  }, [settingsLoaded]);
   const demoEnabled = import.meta.env.DEV && new URLSearchParams(window.location.search).get("analyticsDemo") === "1";
   const demo = useMemo(() => (demoEnabled ? createDevelopmentAnalyticsDataset(20_000) : undefined), [demoEnabled]);
-  const years = demo?.academicYears ?? storedYears,
-    subjects = demo?.subjects ?? storedSubjects,
-    sessions = demo?.sessions ?? storedSessions;
+  const years = demo?.academicYears ?? snapshot?.years,
+    subjects = demo?.subjects ?? snapshot?.subjects,
+    sessions = demo?.sessions ?? snapshot?.sessions;
   const [tab, setTab] = useState<(typeof tabs)[number]>("Overview");
-  const currentYear = useLiveQuery(async () => (await db.settings.get(CURRENT_YEAR_KEY))?.value ?? "", []);
+  const currentYear = snapshot?.currentYear;
   const [yearId, setYearId] = useState("__unselected");
-  const initialized = useRef(false);
+  const [initialized, setInitialized] = useState(false);
   useEffect(() => {
-    if (initialized.current || !years || currentYear === undefined) return;
-    initialized.current = true;
+    if (initialized || !years || currentYear === undefined) return;
+    setInitialized(true);
     setYearId(initialAnalyticsYear(years, currentYear));
-  }, [years, currentYear]);
+  }, [years, currentYear, initialized]);
   const [subjectId, setSubjectId] = useState("");
   const [range, setRange] = useState<AnalyticsRange>("All");
   const [customOpen, setCustomOpen] = useState(false);
@@ -165,13 +185,9 @@ export function AnalyticsPage() {
     yearDisabled ? undefined : years?.find((year) => year.id === yearId),
   );
   const filtered = useMemo(() => filterSessions(history, period), [history, period.start, period.end]);
-  if (!years || !subjects || !sessions)
-    return (
-      <main className="page analytics-page">
-        <div className="analytics-loading">{t("Loading analytics...")}</div>
-      </main>
-    );
-  const timeline = { sessions: filtered, history, period, range };
+  if (!years || !subjects || !sessions || !settingsLoaded || !initialized)
+    return <AnalyticsLoading tab={tab} settings={settingsLoaded ? settings : undefined} />;
+  const timeline = { sessions: filtered, history, period, range, settings };
   return (
     <main className="page analytics-page">
       {demoEnabled && (
@@ -310,11 +326,7 @@ export function AnalyticsPage() {
           </button>
         ))}
       </nav>
-      {yearId === "__unselected" ||
-      period.end <= period.start ||
-      (!yearId && !history.length) ||
-      (range === "Custom" &&
-        !history.some((session) => session.startTime < period.end && session.endTime > period.start)) ? (
+      {yearId === "__unselected" || period.end <= period.start || (range === "All" && !history.length) ? (
         <Empty />
       ) : tab === "Overview" ? (
         <Overview
@@ -379,9 +391,9 @@ function Overview({
   range,
   allSessions,
   activity,
+  settings,
 }: TimelineProps & { allSessions: FocusSession[]; activity: ReturnType<typeof dailyActivityScope> }) {
   const { t } = useTranslation();
-  const { settings } = useSettings();
   const goals = goalProgress(allSessions),
     current = summaryMetrics(history, period),
     previous = previousPeriod(period);
@@ -613,6 +625,7 @@ function SubjectsAnalytics({
 function YearsAnalytics({ sessions, history, years, subjects }: DataProps & { history: FocusSession[] }) {
   const { t } = useTranslation();
   const rows = academicYearTotals(sessions, years, subjects);
+  const yearProgress = new Map(academicYearProgress(years, history).map(item => [item.year.id, item]));
   const averageMaximum = Math.max(1, ...rows.map((row) => row.averageActiveDaySeconds));
   return (
     <div className="analytics-content years-layout">
@@ -679,12 +692,18 @@ function YearsAnalytics({ sessions, history, years, subjects }: DataProps & { hi
               <span role="cell">{row.name}</span>
               <span role="cell">{number(row.sessions)}</span>
               <span role="cell">{number(row.subjects)}</span>
-              <span role="cell">{number(row.activeDays)}</span>
+              <span role="cell"><ValueTooltip lines={[
+                t("{{count}} active days", { count: row.activeDays }),
+                t("An active day is a day with recorded Focus Time."),
+              ]}>{number(row.activeDays)}</ValueTooltip></span>
               <span role="cell">
-                {percent(
-                  (academicYearProgress(years, history).find((item) => item.year.id === row.academicYearId)
-                    ?.activeDayRate ?? 0) * 100,
-                )}
+                <ValueTooltip lines={[
+                  t("{{active}} of {{eligible}} eligible days", {
+                    active: yearProgress.get(row.academicYearId)?.activeDays ?? 0,
+                    eligible: yearProgress.get(row.academicYearId)?.elapsedDays ?? 0,
+                  }),
+                  ...(yearProgress.get(row.academicYearId)?.ongoing ? [t("Eligible days are counted through today.")] : []),
+                ]}>{percent((yearProgress.get(row.academicYearId)?.activeDayRate ?? 0) * 100)}</ValueTooltip>
               </span>
               <span role="cell">{formatDuration(row.averageSessionSeconds)}</span>
             </div>
@@ -696,9 +715,8 @@ function YearsAnalytics({ sessions, history, years, subjects }: DataProps & { hi
   );
 }
 
-function TimeTrends({ sessions, history, period, range }: TimelineProps) {
+function TimeTrends({ sessions, history, period, range, settings }: TimelineProps) {
   const { t } = useTranslation();
-  const { settings } = useSettings();
   const aggregation = defaultAggregation(range, period);
   const [manualAggregation, setGoalAggregation] = useState<Aggregation>();
   const dailyAvailable = settings.dailyGoalEnabled && settings.dailyGoalSeconds > 0;
@@ -730,63 +748,67 @@ function TimeTrends({ sessions, history, period, range }: TimelineProps) {
   const ticks = dailyTickIndices(cumulative.length, cumulativeWidth).map((index) => cumulative[index].label);
   return (
     <div className="analytics-content trend-grid">
-      <Panel
-        title={t("Goal achievement over time")}
-        subtitle={t(
-          goalMode === "daily" ? "Daily Goal achievement by {{grouping}}." : "Weekly Goal achievement by {{grouping}}.",
-          { grouping: t(grouping === "daily" ? "day" : grouping === "weekly" ? "week" : "month") },
-        )}
-      >
-        <div className="trend-controls">
-          {dailyAvailable && weeklyAvailable && (
-            <div className="range-control">
-              {(["daily", "weekly"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  aria-pressed={goalMode === mode}
-                  className={goalMode === mode ? "active" : ""}
-                  onClick={() => {
-                    setGoalAggregation(
-                      mode === "weekly" && grouping === "daily"
-                        ? goalDefaultAggregation(range, calendarDays(period), mode)
-                        : grouping,
-                    );
-                    setChosenGoal(mode);
-                  }}
-                >
-                  {t(mode === "daily" ? "Daily" : "Weekly")}
-                </button>
-              ))}
-            </div>
+      {validGoal && (
+        <Panel
+          title={t("Goal achievement over time")}
+          subtitle={t(
+            goalMode === "daily"
+              ? "Daily Goal achievement by {{grouping}}."
+              : "Weekly Goal achievement by {{grouping}}.",
+            { grouping: t(grouping === "daily" ? "day" : grouping === "weekly" ? "week" : "month") },
           )}
-          <select
-            aria-label={t("Aggregation")}
-            value={grouping}
-            disabled={allowedModes.length === 1}
-            onChange={(e) => setGoalAggregation(e.target.value as Aggregation)}
-          >
-            {allowedModes.map((mode) => (
-              <option key={mode} value={mode}>
-                {t(mode === "daily" ? "By day" : mode === "weekly" ? "By week" : "By month")}
-              </option>
-            ))}
-          </select>
-        </div>
-        {validGoal ? (
+        >
+          <div className="trend-controls">
+            {dailyAvailable && weeklyAvailable && (
+              <div className="range-control">
+                {(["daily", "weekly"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    aria-pressed={goalMode === mode}
+                    className={goalMode === mode ? "active" : ""}
+                    onClick={() => {
+                      setGoalAggregation(
+                        mode === "weekly" && grouping === "daily"
+                          ? goalDefaultAggregation(range, calendarDays(period), mode)
+                          : grouping,
+                      );
+                      setChosenGoal(mode);
+                    }}
+                  >
+                    {t(mode === "daily" ? "Daily" : "Weekly")}
+                  </button>
+                ))}
+              </div>
+            )}
+            <select
+              aria-label={t("Aggregation")}
+              value={grouping}
+              disabled={allowedModes.length === 1}
+              onChange={(e) => setGoalAggregation(e.target.value as Aggregation)}
+            >
+              {allowedModes.map((mode) => (
+                <option key={mode} value={mode}>
+                  {t(mode === "daily" ? "By day" : mode === "weekly" ? "By week" : "By month")}
+                </option>
+              ))}
+            </select>
+          </div>
           <ScrollChart width={goals.length * 28}>
             <BarChart data={goals}>
               <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
               <XAxis dataKey="label" />
-              <YAxis tickFormatter={percent} />
+              <YAxis tickFormatter={percent} domain={[0, goalAxisMaximum(goals)]} />
               <ReferenceLine y={100} stroke="var(--text-muted)" strokeDasharray="4 4" />
               <Bar dataKey="goalPercent" name={t("Goal achievement")} fill="#4da778" />
-              <Tooltip content={(props) => <GoalTooltip {...props} />} />
+              <Tooltip
+                content={(props) => (
+                  <GoalProgressTooltip point={props.active ? props.payload?.[0]?.payload : undefined} />
+                )}
+              />
             </BarChart>
           </ScrollChart>
-        ) : (
-          <p className="muted">{t("Set a Daily or Weekly Goal to view goal achievement.")}</p>
-        )}
-      </Panel>
+        </Panel>
+      )}
       <Panel title={t("Cumulative Focus Time")}>
         <ResponsiveContainer width="100%" height={290} onResize={(width) => setCumulativeWidth(width)}>
           <LineChart data={cumulative}>
@@ -899,7 +921,7 @@ function StudyPatterns({ sessions, history, period, range }: TimelineProps) {
         ))}
         <ComparisonFooter period={period} range={range} />
       </div>
-      <div className="patterns-grid">
+      <div className="patterns-grid aligned-pattern-charts">
         <Panel
           title={t(
             weekdayMetric === "count"
@@ -1173,24 +1195,6 @@ function ChartTooltip({
     </div>
   );
 }
-function GoalTooltip({ active, payload }: ChartTooltipProps) {
-  const { t } = useTranslation();
-  if (!active || !payload?.length) return null;
-  const point = payload[0].payload;
-  return (
-    <div className="chart-tooltip">
-      <strong>{point.label}</strong>
-      <p>{point.goalPercent === null ? t("Pending") : percent(point.goalPercent)}</p>
-      <p>{t("Achieved: {{met}} of {{total}}", { met: point.achieved, total: point.applicable })}</p>
-      {point.pending > 0 && (
-        <p>
-          {t("Pending")}: {point.pending}
-        </p>
-      )}
-    </div>
-  );
-}
-
 function YearProgressChart({ years, sessions }: { years: AcademicYear[]; sessions: FocusSession[] }) {
   const { t } = useTranslation();
   const rows = academicYearProgress(years, sessions);

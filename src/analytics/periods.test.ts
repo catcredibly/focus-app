@@ -32,6 +32,53 @@ const row = (day: number, seconds: number, month = 9): FocusSession => ({
 });
 
 describe("calendar periods", () => {
+  it("distributes All by its calendar length without changing other ranges", () => {
+    for (const [days, mode] of [
+      [1, "daily"],
+      [31, "daily"],
+      [32, "weekly"],
+      [180, "weekly"],
+      [181, "monthly"],
+    ] as const) {
+      const period = { start: at(9, 22), end: addDays(at(9, 22), days) };
+      expect(defaultAggregation("All", period)).toBe(mode);
+    }
+    for (const [range, days, mode] of [
+      ["7D", 7, "daily"],
+      ["30D", 30, "daily"],
+      ["90D", 90, "daily"],
+      ["1Y", 365, "weekly"],
+      ["Custom", 32, "daily"],
+      ["Custom", 180, "weekly"],
+      ["Custom", 181, "weekly"],
+    ] as const) {
+      expect(defaultAggregation(range, { start: at(9, 22), end: addDays(at(9, 22), days) })).toBe(mode);
+    }
+  });
+  it("keeps empty All periods and averages complete Sessions rather than empty dates", () => {
+    const period = { start: at(9, 22), end: at(10, 1) };
+    const sessions = [row(23, 100), { ...row(23, 300), id: "second" }, row(29, 50)];
+    const points = calendarBuckets(sessions, period, defaultAggregation("All", period));
+    expect(points).toHaveLength(9);
+    expect(points.map((p) => p.sessionCount)).toEqual([0, 2, 0, 0, 0, 0, 0, 1, 0]);
+    expect(points.map((p) => (p.sessionCount ? p.averageSeconds : null))).toEqual([
+      null,
+      200,
+      null,
+      null,
+      null,
+      null,
+      null,
+      50,
+      null,
+    ]);
+    const longer = { start: at(9, 22), end: addDays(at(9, 22), 32) };
+    const weekly = calendarBuckets(sessions, longer, defaultAggregation("All", longer));
+    expect(weekly.map((p) => p.sessionCount)).toEqual([2, 1, 0, 0, 0]);
+    expect(weekly[0].averageSeconds).toBe(200);
+    expect(weekly[0].start).toBe(longer.start);
+    expect(weekly.at(-1)?.end).toBe(longer.end);
+  });
   it("selects smart defaults without hiding valid aggregation choices", () => {
     for (const [days, daily, weekly] of [
       [1, "daily", "weekly"],
@@ -86,9 +133,9 @@ describe("calendar periods", () => {
       "weekly",
       3600,
     );
-    expect(buckets.map((b) => [b.days, b.goalPercent, b.goalMetDays])).toEqual([
-      [1, 100, 1],
-      [2, 50, 1],
+    expect(buckets.map((b) => [b.days, b.goalPercent])).toEqual([
+      [1, 200],
+      [2, 50],
     ]);
     expect(buckets.map((b) => b.sessionCount)).toEqual([1, 1]);
     expect(

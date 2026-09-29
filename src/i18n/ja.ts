@@ -1,6 +1,15 @@
 import en from "./en";
 
 const ja: Record<keyof typeof en, string> = {
+  "{{count}} active days": "学習日数：{{count}} 日",
+  "An active day is a day with recorded Focus Time.": "学習日とは、集中時間が記録された日です。",
+  "{{active}} of {{eligible}} eligible days": "対象日数 {{eligible}} 日のうち {{active}} 日",
+  "Eligible days are counted through today.": "対象日数は今日までを数えます。",
+  Notes: "メモ",
+  "Focus time: {{duration}}": "集中時間：{{duration}}",
+  "Goal: {{duration}}": "目標：{{duration}}",
+  "Daily Goal: {{duration}}": "1日の目標：{{duration}}",
+  "Weekly Goal: {{duration}}": "1週間の目標：{{duration}}",
   "Check manually for a newer version of Shunhen.": "Shunhen の新しいバージョンを手動で確認します。",
   "Automatically check for updates when Shunhen starts.": "Shunhen の起動時に更新を自動で確認します。",
   "{{count}} seconds": "{{count}} 秒間",
@@ -677,8 +686,6 @@ const ja: Record<keyof typeof en, string> = {
   "Weekly Goal achievement by {{grouping}}.": "{{grouping}}別の毎週の目標達成率。",
   "Set a Daily or Weekly Goal to view goal achievement.":
     "目標達成状況を表示するには、毎日または毎週の目標を設定してください。",
-  Pending: "未確定",
-  "Achieved: {{met}} of {{total}}": "達成：{{met}} / {{total}}",
   "Cumulative focus by Academic Year": "学年別の累積集中時間",
   "Active-day rate": "学習日の割合",
   days: "日",

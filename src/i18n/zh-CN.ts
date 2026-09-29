@@ -1,6 +1,15 @@
 import en from "./en";
 
 const zhCN: Record<keyof typeof en, string> = {
+  "{{count}} active days": "{{count}} 个学习日",
+  "An active day is a day with recorded Focus Time.": "学习日是指记录了专注时长的日期。",
+  "{{active}} of {{eligible}} eligible days": "{{eligible}} 个计入天数中有 {{active}} 个学习日",
+  "Eligible days are counted through today.": "计入天数统计至今天。",
+  Notes: "备注",
+  "Focus time: {{duration}}": "专注时长：{{duration}}",
+  "Goal: {{duration}}": "目标：{{duration}}",
+  "Daily Goal: {{duration}}": "每日目标：{{duration}}",
+  "Weekly Goal: {{duration}}": "每周目标：{{duration}}",
   "Check manually for a newer version of Shunhen.": "手动检查是否有更新版本的 Shunhen。",
   "Automatically check for updates when Shunhen starts.": "启动 Shunhen 时自动检查更新。",
   "{{count}} seconds": "{{count}} 秒",
@@ -658,8 +667,6 @@ const zhCN: Record<keyof typeof en, string> = {
   "Daily Goal achievement by {{grouping}}.": "按{{grouping}}统计每日目标达成情况。",
   "Weekly Goal achievement by {{grouping}}.": "按{{grouping}}统计每周目标达成情况。",
   "Set a Daily or Weekly Goal to view goal achievement.": "设置每日或每周目标以查看目标达成情况。",
-  Pending: "待定",
-  "Achieved: {{met}} of {{total}}": "已达成：{{met}} / {{total}}",
   "Cumulative focus by Academic Year": "按学年累计专注时间",
   "Active-day rate": "活跃天数比例",
   days: "天",
