@@ -14,16 +14,11 @@ import {
 export const analyticsRanges = ["7D", "30D", "90D", "1Y", "All", "Custom"] as const;
 export type AnalyticsRange = (typeof analyticsRanges)[number];
 export type Aggregation = "daily" | "weekly" | "monthly";
-export function goalAggregationModes(range: AnalyticsRange, days: number): Aggregation[] {
-  if (range === "7D") return ["daily"];
-  if (range === "30D" || (range === "Custom" && days <= 90)) return ["daily", "weekly"];
+export function goalAggregationModes(_range: AnalyticsRange, _days: number): Aggregation[] {
   return ["daily", "weekly", "monthly"];
 }
-
-export function goalDefaultAggregation(range: AnalyticsRange, days: number): Aggregation {
-  if (range === "7D" || range === "30D" || (range === "Custom" && days <= 30)) return "daily";
-  if (range === "90D" || (range === "Custom" && days <= 90)) return "weekly";
-  return "monthly";
+export function goalDefaultAggregation(_range: AnalyticsRange, days: number, mode: "daily" | "weekly" = "daily"): Aggregation {
+  return days > 180 ? "monthly" : mode === "daily" && days <= 31 ? "daily" : "weekly";
 }
 export type Period = { start: number; end: number };
 
@@ -103,7 +98,7 @@ export function calendarBuckets(
     value.count++;
     startedTotals.set(key, value);
   }
-  let bucketSessionSeconds = 0;
+  let bucketSessionSeconds = 0, progressTotal = 0;
   for (const day of calendarDailySeries(sessions, period.start, period.end)) {
     const date = new Date(day.start);
     const key = localDayKey(
@@ -128,6 +123,7 @@ export function calendarBuckets(
       };
       result.push(bucket);
       bucketSessionSeconds = 0;
+      progressTotal = 0;
     }
     bucket.end = addDays(day.start, 1);
     bucket.days++;
@@ -136,7 +132,8 @@ export function calendarBuckets(
     if (Number.isFinite(dailyGoal) && dailyGoal > 0 && day.seconds >= dailyGoal) bucket.goalMetDays++;
     bucketSessionSeconds += startedTotals.get(day.key)?.seconds ?? 0;
     bucket.averageSeconds = bucket.sessionCount ? bucketSessionSeconds / bucket.sessionCount : 0;
-    bucket.goalPercent = Number.isFinite(dailyGoal) && dailyGoal > 0 ? (bucket.goalMetDays / bucket.days) * 100 : 0;
+    if (Number.isFinite(dailyGoal) && dailyGoal > 0) progressTotal += Math.min(1, day.seconds / dailyGoal);
+    bucket.goalPercent = (progressTotal / bucket.days) * 100;
   }
   return result;
 }
@@ -215,4 +212,16 @@ export function averageStudyPattern(sessions: FocusSession[], period: Period) {
   const counts = Array<number>(7).fill(0);
   for (let day = period.start; day < period.end; day = addDays(day, 1)) counts[(new Date(day).getDay() + 6) % 7]++;
   return matrix.map((row, index) => row.map((seconds) => seconds / Math.max(1, counts[index])));
+}
+
+/** Daily data stays intact; only axis labels are sampled to fit the viewport. */
+export function cumulativeDailyFocus(sessions: FocusSession[], period: Period) {
+  let total = 0;
+  return calendarBuckets(sessions, period, "daily").map(point => ({ ...point, cumulativeSeconds: (total += point.seconds) }));
+}
+export function dailyTickIndices(count: number, width: number): number[] {
+  if (count <= 0) return [];
+  const step = Math.max(1, Math.ceil((count - 1) / Math.max(1, Math.floor(width / 100) - 1)));
+  const ticks = Array.from({ length: Math.ceil((count - 1) / step) }, (_, i) => i * step);
+  return [...ticks, count - 1];
 }

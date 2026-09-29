@@ -31,6 +31,7 @@ export function goalAchievement(
       pending: 0,
     }));
   const result: GoalPoint[] = [];
+  let progressTotal = 0;
   for (let start = startOfLocalWeek(period.start); start < end; start = addDays(start, 7)) {
     const weekEnd = addDays(start, 7);
     const seconds = history.reduce(
@@ -56,12 +57,14 @@ export function goalAchievement(
         goalPercent: null,
       };
       result.push(bucket);
+      progressTotal = 0;
     }
     bucket.seconds += seconds;
     bucket.achieved += achieved;
-    bucket.applicable += 1 - pending;
+    bucket.applicable += 1;
+    progressTotal += Math.min(1, seconds / target);
     bucket.pending += pending;
-    bucket.goalPercent = bucket.applicable ? (100 * bucket.achieved) / bucket.applicable : null;
+    bucket.goalPercent = bucket.applicable ? (100 * progressTotal) / bucket.applicable : null;
   }
   return result;
 }

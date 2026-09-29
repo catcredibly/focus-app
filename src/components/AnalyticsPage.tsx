@@ -4,7 +4,7 @@ import {
   subjectsForYear,
   DEFAULT_WEEKDAY_METRIC,
   availableGoalMode,
-  compatibleGoalGrouping,
+  
 } from "../analytics/controls";
 import { goalAchievement } from "../analytics/goalAchievement";
 import { academicYearProgress } from "../analytics/yearProgress";
@@ -57,6 +57,8 @@ import {
   calendarDays,
   defaultAggregation,
   goalDefaultAggregation,
+  cumulativeDailyFocus,
+  dailyTickIndices,
   percentageChange,
   personalBests,
   previousPeriod,
@@ -520,7 +522,7 @@ function SubjectsAnalytics({
     });
   return (
     <div className="analytics-content subjects-layout">
-      <Panel title={t("Subjects")}>
+      <Panel className="subject-card" title={t("Subjects")}>
         <div className="analytics-table">
           <div className="analytics-table-head">
             {["Subject", "Academic Year", "Focus time", "Sessions", "Average Session", "Active days"].map((label) => (
@@ -543,7 +545,7 @@ function SubjectsAnalytics({
         </div>
         {!rows.length && <Empty />}
       </Panel>
-      <Panel title={t("Focus time by Subject")}>
+      <Panel className="subject-card subject-share-card" title={t("Focus time by Subject")}>
         <div className="donut-wrap">
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -626,7 +628,6 @@ function YearsAnalytics({ sessions, history, years, subjects }: DataProps & { hi
             >
               <span>{row.name}</span>
               <strong>{formatDuration(row.seconds)}</strong>
-              <small>{t("{{count}} Sessions", { count: row.sessions })}</small>
               <i
                 style={{
                   width: `${(row.seconds / Math.max(1, rows[0].seconds)) * 100}%`,
@@ -640,9 +641,9 @@ function YearsAnalytics({ sessions, history, years, subjects }: DataProps & { hi
       </Panel>
       <Panel title={t("Average focus per active day")}>
         <div className="analytics-list-scroll">
-          {rows.map((row, index) => (
+          {[...rows].sort((a, b) => b.averageActiveDaySeconds - a.averageActiveDaySeconds).map((row, index) => (
             <div
-              className="breakdown-row"
+              className="breakdown-row year-comparison-row"
               key={row.academicYearId}
               title={`${row.name}: ${formatDuration(row.averageActiveDaySeconds)}`}
               tabIndex={0}
@@ -698,10 +699,7 @@ function TimeTrends({ sessions, history, period, range }: TimelineProps) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const aggregation = defaultAggregation(range, period);
-  // This keyed, conditionally mounted page resets chart state without resetting global filters.
-  const [goalAggregation, setGoalAggregation] = useState<Aggregation>(() =>
-    goalDefaultAggregation(range, calendarDays(period)),
-  );
+  const [manualAggregation, setGoalAggregation] = useState<Aggregation>();
   const dailyAvailable = settings.dailyGoalEnabled && settings.dailyGoalSeconds > 0;
   const weeklyAvailable = settings.weeklyGoalEnabled && settings.weeklyGoalSeconds > 0;
   const [chosenGoal, setChosenGoal] = useState<"daily" | "weekly">("daily");
@@ -709,10 +707,12 @@ function TimeTrends({ sessions, history, period, range }: TimelineProps) {
   useEffect(() => {
     if (!(dailyAvailable && weeklyAvailable)) setChosenGoal(weeklyAvailable ? "weekly" : "daily");
   }, [dailyAvailable, weeklyAvailable]);
-  const grouping = compatibleGoalGrouping(goalMode, goalAggregation);
+  const smartDefault = goalDefaultAggregation(range, calendarDays(period), goalMode);
+  const grouping = manualAggregation && !(goalMode === "weekly" && manualAggregation === "daily")
+    ? manualAggregation : smartDefault;
   useEffect(() => {
-    if (goalMode === "weekly" && goalAggregation === "daily") setGoalAggregation("weekly");
-  }, [goalMode, goalAggregation]);
+    if (goalMode === "weekly" && manualAggregation === "daily") setGoalAggregation(smartDefault);
+  }, [goalMode, manualAggregation, smartDefault]);
   const allowedModes: Aggregation[] = goalMode === "daily" ? ["daily", "weekly", "monthly"] : ["weekly", "monthly"];
   const target = goalMode === "daily" ? settings.dailyGoalSeconds : settings.weeklyGoalSeconds;
   const validGoal = dailyAvailable || weeklyAvailable;
@@ -720,12 +720,10 @@ function TimeTrends({ sessions, history, period, range }: TimelineProps) {
     ...point,
     label: periodLabel(point),
   }));
-  let cumulativeSeconds = 0;
-  const points = calendarBuckets(history, period, aggregation).map((point) => ({
-    ...point,
-    label: periodLabel(point),
-    cumulativeSeconds: (cumulativeSeconds += point.seconds),
-  }));
+  const points = calendarBuckets(history, period, aggregation).map(point => ({ ...point, label: periodLabel(point) }));
+  const cumulative = cumulativeDailyFocus(history, period).map(point => ({ ...point, label: periodLabel(point) }));
+  const [cumulativeWidth, setCumulativeWidth] = useState(500);
+  const ticks = dailyTickIndices(cumulative.length, cumulativeWidth).map(index => cumulative[index].label);
   return (
     <div className="analytics-content trend-grid">
       <Panel
@@ -779,13 +777,15 @@ function TimeTrends({ sessions, history, period, range }: TimelineProps) {
         )}
       </Panel>
       <Panel title={t("Cumulative Focus Time")}>
-        <ScrollChart width={points.length * 28}>
-          <LineChart data={points}>
-            <ChartAxes />
+        <ResponsiveContainer width="100%" height={290} onResize={width => setCumulativeWidth(width)}>
+          <LineChart data={cumulative}>
+            <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
+            <XAxis dataKey="label" ticks={ticks} interval={0} fontSize={11} />
+            <YAxis tickFormatter={formatDurationAxis} fontSize={11} />
             <Line dataKey="cumulativeSeconds" name={t("Cumulative Focus Time")} stroke="var(--accent)" dot={false} />
             <Tooltip content={(props) => <ChartTooltip {...props} />} />
           </LineChart>
-        </ScrollChart>
+        </ResponsiveContainer>
       </Panel>
       <Panel title={t("Sessions over time")}>
         <ScrollChart width={points.length * 28}>

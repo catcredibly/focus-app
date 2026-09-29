@@ -1,5 +1,13 @@
 import { isTauri } from "@tauri-apps/api/core";
 import type { UpdateState } from "./updater";
+import metadata from "../package.json";
+
+export function previousPreviewVersion(version: string) {
+  const [major, minor, patch] = version.split(".").map(part => parseInt(part, 10) || 0);
+  // At a new minor/major boundary, use its previous baseline rather than inventing a patch history.
+  return patch > 0 ? `${major}.${minor}.${patch - 1}` : minor > 0 ? `${major}.${minor - 1}.0` : `${Math.max(0, major - 1)}.0.0`;
+}
+let generation = 0;
 
 // Deliberately owns no updater candidate, IPC, download, or relaunch functions.
 let state: UpdateState | null = null;
@@ -13,22 +21,31 @@ export const updatePreview = {
     };
   },
   getSnapshot: () => state,
-  open: (currentVersion: string) => {
+  open: async (currentVersion: string) => {
     if (!import.meta.env.DEV || !isTauri()) return;
-    const [major, minor, patch] = currentVersion.split(".").map((part) => parseInt(part, 10) || 0);
+    const request = ++generation;
     state = {
       phase: "available",
-      currentVersion,
-      availableVersion: `${major}.${minor}.${patch + 1}`,
+      currentVersion: previousPreviewVersion(currentVersion),
+      availableVersion: currentVersion,
       promptOpen: true,
       automaticPrompt: false,
       downloaded: 0,
-      notes:
-        "## A little more focus\n\nThis preview uses **sample release notes** to demonstrate the update dialog.\n\n### Improvements\n- A smoother transition between study sessions.\n- Clearer feedback when saving your work.\n- More consistent keyboard navigation.\n\n### Fixes\n- Improved recovery of paused sessions.\n- Refined layout at smaller window sizes.\n- Updated translations throughout Settings.\n\n### Tips\nUse `Ctrl + Alt + F` to reveal the timer Popout. Your study data stays on this device.\n\nRead the [Shunhen source and release information](https://github.com/catcredibly/shihen).\n\n### Before you continue\nThese notes are for visual inspection only. No update will be downloaded or installed from this preview.",
+
     };
     publish();
+    try {
+      const repository = new URL(metadata.homepage).pathname.replace(/^\/|\/$/g, "");
+      const response = await fetch(`https://api.github.com/repos/${repository}/releases/tags/v${encodeURIComponent(currentVersion)}`, { signal: AbortSignal.timeout(10000) });
+      if (!response.ok) return;
+      const release: { body?: unknown } = await response.json();
+      if (request !== generation || !state) return;
+      state = { ...state, notes: typeof release.body === "string" ? release.body : undefined };
+      publish();
+    } catch { /* Offline/unpublished releases use the real dialog's existing fallback. */ }
   },
   close: () => {
+    generation++;
     state = null;
     publish();
   },
