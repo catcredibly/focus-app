@@ -9,7 +9,7 @@
 Shunhen is a desktop focus timer and study tracker that combines a clean countdown with Subjects, Academic Years, Session history, study goals, and long-term analytics. Your study data stays local, with no account or cloud service required.
 
 <p align="center">
-  <img src="docs/screenshots/timer.png" alt="Shunhen Timer" width="1200" />
+  <img src="docs/screenshots/timer-page.png" alt="Shunhen Timer" width="1200" />
 </p>
 
 ## Features
