@@ -4991,8 +4991,9 @@ html[data-utility-window] #root {
   gap: 16px;
 }
 .history-filters > label {
-  flex: 0 0 190px;
-  min-width: 0;
+  flex: 0 1 238px;
+  width: 238px;
+  min-width: 150px;
 }
 .history-filters > label > select {
   min-width: 0;
@@ -5136,10 +5137,6 @@ html[data-utility-window] #root {
 }
 .analytics-page :is(.overview-grid, .subjects-layout, .years-layout, .trend-grid, .patterns-grid) {
   align-items: start;
-}
-
-.history-filters > label:nth-child(3) {
-  flex-basis: 120px;
 }
 .history-note-search.is-open {
   flex: 0 0 clamp(230px, 24vw, 360px);
