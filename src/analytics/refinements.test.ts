@@ -1,3 +1,6 @@
+import { validSessions } from "../sessionValidity";
+import { goalProgress } from "../goals";
+import { dailyTotals, weekdayTotals } from "./analytics";
 import { describe, expect, it } from "vitest";
 import type { FocusSession } from "../types";
 import { goalAchievement } from "./goalAchievement";
@@ -23,7 +26,12 @@ describe("analytics refinements", () => {
     expect(analyticsPeriod("Custom", [], at(29), custom, year)).toEqual(custom);
   });
   it("keeps session averages whole while splitting calendar focus across midnight", () => {
-    const overnight = { ...row(20, 7200), startTime: at(20, 23), endTime: at(21, 1) };
+    const overnight = {
+      ...row(20, 7200),
+      startTime: at(20, 23),
+      endTime: at(21, 1),
+      focusedAfterMidnightSeconds: 3600,
+    };
     const points = calendarBuckets([overnight], { start: at(20), end: at(22) }, "daily");
     expect(points.map((point) => [point.seconds, point.sessionCount, point.averageSeconds])).toEqual([
       [3600, 1, 7200],
@@ -61,4 +69,36 @@ describe("analytics refinements", () => {
     expect(year.activeDayRate).toBe(1 / 15);
     expect(academicYearProgress(years, [], at(30))[0]).toMatchObject({ progress: 100, ongoing: false });
   });
+});
+
+it("excludes invalid data consistently and revalidates without changing stored records", () => {
+  const year = { id: "y", name: "Year", archived: false, startDate: "2026-09-10", endDate: "2026-09-30" };
+  const all = [row(1, 500), row(20, 100)];
+  const valid = validSessions(all, [year]);
+  expect(valid.map((session) => session.id)).toEqual(["20"]);
+  expect(dailyTotals(valid)).toHaveLength(1);
+  expect(analyticsPeriod("All", valid, at(25)).start).toBe(at(20));
+  expect(rollingTimeline(valid, { start: at(19), end: at(21) })[0].avg7).toBeNull();
+  expect(goalProgress(valid, at(1, 15)).dailySeconds).toBe(0);
+  expect(validSessions(all, [{ ...year, startDate: "2026-09-01" }])).toHaveLength(2);
+  expect(all).toHaveLength(2);
+  expect(validSessions([{ ...all[0], startTime: at(12), endTime: at(12) + 500000 }], [year])).toHaveLength(1);
+});
+it.each(["7D", "30D", "90D", "1Y"] as const)("anchors %s historical, ongoing and All Years ranges", (range) => {
+  const year = { id: "y", name: "Year", archived: false, startDate: "2026-09-01", endDate: "2026-09-20" };
+  expect(analyticsPeriod(range, [], at(29), undefined, year).end).toBe(at(21));
+  expect(
+    analyticsPeriod(range, [], at(29), undefined, { ...year, endDate: "2026-10-30" }).start,
+  ).toBeGreaterThanOrEqual(at(1));
+  expect(analyticsPeriod(range, [], at(29)).end).toBe(at(30));
+  const custom = { start: at(1), end: at(3) };
+  expect(analyticsPeriod("Custom", [], at(29), custom, year)).toEqual(custom);
+});
+it("keeps weekday count and whole-session averages separate from overnight calendar allocation", () => {
+  const overnight = { ...row(20, 7200), startTime: at(20, 23), endTime: at(21, 1), focusedAfterMidnightSeconds: 3600 };
+  const values = weekdayTotals([overnight], { start: at(20), end: at(22) });
+  expect(values.map((value) => value.label)).toEqual(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
+  expect(values[6]).toMatchObject({ count: 1, sessionSeconds: 7200, seconds: 3600 });
+  expect(values[0]).toMatchObject({ count: 0, sessionSeconds: 0, seconds: 3600 });
+  expect(values.reduce((sum, value) => sum + value.count, 0)).toBe(1);
 });

@@ -12,6 +12,7 @@ import {
   filterSessions,
   heatmapLevel,
   heatmapScale,
+  sessionsWithoutExactTimeOfDay,
   localDayKey,
   longestStreak,
   medianSessionSeconds,
@@ -20,6 +21,7 @@ import {
   sessionLengthBuckets,
   startOfLocalWeek,
   subjectTotals,
+  timeOfDayMatrix,
   weeklyTotals,
 } from "./analytics";
 
@@ -38,6 +40,7 @@ const session = (
   startTime,
   endTime: startTime + seconds * 1000,
   focusedDurationSeconds: seconds,
+  focusIntervals: [{ startTime, endTime: startTime + seconds * 1000 }],
   archived: false,
   ...overrides,
 });
@@ -159,6 +162,31 @@ describe("adaptive heatmap scale", () => {
     expect(dailyTotals(active)).toHaveLength(3);
     expect(heatmapScale(active).p90).toBeGreaterThan(3600);
   });
+});
+
+it("excludes Sessions without exact clock-time data from only the time-of-day heatmap", () => {
+  const start = new Date(2026, 8, 21, 10).getTime();
+  const historical = {
+    ...session("historical", start, 3600),
+    focusIntervals: undefined,
+    startTime: start,
+    endTime: start + 7200_000,
+    focusedDurationSeconds: 3600,
+    durationMode: "unlocked" as const,
+  };
+  const period = { start: new Date(2026, 8, 21).getTime(), end: new Date(2026, 8, 22).getTime() };
+  expect(dailyTotals([historical])[0].seconds).toBe(3600);
+  expect(
+    timeOfDayMatrix([historical], period)
+      .flat()
+      .reduce((sum, seconds) => sum + seconds, 0),
+  ).toBe(0);
+  expect(sessionsWithoutExactTimeOfDay([historical], period)).toEqual([historical]);
+  expect(
+    timeOfDayMatrix([{ ...historical, focusedDurationSeconds: 7200 }], period)
+      .flat()
+      .reduce((sum, seconds) => sum + seconds, 0),
+  ).toBe(7200);
 });
 
 describe("Academic Year comparison", () => {

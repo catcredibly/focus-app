@@ -1,3 +1,4 @@
+import { dailyFocusAllocations } from "../sessionAllocation";
 import metadata from "../../package.json";
 import "fake-indexeddb/auto";
 import Dexie from "dexie";
@@ -251,6 +252,34 @@ it("normalizes oversized notes once when upgrading an older database", async () 
   expect((await migrated.sessions.get("valid"))!.note).toBe("\n**Keep**\n");
 });
 
+it("migrates only an exactly reconstructable legacy overnight split", async () => {
+  const name = `session-split-migration-${crypto.randomUUID()}`;
+  const old = new Dexie(name);
+  old.version(3).stores({ academicYears: "id", subjects: "id", sessions: "id", settings: "key" });
+  const start = new Date(2026, 8, 21, 23, 30).getTime();
+  const exact = {
+    id: "exact",
+    subjectId: "subject",
+    subjectName: "Subject",
+    academicYearId: "year",
+    academicYearName: "Year",
+    startTime: start,
+    endTime: start + 7200_000,
+    focusedDurationSeconds: 3600,
+    archived: false,
+    focusIntervals: [
+      { startTime: start, endTime: start + 1800_000 },
+      { startTime: start + 5400_000, endTime: start + 7200_000 },
+    ],
+  };
+  await old.table("sessions").bulkPut([exact, { ...exact, id: "unknown", focusIntervals: undefined }]);
+  old.close();
+  const migrated = new FocusDatabase(name);
+  opened.push(migrated);
+  expect((await migrated.sessions.get("exact"))?.focusedAfterMidnightSeconds).toBe(1800);
+  expect((await migrated.sessions.get("unknown"))?.focusedAfterMidnightSeconds).toBeUndefined();
+});
+
 it("normalizes oversized CSV notes without rejecting their Sessions", async () => {
   const source = await seeded();
   const rows = await source.sessions.toArray();
@@ -276,4 +305,37 @@ it("preserves imported out-of-year sessions and reports only applied invalid imp
   await csvTarget.subjects.bulkAdd(await source.subjects.toArray());
   const preview = await previewCsv(exportSessionsCsv(await source.sessions.toArray()), undefined, undefined, csvTarget);
   expect((await importCsvPreview(preview, csvTarget)).invalidSessionsImported).toBe(1);
+});
+
+it("imports malformed optional intervals without crashing Analytics and preserves valid intervals", async () => {
+  const source = await seeded();
+  for (const intervals of [
+    [null],
+    {},
+    [{ startTime: new Date(2026, 8, 21, 23, 45).getTime(), endTime: new Date(2026, 8, 22, 0, 30).getTime() }],
+  ]) {
+    const raw = await createBackup(source);
+    (raw.data.sessions[0] as unknown as { focusIntervals: unknown }).focusIntervals = intervals;
+    const backup = validateBackup(JSON.parse(JSON.stringify(raw)));
+    const target = database();
+    await restoreBackup(backup, "replace", "use-imported", target);
+    const imported = (await target.sessions.toArray())[0];
+    expect(dailyFocusAllocations(imported).reduce((sum, part) => sum + part.seconds, 0)).toBe(
+      Array.isArray(intervals) && intervals[0] !== null ? 2700 : 0,
+    );
+    expect(imported.focusIntervals).toEqual(intervals);
+  }
+});
+
+it("preserves explicit overnight summaries and focused duration through CSV", async () => {
+  const source = await seeded();
+  await source.sessions.update("session", { focusedDurationSeconds: 1200, focusedAfterMidnightSeconds: 600 });
+  const target = database();
+  const preview = await previewCsv(exportSessionsCsv(await source.sessions.toArray()), undefined, undefined, target);
+  const result = await importCsvPreview(preview, target);
+  expect(result.invalidSessionsImported ?? 0).toBe(0);
+  expect(await target.sessions.get("session")).toMatchObject({
+    focusedDurationSeconds: 1200,
+    focusedAfterMidnightSeconds: 600,
+  });
 });

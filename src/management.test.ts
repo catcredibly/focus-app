@@ -12,6 +12,8 @@ import {
   moveSessions,
   setAcademicYearArchived,
   updateSessionDetails,
+  saveSessionEdit,
+  saveAcademicYearEdit,
 } from "./management";
 import { managementViewState } from "./managementViewState";
 
@@ -326,6 +328,41 @@ describe("management archive and deletion integrity", () => {
   });
 });
 
+it("corrects an invalid overnight Session only after a valid explicit split is saved", async () => {
+  const testDb = database();
+  await testDb.academicYears.add({ id: "year", name: "Year", archived: false });
+  await testDb.subjects.add({
+    id: "subject",
+    academicYearId: "year",
+    name: "Subject",
+    color: "#fff",
+    archived: false,
+  });
+  const startTime = new Date(2026, 8, 21, 23).getTime();
+  const input = {
+    academicYearId: "year",
+    subjectId: "subject",
+    startTime,
+    endTime: startTime + 7200_000,
+    focusedDurationSeconds: 3600,
+    focusedAfterMidnightSeconds: 1800,
+    durationMode: "unlocked" as const,
+  };
+  await testDb.sessions.add({
+    id: "legacy",
+    ...input,
+    focusedAfterMidnightSeconds: undefined,
+    subjectName: "Subject",
+    academicYearName: "Year",
+    archived: false,
+  });
+  await expect(updateSessionDetails("legacy", { ...input, focusedAfterMidnightSeconds: 4000 }, testDb)).rejects.toThrow(
+    /fit within/,
+  );
+  expect(await saveSessionEdit("legacy", input, {}, testDb)).toBe("saved");
+  expect((await testDb.sessions.get("legacy"))?.focusedAfterMidnightSeconds).toBe(1800);
+});
+
 it("preserves exact intervals for unrelated edits and removes them for timing edits", async () => {
   const testDb = database();
   await testDb.academicYears.add({ id: "y", name: "Year", archived: false });
@@ -359,4 +396,58 @@ it("preserves exact intervals for unrelated edits and removes them for timing ed
   expect((await testDb.sessions.get("session"))?.focusIntervals).toEqual(intervals);
   await updateSessionDetails("session", { ...input, endTime: 124001 }, testDb);
   expect((await testDb.sessions.get("session"))?.focusIntervals).toBeUndefined();
+});
+
+it("gates destructive timing edits and year-boundary edits before persistence", async () => {
+  const databaseUnderTest = database();
+  const year = { id: "y", name: "Year", archived: false, startDate: "2026-09-01", endDate: "2026-09-30" };
+  await databaseUnderTest.academicYears.bulkAdd([year, { ...year, id: "other" }]);
+  await databaseUnderTest.subjects.bulkAdd([
+    { id: "s", academicYearId: "y", name: "Subject", color: "#fff", archived: false },
+    { id: "s2", academicYearId: "y", name: "Second", color: "#fff", archived: false },
+    { id: "s3", academicYearId: "other", name: "Subject", color: "#fff", archived: false },
+  ]);
+  const start = new Date(2026, 8, 15, 23).getTime(),
+    end = start + 7200000;
+  const original = {
+    id: "s",
+    academicYearId: "y",
+    academicYearName: "Year",
+    subjectId: "s",
+    subjectName: "Subject",
+    startTime: start,
+    endTime: end,
+    focusedDurationSeconds: 3600,
+    durationMode: "unlocked" as const,
+    archived: true,
+    focusIntervals: [{ startTime: start, endTime: start + 3600000 }],
+  };
+  await databaseUnderTest.sessions.add(original);
+  const input = { ...original, focusedAfterMidnightSeconds: 0, note: "new" };
+  for (const change of [{ note: "changed" }, { subjectId: "s2" }, { academicYearId: "other", subjectId: "s3" }]) {
+    await databaseUnderTest.sessions.put(original);
+    expect(await saveSessionEdit("s", { ...input, ...change }, {}, databaseUnderTest)).toBe("saved");
+    expect((await databaseUnderTest.sessions.get("s"))?.focusIntervals).toEqual(original.focusIntervals);
+  }
+  for (const change of [{ startTime: start - 1000 }, { endTime: end + 1000 }, { focusedDurationSeconds: 3500 }]) {
+    await databaseUnderTest.sessions.put(original);
+    expect(await saveSessionEdit("s", { ...input, ...change }, {}, databaseUnderTest)).toBe("timing");
+    expect(await databaseUnderTest.sessions.get("s")).toEqual(original); // Cancel means no save call.
+    expect(await saveSessionEdit("s", { ...input, ...change }, { timing: true }, databaseUnderTest)).toBe("saved");
+    expect((await databaseUnderTest.sessions.get("s"))?.focusIntervals).toBeUndefined();
+    expect(await saveSessionEdit("s", { ...input, ...change }, {}, databaseUnderTest)).toBe("saved");
+  }
+  await databaseUnderTest.sessions.put(original);
+  expect(await saveSessionEdit("s", input, {}, databaseUnderTest)).toBe("saved"); // Restored timing, no warning.
+  await databaseUnderTest.sessions.add({
+    ...original,
+    id: "already-invalid",
+    startTime: new Date(2026, 7, 30).getTime(),
+  });
+  const narrow = { ...year, endDate: "2026-09-14" };
+  expect(await saveAcademicYearEdit(narrow, false, databaseUnderTest)).toBe(1);
+  expect(await databaseUnderTest.academicYears.get("y")).toEqual(year);
+  expect((await databaseUnderTest.sessions.get("s"))?.archived).toBe(true);
+  expect(await saveAcademicYearEdit(narrow, true, databaseUnderTest)).toBe(0);
+  expect(await saveAcademicYearEdit(year, false, databaseUnderTest)).toBe(0);
 });

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { durationParts, inferDurationMode, normalizeDurationParts } from "./sessionDuration";
+import {
+  durationParts,
+  inferDurationMode,
+  normalizeDurationParts,
+  editedSessionTimes,
+  sessionSpanSeconds,
+} from "./sessionDuration";
 
 describe("session duration editing", () => {
   it("infers legacy paused sessions as unlocked", () => {
@@ -23,4 +29,15 @@ describe("session duration editing", () => {
     expect(normalizeDurationParts(1, 75, 0).parts).toEqual({ hours: 2, minutes: 15, seconds: 0 });
     expect(durationParts(360005)).toEqual({ hours: 100, minutes: 0, seconds: 5 });
   });
+});
+
+it("resolves overnight editor values and preserves restored timing precision", () => {
+  const overnight = editedSessionTimes("2026-09-15", "23:30", "00:30");
+  expect(new Date(overnight.endTime).getDate()).toBe(16);
+  expect(sessionSpanSeconds(overnight.startTime, overnight.endTime)).toBe(3600);
+  const equal = editedSessionTimes("2026-09-15", "23:30", "23:30");
+  expect(equal.endTime).toBe(equal.startTime);
+  const precise = { startTime: overnight.startTime + 1234, endTime: overnight.endTime + 5678 };
+  expect(editedSessionTimes("2026-09-15", "23:30", "00:30", precise)).toEqual(precise);
+  expect(editedSessionTimes("2026-09-15", "23:31", "00:30", precise).startTime).not.toBe(precise.startTime);
 });

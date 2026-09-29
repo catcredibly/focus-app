@@ -1,3 +1,4 @@
+import { followingMidnight, sessionMaximumEnd, overnightAllocationValid } from "./sessionBoundary";
 import { noteMetrics } from "./notes";
 import { db } from "./db";
 import type { AcademicYear, FocusSession, Subject } from "./types";
@@ -67,6 +68,7 @@ export async function createSession(input: {
   endTime: number;
   note?: string;
   focusedDurationSeconds?: number;
+  focusedAfterMidnightSeconds?: number;
   durationMode?: "locked" | "unlocked";
 }) {
   if (!noteMetrics(input.note ?? "").valid) throw new Error("Note exceeds the allowed limits.");
@@ -75,12 +77,23 @@ export async function createSession(input: {
   }
   if (input.subject.academicYearId !== input.academicYear.id)
     throw new Error("Choose a Subject from the selected Academic Year.");
-  const spanSeconds = Math.round((input.endTime - input.startTime) / 1000);
+  const spanSeconds = (input.endTime - input.startTime) / 1000;
   const durationMode = input.durationMode ?? "locked";
   const focusedDurationSeconds =
-    durationMode === "locked" ? spanSeconds : Math.round(input.focusedDurationSeconds ?? spanSeconds);
+    durationMode === "locked" ? spanSeconds : (input.focusedDurationSeconds ?? spanSeconds);
   if (focusedDurationSeconds <= 0 || focusedDurationSeconds > spanSeconds)
     throw new Error("Duration cannot exceed the available Start and End span.");
+  const midnight = followingMidnight(input.startTime);
+  const focusedAfterMidnightSeconds =
+    input.endTime < midnight
+      ? undefined
+      : input.durationMode === "unlocked"
+        ? input.focusedAfterMidnightSeconds
+        : (input.endTime - midnight) / 1000;
+  if (input.endTime > sessionMaximumEnd(input.startTime))
+    throw new Error("Sessions cannot extend beyond the following day.");
+  if (!overnightAllocationValid(input.startTime, input.endTime, focusedDurationSeconds, focusedAfterMidnightSeconds))
+    throw new Error("Focused time must fit within each calendar day’s available Session span.");
   const session: FocusSession = {
     id: makeId(),
     subjectId: input.subject.id,
@@ -90,6 +103,7 @@ export async function createSession(input: {
     startTime: input.startTime,
     endTime: input.endTime,
     focusedDurationSeconds,
+    focusedAfterMidnightSeconds,
     durationMode,
     note: input.note?.trim() ? input.note : undefined,
     archived: false,

@@ -1,3 +1,6 @@
+import { followingMidnight, sessionMaximumEnd, overnightAllocationValid } from "./sessionBoundary";
+import { removesExactFocusTiming } from "./sessionAllocation";
+import { sessionInvalidReason, newlyInvalidCount } from "./sessionValidity";
 import { noteMetrics } from "./notes";
 import { db, type FocusDatabase } from "./db";
 import { CURRENT_YEAR_KEY } from "./data";
@@ -75,6 +78,7 @@ export async function updateSessionDetails(
     startTime: number;
     endTime: number;
     focusedDurationSeconds: number;
+    focusedAfterMidnightSeconds?: number;
     durationMode: DurationMode;
     note?: string;
   },
@@ -91,11 +95,21 @@ export async function updateSessionDetails(
     if (!Number.isFinite(input.startTime) || !Number.isFinite(input.endTime) || input.endTime <= input.startTime)
       throw new Error("End time must be after start time.");
     const spanSeconds = sessionSpanSeconds(input.startTime, input.endTime);
-    const focusedDurationSeconds =
-      input.durationMode === "locked" ? spanSeconds : Math.round(input.focusedDurationSeconds);
+    const focusedDurationSeconds = input.durationMode === "locked" ? spanSeconds : input.focusedDurationSeconds;
     if (focusedDurationSeconds <= 0) throw new Error("Duration must be greater than zero.");
     if (focusedDurationSeconds > spanSeconds)
       throw new Error("Duration cannot exceed the available Start and End span.");
+    const midnight = followingMidnight(input.startTime);
+    const focusedAfterMidnightSeconds =
+      input.endTime < midnight
+        ? undefined
+        : input.durationMode === "unlocked"
+          ? input.focusedAfterMidnightSeconds
+          : (input.endTime - midnight) / 1000;
+    if (input.endTime > sessionMaximumEnd(input.startTime))
+      throw new Error("Sessions cannot extend beyond the following day.");
+    if (!overnightAllocationValid(input.startTime, input.endTime, focusedDurationSeconds, focusedAfterMidnightSeconds))
+      throw new Error("Focused time must fit within each calendar day’s available Session span.");
     await database.sessions.update(id, {
       subjectId: subject.id,
       subjectName: subject.name,
@@ -104,6 +118,7 @@ export async function updateSessionDetails(
       startTime: input.startTime,
       endTime: input.endTime,
       focusedDurationSeconds,
+      focusedAfterMidnightSeconds,
       durationMode: input.durationMode,
       // Recorded intervals describe the original timer, not manually edited timing.
       focusIntervals:
@@ -119,4 +134,42 @@ export async function updateSessionDetails(
 
 export function canDeleteManagedRecord(archived: boolean, allowDirectActiveDeletion: boolean) {
   return archived || allowDirectActiveDeletion;
+}
+
+/** Warning results never mutate data. Only explicit acknowledgements allow the save to proceed. */
+export async function saveSessionEdit(
+  id: string,
+  input: Parameters<typeof updateSessionDetails>[1],
+  confirmed: { invalid?: boolean; timing?: boolean } = {},
+  database: FocusDatabase = db,
+) {
+  return database.transaction("rw", database.academicYears, database.subjects, database.sessions, async () => {
+    const original = await database.sessions.get(id);
+    if (!original) throw new Error("Session not found.");
+    const next = {
+      ...input,
+      focusedDurationSeconds:
+        input.durationMode === "locked"
+          ? sessionSpanSeconds(input.startTime, input.endTime)
+          : input.focusedDurationSeconds,
+    };
+    const reason = sessionInvalidReason(next, await database.academicYears.get(input.academicYearId));
+    const previousReason = sessionInvalidReason(original, await database.academicYears.get(original.academicYearId));
+    if (reason && reason !== previousReason && !confirmed.invalid) return "invalid" as const;
+    if (removesExactFocusTiming(original, next) && !confirmed.timing) return "timing" as const;
+    await updateSessionDetails(id, input, database);
+    return "saved" as const;
+  });
+}
+
+export async function saveAcademicYearEdit(next: AcademicYear, confirmed = false, database: FocusDatabase = db) {
+  return database.transaction("rw", database.academicYears, database.sessions, async () => {
+    const previous = await database.academicYears.get(next.id);
+    const count = previous
+      ? newlyInvalidCount(await database.sessions.where("academicYearId").equals(next.id).toArray(), previous, next)
+      : 0;
+    if (count && !confirmed) return count;
+    await database.academicYears.put(next);
+    return 0;
+  });
 }

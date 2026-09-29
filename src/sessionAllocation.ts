@@ -1,17 +1,16 @@
+import { followingMidnight, overnightAllocationValid, sessionMaximumEnd } from "./sessionBoundary";
 import type { FocusSession } from "./types";
 
-/** Never infer pauses. Obsolete/overlapping intervals fall back to the real interval. */
-function usableIntervals(session: FocusSession) {
+/** Returns recorded focus intervals only when they exactly account for focused duration. */
+export function exactFocusIntervals(session: FocusSession) {
   const intervals = session.focusIntervals;
-  const recorded = intervals?.reduce((sum, interval) => sum + (interval.endTime - interval.startTime) / 1000, 0) ?? 0;
   if (
-    intervals?.length &&
-    recorded > 0 &&
-    (Math.abs(recorded - session.focusedDurationSeconds) <= 0.5 ||
-      intervals.reduce((sum, interval) => sum + Math.round((interval.endTime - interval.startTime) / 1000), 0) ===
-        session.focusedDurationSeconds) &&
+    Array.isArray(intervals) &&
+    intervals.length &&
     intervals.every(
       (interval, index) =>
+        interval &&
+        typeof interval === "object" &&
         Number.isFinite(interval.startTime) &&
         Number.isFinite(interval.endTime) &&
         interval.startTime >= session.startTime &&
@@ -19,13 +18,49 @@ function usableIntervals(session: FocusSession) {
         interval.endTime > interval.startTime &&
         (!index || interval.startTime >= intervals[index - 1].endTime),
     )
-  )
-    return intervals;
-  return [{ startTime: session.startTime, endTime: session.endTime }];
+  ) {
+    const recorded = intervals.reduce((sum, interval) => sum + (interval.endTime - interval.startTime) / 1000, 0);
+    if (session.focusedAfterMidnightSeconds !== undefined) {
+      const midnight = followingMidnight(session.startTime);
+      const after = intervals.reduce(
+        (sum, interval) => sum + Math.max(0, interval.endTime - Math.max(interval.startTime, midnight)) / 1000,
+        0,
+      );
+      if (Math.abs(after - session.focusedAfterMidnightSeconds) >= 1e-7) return undefined;
+    }
+    if (recorded > 0 && Math.abs(recorded - session.focusedDurationSeconds) < 1e-7) return intervals;
+  }
+  return undefined;
 }
 
 export function hasUsableFocusIntervals(session: FocusSession) {
-  return Boolean(session.focusIntervals?.length && usableIntervals(session) === session.focusIntervals);
+  return Boolean(exactFocusIntervals(session));
+}
+
+export function hasExactFocusTiming(session: FocusSession) {
+  const span = (session.endTime - session.startTime) / 1000;
+  return (
+    Boolean(exactFocusIntervals(session)) ||
+    (Number.isFinite(span) && span > 0 && Math.abs(span - session.focusedDurationSeconds) < 1e-7)
+  );
+}
+
+export function reconstructFocusedAfterMidnight(session: FocusSession) {
+  const midnight = followingMidnight(session.startTime);
+  if (session.endTime < midnight || session.endTime > sessionMaximumEnd(session.startTime)) return undefined;
+  const intervals = exactFocusIntervals(session);
+  if (intervals)
+    return intervals.reduce(
+      (sum, interval) => sum + Math.max(0, interval.endTime - Math.max(interval.startTime, midnight)) / 1000,
+      0,
+    );
+  return undefined;
+}
+
+export function reconstructSessionFields(session: FocusSession): FocusSession {
+  if (session.focusedAfterMidnightSeconds !== undefined) return session;
+  const focusedAfterMidnightSeconds = reconstructFocusedAfterMidnight(session);
+  return focusedAfterMidnightSeconds === undefined ? session : { ...session, focusedAfterMidnightSeconds };
 }
 
 export function removesExactFocusTiming(
@@ -41,37 +76,87 @@ export function removesExactFocusTiming(
 }
 
 export function allocatedFocusInRange(session: FocusSession, start: number, end: number) {
-  const intervals = usableIntervals(session);
-  const total = intervals.reduce((sum, interval) => sum + interval.endTime - interval.startTime, 0);
-  if (!(total > 0) || !Number.isFinite(total) || !(session.focusedDurationSeconds > 0)) return 0;
-  const overlap = intervals.reduce(
-    (sum, interval) => sum + Math.max(0, Math.min(interval.endTime, end) - Math.max(interval.startTime, start)),
-    0,
-  );
-  return session.focusedDurationSeconds * (overlap / total);
+  return dailyFocusAllocations(session).reduce((sum, day) => {
+    const from = Math.max(day.start, session.startTime);
+    const to = Math.min(day.end, session.endTime);
+    if (start <= from && end >= to) return sum + day.seconds;
+    return sum + exactFocusInRange(session, Math.max(start, from), Math.min(end, to));
+  }, 0);
+}
+
+/** Intraday consumers must never manufacture pause placement. */
+export function exactFocusInRange(session: FocusSession, start: number, end: number) {
+  if (end <= start) return 0;
+  const intervals = exactFocusIntervals(session);
+  if (intervals)
+    return intervals.reduce(
+      (sum, interval) =>
+        sum + Math.max(0, Math.min(interval.endTime, end) - Math.max(interval.startTime, start)) / 1000,
+      0,
+    );
+  if (!hasExactFocusTiming(session)) return 0;
+  return Math.max(0, Math.min(session.endTime, end) - Math.max(session.startTime, start)) / 1000;
 }
 
 export function dailyFocusAllocations(session: FocusSession) {
-  const result: { start: number; end: number; seconds: number }[] = [];
+  if (
+    !Number.isFinite(session.focusedDurationSeconds) ||
+    session.focusedDurationSeconds <= 0 ||
+    session.endTime <= session.startTime ||
+    session.focusedDurationSeconds > (session.endTime - session.startTime) / 1000 ||
+    session.endTime > sessionMaximumEnd(session.startTime)
+  )
+    return [];
+  const midnight = followingMidnight(session.startTime);
+  const focusedAfterMidnightSeconds = session.focusedAfterMidnightSeconds ?? reconstructFocusedAfterMidnight(session);
+  if (
+    session.endTime >= midnight &&
+    overnightAllocationValid(
+      session.startTime,
+      session.endTime,
+      session.focusedDurationSeconds,
+      focusedAfterMidnightSeconds,
+    )
+  ) {
+    const first = new Date(session.startTime);
+    first.setHours(0, 0, 0, 0);
+    const next = new Date(midnight);
+    next.setDate(next.getDate() + 1);
+    return [
+      {
+        start: first.getTime(),
+        end: midnight,
+        seconds: session.focusedDurationSeconds - focusedAfterMidnightSeconds!,
+      },
+      { start: midnight, end: next.getTime(), seconds: focusedAfterMidnightSeconds! },
+    ].filter((part) => part.seconds > 0);
+  }
   if (
     !Number.isFinite(session.startTime) ||
     !Number.isFinite(session.endTime) ||
     !Number.isFinite(session.focusedDurationSeconds)
   )
-    return result;
+    return [];
+  if (session.endTime >= midnight) return [];
   const date = new Date(session.startTime);
   date.setHours(0, 0, 0, 0);
-  while (date.getTime() < session.endTime) {
-    const start = date.getTime();
-    date.setDate(date.getDate() + 1);
-    const end = date.getTime();
-    const seconds = allocatedFocusInRange(session, start, end);
-    if (seconds > 0) result.push({ start, end, seconds });
+  const start = date.getTime();
+  date.setDate(date.getDate() + 1);
+  return session.focusedDurationSeconds > 0
+    ? [{ start, end: date.getTime(), seconds: session.focusedDurationSeconds }]
+    : [];
+}
+
+/** Completed timer storage keeps the day split, while the active state retains retry intervals. */
+export function summarizeTimerSession(session: FocusSession): FocusSession {
+  const midnight = followingMidnight(session.startTime);
+  const { focusIntervals: _temporary, ...saved } = session;
+  if (session.endTime < midnight) {
+    delete saved.focusedAfterMidnightSeconds;
+    return saved;
   }
-  if (result.length) {
-    // Assign arithmetic residue to the final populated day; preserve the canonical total.
-    result[result.length - 1].seconds =
-      session.focusedDurationSeconds - result.slice(0, -1).reduce((sum, day) => sum + day.seconds, 0);
-  }
-  return result;
+  return {
+    ...saved,
+    focusedAfterMidnightSeconds: session.focusedAfterMidnightSeconds ?? reconstructFocusedAfterMidnight(session),
+  };
 }

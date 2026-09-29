@@ -1,6 +1,6 @@
 import "fake-indexeddb/auto";
 import Dexie from "dexie";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { FocusDatabase } from "./db";
 import { filterSessions } from "./analytics/analytics";
 import { createDevelopmentAnalyticsDataset } from "./analytics/developmentDataset";
@@ -188,10 +188,6 @@ it("restores expiry at the deadline and excludes the closed-app gap on extension
   expect(completedSession(extended, 960000)).toMatchObject({
     id: "expired",
     focusedDurationSeconds: 360,
-    focusIntervals: [
-      { startTime: 1000, endTime: 301000 },
-      { startTime: 900000, endTime: 960000 },
-    ],
   });
 });
 
@@ -206,10 +202,6 @@ it("shares Stopwatch persistence and completion while excluding paused time", ()
   expect(extendTimerState(resumed, 300, 310000)).toBe(resumed);
   expect(completedSession(resumed, 361000)).toMatchObject({
     focusedDurationSeconds: 150,
-    focusIntervals: [
-      { startTime: 1000, endTime: 91000 },
-      { startTime: 301000, endTime: 361000 },
-    ],
   });
   expect(idleTimerState(resumed)).toMatchObject({
     mode: "timer",
@@ -268,4 +260,51 @@ describe("Pause/Resume interaction guard", () => {
     const finished = finishTimerState(started, 1300);
     expect(toggleTimerPause(finished, 1400)).toBe(finished);
   });
+});
+
+it("uses a one-second guard without queuing inputs, measured with a fake clock", () => {
+  vi.useFakeTimers();
+  try {
+    vi.setSystemTime(100000);
+    let state = startStopwatchState(initialTimerState, subject, year);
+    vi.advanceTimersByTime(2000);
+    state = toggleTimerPause(state);
+    const paused = state;
+    for (let n = 0; n < 10; n++) state = toggleTimerPause(state);
+    expect(state).toBe(paused);
+    vi.advanceTimersByTime(999);
+    expect(toggleTimerPause(state)).toBe(paused);
+    vi.advanceTimersByTime(1);
+    expect(state.paused).toBe(true);
+    state = toggleTimerPause(state);
+    expect(state.paused).toBe(false);
+    vi.advanceTimersByTime(2000);
+    state = toggleTimerPause(state);
+    expect(state.focusIntervals).toEqual([
+      { startTime: 100000, endTime: 102000 },
+      { startTime: 103000, endTime: 105000 },
+    ]);
+    expect(state.accumulatedFocusedSeconds).toBe(4);
+    expect(vi.getTimerCount()).toBe(0);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("preserves paused and running intervals through reload and completion retry", () => {
+  const started = startStopwatchState(initialTimerState, subject, year, 1000);
+  const paused = toggleTimerPause(started, 6000);
+  const restored = normalizeTimerState(JSON.parse(JSON.stringify(paused)));
+  expect(restored.runningSince).toBeNull();
+  expect(restored.focusIntervals).toEqual(paused.focusIntervals);
+  const running = toggleTimerPause(restored, 9000);
+  const reloaded = normalizeTimerState(JSON.parse(JSON.stringify(running)));
+  const closed = finishTimerState(reloaded, 12000);
+  expect(closed.focusIntervals).toEqual([
+    { startTime: 1000, endTime: 6000 },
+    { startTime: 9000, endTime: 12000 },
+  ]);
+  expect(completedSession(normalizeTimerState({ ...closed, saveFailed: true }), 12000)).toEqual(
+    completedSession(closed, 12000),
+  );
 });

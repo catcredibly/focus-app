@@ -1,4 +1,5 @@
-import { dailyFocusAllocations, allocatedFocusInRange } from "./sessionAllocation";
+import { sessionMaximumEnd, countdownCanStart } from "./sessionBoundary";
+import { dailyFocusAllocations, allocatedFocusInRange, summarizeTimerSession } from "./sessionAllocation";
 import type { AcademicYear, FocusSession, Subject } from "./types";
 
 export const ACTIVE_TIMER_STORAGE_KEY = "focus.activeTimer";
@@ -11,6 +12,9 @@ export type TimerState = {
   running: boolean;
   paused: boolean;
   pauseResumeAcceptedAt?: number;
+  maximumEnd?: number;
+  sessionLimitReached?: boolean;
+  sessionLimitAcknowledged?: boolean;
   subject: string;
   subjectColor: string;
   subjectId: string;
@@ -62,6 +66,8 @@ export const initialTimerState: TimerState = {
 
 export function normalizeTimerState(value: Partial<TimerState> | null | undefined): TimerState {
   const state = { ...initialTimerState, ...value };
+  if (state.startedAt !== null && !Number.isFinite(state.maximumEnd))
+    state.maximumEnd = sessionMaximumEnd(state.startedAt);
   state.focusIntervals = Array.isArray(value?.focusIntervals) ? value.focusIntervals : [];
   state.checkpointIntervals = Array.isArray(value?.checkpointIntervals) ? value.checkpointIntervals : [];
   state.accumulatedFocusedSeconds = Number.isFinite(value?.accumulatedFocusedSeconds)
@@ -85,7 +91,9 @@ export function startTimerState(
   year: AcademicYear,
   now = Date.now(),
   sessionId: string = crypto.randomUUID(),
+  mode: "timer" | "stopwatch" = "timer",
 ): TimerState {
+  if (mode === "timer" && !countdownCanStart(seconds, now)) return state;
   return {
     ...state,
     mode: "timer",
@@ -98,6 +106,9 @@ export function startTimerState(
     academicYearName: year.name,
     sessionId,
     pauseResumeAcceptedAt: undefined,
+    maximumEnd: sessionMaximumEnd(now),
+    sessionLimitReached: false,
+    sessionLimitAcknowledged: false,
     running: true,
     paused: false,
     finished: false,
@@ -125,7 +136,7 @@ export function startStopwatchState(
   sessionId: string = crypto.randomUUID(),
 ): TimerState {
   return {
-    ...startTimerState(state, state.plannedDurationSeconds, subject, year, now, sessionId),
+    ...startTimerState(state, state.plannedDurationSeconds, subject, year, now, sessionId, "stopwatch"),
     mode: "stopwatch",
     remainingSeconds: 0,
     targetEnd: null,
@@ -135,6 +146,8 @@ export function startStopwatchState(
 
 /** Restore expiry without replaying completion effects or finalizing the Session. */
 export function restoreExpiredTimer(state: TimerState, now = Date.now()): TimerState {
+  const bounded = enforceSessionBoundary(state, now);
+  if (bounded !== state) return bounded;
   if (
     !state.running ||
     state.paused ||
@@ -149,12 +162,14 @@ export function restoreExpiredTimer(state: TimerState, now = Date.now()): TimerS
 
 export function focusedSecondsAt(state: TimerState, now: number) {
   if (state.runningSince === null || state.paused || state.finished) return state.accumulatedFocusedSeconds;
-  const end = state.targetEnd ? Math.min(now, state.targetEnd) : now;
-  return state.accumulatedFocusedSeconds + Math.max(0, Math.round((end - state.runningSince) / 1000));
+  const end = Math.min(now, state.targetEnd ?? Infinity, timerMaximumEnd(state));
+  return state.accumulatedFocusedSeconds + Math.max(0, (end - state.runningSince) / 1000);
 }
 
 /** Ignore rapid inputs without changing the timestamps of accepted transitions. */
 export function toggleTimerPause(state: TimerState, now = Date.now()): TimerState {
+  const bounded = enforceSessionBoundary(state, now);
+  if (bounded !== state) return bounded;
   if (
     !state.running ||
     state.finished ||
@@ -187,7 +202,7 @@ export function toggleTimerPause(state: TimerState, now = Date.now()): TimerStat
 
 export function closeRunningInterval(state: TimerState, endTime: number): TimerState {
   if (state.runningSince === null) return state;
-  const end = state.targetEnd ? Math.min(endTime, state.targetEnd) : endTime;
+  const end = Math.min(endTime, state.targetEnd ?? Infinity, timerMaximumEnd(state));
   if (end <= state.runningSince) return { ...state, runningSince: null };
   return {
     ...state,
@@ -198,13 +213,14 @@ export function closeRunningInterval(state: TimerState, endTime: number): TimerS
 }
 
 export function finishTimerState(state: TimerState, endTime: number): TimerState {
+  endTime = Math.min(endTime, timerMaximumEnd(state));
   const closed = closeRunningInterval(state, endTime);
   return { ...closed, remainingSeconds: 0, targetEnd: null, finished: true, finishedAt: endTime, paused: false };
 }
 
 export function extendTimerState(state: TimerState, seconds: number, now = Date.now()): TimerState {
   if (!state.running || state.mode === "stopwatch") return state;
-  if (seconds <= 0) return state;
+  if (seconds <= 0 || !canExtendTimer(state, seconds, now)) return state;
   const fromFinished = Boolean(state.finished);
   return {
     ...state,
@@ -221,11 +237,12 @@ export function extendTimerState(state: TimerState, seconds: number, now = Date.
 }
 
 export function completedSession(state: TimerState, endTime: number): FocusSession | undefined {
+  endTime = Math.min(endTime, timerMaximumEnd(state));
   if (!state.sessionId || !state.subjectId || !state.startedAt || endTime <= state.startedAt) return;
   const closed = closeRunningInterval(state, endTime);
   const focusedDurationSeconds = Math.max(0, closed.accumulatedFocusedSeconds);
   if (!focusedDurationSeconds) return;
-  return {
+  return summarizeTimerSession({
     id: state.sessionId,
     subjectId: state.subjectId,
     subjectName: state.subject,
@@ -234,17 +251,20 @@ export function completedSession(state: TimerState, endTime: number): FocusSessi
     startTime: state.startedAt,
     endTime,
     focusedDurationSeconds,
-    durationMode: focusedDurationSeconds === Math.round((endTime - state.startedAt) / 1000) ? "locked" : "unlocked",
+    durationMode: focusedDurationSeconds === (endTime - state.startedAt) / 1000 ? "locked" : "unlocked",
     note: state.note.trim() ? state.note : undefined,
     archived: false,
     focusIntervals: closed.focusIntervals,
-  };
+  });
 }
 
 export function idleTimerState(state: TimerState): TimerState {
   return {
     ...state,
     mode: "timer",
+    maximumEnd: undefined,
+    sessionLimitReached: false,
+    sessionLimitAcknowledged: false,
     expiredWhileClosed: false,
     expiredNoticeDismissed: false,
     running: false,
@@ -305,7 +325,31 @@ export function currentStreak(sessions: FocusSession[], now = Date.now()) {
 }
 
 export function timerStateAt(state: TimerState, now = Date.now()) {
+  state = enforceSessionBoundary(state, now);
   if (state.mode === "stopwatch") return { ...state, remainingSeconds: focusedSecondsAt(state, now) };
   if (!state.running || state.paused || state.finished || !state.targetEnd) return state;
   return { ...state, remainingSeconds: Math.max(0, Math.ceil((state.targetEnd - now) / 1000)) };
+}
+
+export function timerMaximumEnd(state: TimerState) {
+  return state.maximumEnd ?? (state.startedAt === null ? Infinity : sessionMaximumEnd(state.startedAt));
+}
+export function enforceSessionBoundary(state: TimerState, now = Date.now()): TimerState {
+  if (!state.running || state.finished || now < timerMaximumEnd(state)) return state;
+  // A countdown that completed earlier keeps its earlier natural end.
+  const end = Math.min(timerMaximumEnd(state), state.paused ? Infinity : (state.targetEnd ?? Infinity));
+  const finished = finishTimerState(state, end);
+  return { ...finished, sessionLimitReached: state.mode === "stopwatch" && end === timerMaximumEnd(state) };
+}
+export function canExtendTimer(state: TimerState, seconds: number, now = Date.now()) {
+  if (state.mode === "stopwatch" || !state.running || now >= timerMaximumEnd(state)) return false;
+  const projected = state.finished
+    ? now + seconds * 1000
+    : state.paused
+      ? now + (state.remainingSeconds + seconds) * 1000
+      : (state.targetEnd ?? now) + seconds * 1000;
+  return seconds > 0 && Number.isFinite(seconds) && projected <= timerMaximumEnd(state);
+}
+export function acknowledgeSessionLimit(state: TimerState): TimerState {
+  return state.sessionLimitReached ? { ...state, sessionLimitAcknowledged: true } : state;
 }

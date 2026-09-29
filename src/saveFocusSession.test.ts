@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FocusDatabase } from "./db";
 import { saveFocusSession } from "./saveFocusSession";
 import type { FocusSession } from "./types";
@@ -29,6 +29,31 @@ async function goals() {
   );
 }
 afterEach(() => database.delete());
+it("retains exact retry data after a failed save and stores only the final day split", async () => {
+  const start = new Date(2026, 8, 24, 23).getTime();
+  const source = {
+    ...session("retry"),
+    startTime: start,
+    endTime: start + 10800000,
+    focusedDurationSeconds: 7200,
+    focusIntervals: [
+      { startTime: start, endTime: start + 1800000 },
+      { startTime: start + 5400000, endTime: start + 10800000 },
+    ],
+  };
+  const original = structuredClone(source);
+  const add = vi.spyOn(database.sessions, "add").mockRejectedValueOnce(new Error("Storage unavailable"));
+  await expect(saveFocusSession(source, false, database)).rejects.toThrow("Storage unavailable");
+  expect(source).toEqual(original);
+  expect(await database.sessions.count()).toBe(0);
+  add.mockRestore();
+  await saveFocusSession(source, false, database);
+  const saved = await database.sessions.get(source.id);
+  expect(saved?.focusIntervals).toBeUndefined();
+  expect(saved?.focusedAfterMidnightSeconds).toBe(5400);
+  expect(saved?.focusedDurationSeconds).toBe(7200);
+  expect(source).toEqual(original);
+});
 describe("live goal completion", () => {
   it("queues daily before weekly and claims each period only once across webviews", async () => {
     await goals();
