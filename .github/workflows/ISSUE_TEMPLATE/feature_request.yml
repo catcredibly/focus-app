@@ -1,0 +1,30 @@
+name: Feature request
+description: Suggest an improvement or new feature for Shihen
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the problem or limitation you are experiencing.
+      placeholder: It would be useful if...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like Shihen to do?
+      description: Describe the behavior or feature you would like.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add screenshots, examples, or anything else that may help.
+    validations:
+      required: false
