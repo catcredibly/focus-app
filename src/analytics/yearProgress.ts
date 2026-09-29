@@ -20,16 +20,17 @@ export function academicYearProgress(years: AcademicYear[], sessions: FocusSessi
       seconds += totals.get(day) ?? 0;
       points.push({ progress: (elapsed / totalDays) * 100, seconds, elapsedDays: elapsed, totalDays });
     }
+    const activeDays = days.filter((day) => day.seconds > 0 && day.start >= start && day.start < elapsedEnd).length;
     return [
       {
         year,
+        activeDays,
         points,
         totalDays,
         elapsedDays,
         progress: (elapsedDays / totalDays) * 100,
         ongoing: last > today,
-        activeDayRate:
-          days.filter((day) => day.seconds > 0 && day.start >= start && day.start < elapsedEnd).length / elapsedDays,
+        activeDayRate: activeDays / elapsedDays,
       },
     ];
   });

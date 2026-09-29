@@ -73,8 +73,8 @@ export function goalAchievement(
 
 /** Keep the goal threshold visible; add rounded headroom only for overachievement. */
 export function goalAxisMaximum(points: Pick<GoalPoint, "goalPercent">[]) {
-  const highest = Math.max(100, ...points.map(point => Number.isFinite(point.goalPercent) ? point.goalPercent : 0));
+  const highest = Math.max(100, ...points.map((point) => (Number.isFinite(point.goalPercent) ? point.goalPercent : 0)));
   if (highest <= 100) return 100;
   const step = 10 ** Math.floor(Math.log10(highest)) / 5;
-  return Math.ceil(highest * 1.1 / step) * step;
+  return Math.ceil((highest * 1.1) / step) * step;
 }

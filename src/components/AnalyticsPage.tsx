@@ -625,7 +625,7 @@ function SubjectsAnalytics({
 function YearsAnalytics({ sessions, history, years, subjects }: DataProps & { history: FocusSession[] }) {
   const { t } = useTranslation();
   const rows = academicYearTotals(sessions, years, subjects);
-  const yearProgress = new Map(academicYearProgress(years, history).map(item => [item.year.id, item]));
+  const yearProgress = new Map(academicYearProgress(years, history).map((item) => [item.year.id, item]));
   const averageMaximum = Math.max(1, ...rows.map((row) => row.averageActiveDaySeconds));
   return (
     <div className="analytics-content years-layout">
@@ -692,18 +692,30 @@ function YearsAnalytics({ sessions, history, years, subjects }: DataProps & { hi
               <span role="cell">{row.name}</span>
               <span role="cell">{number(row.sessions)}</span>
               <span role="cell">{number(row.subjects)}</span>
-              <span role="cell"><ValueTooltip lines={[
-                t("{{count}} active days", { count: row.activeDays }),
-                t("An active day is a day with recorded Focus Time."),
-              ]}>{number(row.activeDays)}</ValueTooltip></span>
               <span role="cell">
-                <ValueTooltip lines={[
-                  t("{{active}} of {{eligible}} eligible days", {
-                    active: yearProgress.get(row.academicYearId)?.activeDays ?? 0,
-                    eligible: yearProgress.get(row.academicYearId)?.elapsedDays ?? 0,
-                  }),
-                  ...(yearProgress.get(row.academicYearId)?.ongoing ? [t("Eligible days are counted through today.")] : []),
-                ]}>{percent((yearProgress.get(row.academicYearId)?.activeDayRate ?? 0) * 100)}</ValueTooltip>
+                <ValueTooltip
+                  lines={[
+                    t("{{count}} active days", { count: row.activeDays }),
+                    t("An active day is a day with recorded Focus Time."),
+                  ]}
+                >
+                  {number(row.activeDays)}
+                </ValueTooltip>
+              </span>
+              <span role="cell">
+                <ValueTooltip
+                  lines={[
+                    t("{{active}} of {{eligible}} eligible days", {
+                      active: yearProgress.get(row.academicYearId)?.activeDays ?? 0,
+                      eligible: yearProgress.get(row.academicYearId)?.elapsedDays ?? 0,
+                    }),
+                    ...(yearProgress.get(row.academicYearId)?.ongoing
+                      ? [t("Eligible days are counted through today.")]
+                      : []),
+                  ]}
+                >
+                  {percent((yearProgress.get(row.academicYearId)?.activeDayRate ?? 0) * 100)}
+                </ValueTooltip>
               </span>
               <span role="cell">{formatDuration(row.averageSessionSeconds)}</span>
             </div>

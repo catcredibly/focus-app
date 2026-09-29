@@ -3,8 +3,8 @@ import metadata from "../package.json";
 import tauri from "../src-tauri/tauri.conf.json";
 
 describe("canonical repository identity", () => {
-  it("keeps metadata and updater on catcredibly/shihen", () => {
-    const repository = "https://github.com/catcredibly/shihen";
+  it("keeps metadata and updater on catcredibly/shunhen", () => {
+    const repository = "https://github.com/catcredibly/shunhen";
     expect(metadata.repository.url).toBe(`git+${repository}.git`);
     expect(metadata.homepage).toBe(`${repository}#readme`);
     expect(tauri.plugins.updater.endpoints).toEqual([`${repository}/releases/latest/download/latest.json`]);

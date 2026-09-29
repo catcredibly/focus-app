@@ -61,12 +61,26 @@ export function HistoryLoading({ searchOpen = false }: { searchOpen?: boolean })
 }
 
 const tabs = ["Overview", "Study Patterns", "Subjects", "Academic Years", "Time Trends"] as const;
-function CardSkeleton({ title, compact = false, className = "", controls = false }: { title?: string; compact?: boolean; className?: string; controls?: boolean }) {
+function CardSkeleton({
+  title,
+  compact = false,
+  className = "",
+  controls = false,
+}: {
+  title?: string;
+  compact?: boolean;
+  className?: string;
+  controls?: boolean;
+}) {
   const { t } = useTranslation();
   return (
     <section className={`analytics-panel ${className}`}>
       <header>{title ? <h2>{t(title)}</h2> : <Skeleton className="loading-card-title" />}</header>
-      {controls && <div className="trend-controls"><Skeleton className="loading-control loading-analytics-filter" /></div>}
+      {controls && (
+        <div className="trend-controls">
+          <Skeleton className="loading-control loading-analytics-filter" />
+        </div>
+      )}
       <Skeleton className={compact ? "loading-summary-area" : "loading-chart-area"} />
     </section>
   );
@@ -158,7 +172,12 @@ export function AnalyticsLoading({
                     "Average session length",
                   ]
           ).map((title) => (
-            <CardSkeleton title={title} key={title} className={title === "Study time by weekday and time" ? "full-row" : undefined} controls={tab === "Study Patterns" && title === "Focus time by weekday"} />
+            <CardSkeleton
+              title={title}
+              key={title}
+              className={title === "Study time by weekday and time" ? "full-row" : undefined}
+              controls={tab === "Study Patterns" && title === "Focus time by weekday"}
+            />
           ))}
         </div>
       )}

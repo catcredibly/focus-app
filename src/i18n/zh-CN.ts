@@ -319,7 +319,6 @@ const zhCN: Record<keyof typeof en, string> = {
   Average: "平均",
   "Active days": "活跃天数",
   "{{count}} Sessions": "{{count}} 次专注时段",
-  "{{count}} active days": "{{count}} 个活跃天数",
   "Activity and Subject detail": "活动和科目详细信息",
   "Average active day": "平均活跃日",
   "90th percentile": "第 90 个百分位",

@@ -1,14 +1,14 @@
 {
   "name": "focus",
   "private": true,
-  "version": "2.2.3",
+  "version": "2.3.0",
   "description": "A local-first Windows focus timer and study analytics app.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/catcredibly/shihen.git"
+    "url": "git+https://github.com/catcredibly/shunhen.git"
   },
-  "homepage": "https://github.com/catcredibly/shihen#readme",
+  "homepage": "https://github.com/catcredibly/shunhen#readme",
   "type": "module",
   "scripts": {
     "dev": "vite",

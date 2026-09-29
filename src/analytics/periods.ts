@@ -56,7 +56,10 @@ export function analyticsPeriod(
   const end = addDays(yearEnd !== undefined ? Math.min(yearEnd, today) : today, 1);
   if (range === "All")
     return {
-      start: sessions.reduce((first, s) => Math.min(first, startOfLocalDay(s.startTime)), startOfLocalDay(Math.min(today, end - 1))),
+      start: sessions.reduce(
+        (first, s) => Math.min(first, startOfLocalDay(s.startTime)),
+        startOfLocalDay(Math.min(today, end - 1)),
+      ),
       end,
     };
   const days = range === "7D" ? 7 : range === "30D" ? 30 : range === "90D" ? 90 : 365;

@@ -7,23 +7,26 @@ Use this process for Windows production releases of Shunhen.
 The current release version used by this guide is:
 
 ```text
-2.2.3
+2.3.0
 ```
 
-When preparing the next release, use **Ctrl+H** in this file and replace every occurrence of the current release version with the new version.
+When preparing a new release, first use Ctrl+H in this file to replace every occurrence of the current release version with the new version.
 
-This updates the version-specific examples in this guide, such as expected installer filenames and manifest checks. Do not use this replacement on historical compatibility references that intentionally refer to an older release.
+This updates version-specific examples in the guide, including expected installer filenames and manifest checks. Do not replace historical compatibility references that intentionally refer to an older version.
 
-Then update the actual application version from the repository root:
+Then, from the repository root, update and verify the application version and run the formatter:
 
 ```powershell
-npm run version:set -- 2.2.3
+npx prettier . --write
+npm run version:set -- 2.3.0
 npm run version:check
 ```
 
-Replace `2.2.3` with the new release version before running the command. `package.json` is authoritative; `version:set` synchronizes the required npm/Cargo metadata and Tauri reads the package version.
+Replace `2.3.0` with the new release version before running the commands.
 
-Run all commands from the **repository root** unless stated otherwise.
+`package.json` is the authoritative version source. `version:set` synchronizes the required npm and Cargo metadata, and Tauri reads the resulting package version.
+
+Run all commands in this guide from the repository root unless stated otherwise.
 
 ## 1. Prepare the release notes
 
@@ -104,11 +107,11 @@ The NSIS release files are created under:
 src-tauri\target\release\bundle\nsis\
 ```
 
-For Shunhen 2.2.3, expect:
+For Shunhen 2.3.0, expect:
 
 ```text
-Shunhen_2.2.3_x64-setup.exe
-Shunhen_2.2.3_x64-setup.exe.sig
+Shunhen_2.3.0_x64-setup.exe
+Shunhen_2.3.0_x64-setup.exe.sig
 ```
 
 The `.sig` belongs to that exact build.
@@ -126,7 +129,7 @@ $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
 $installer = "Shunhen_${version}_x64-setup.exe"
 $dir = "src-tauri\target\release\bundle\nsis"
 
-node tools/generate-updater-manifest.mjs --notes RELEASE_NOTES.md --artifact "$dir\$installer" --repository catcredibly/shihen
+node tools/generate-updater-manifest.mjs --notes RELEASE_NOTES.md --artifact "$dir\$installer" --repository catcredibly/shunhen
 ```
 
 The helper should:
@@ -156,7 +159,7 @@ $manifest.notes
 For this release it should report:
 
 ```text
-2.2.3
+2.3.0
 
 Release Notes:
 ```
@@ -199,7 +202,7 @@ gh release create "v$version" `
   "$dir\$installer" `
   "$dir\$installer.sig" `
   "$dir\latest.json" `
-  --repo catcredibly/shihen `
+  --repo catcredibly/shunhen `
   --title "Shunhen $version" `
   --notes-file RELEASE_NOTES.md
 ```

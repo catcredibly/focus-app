@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import type { FocusSession } from "../types";
 import { goalAchievement, goalAxisMaximum } from "./goalAchievement";
 import { academicYearProgress } from "./yearProgress";
-import { analyticsPeriod, calendarBuckets, rollingTimeline } from "./periods";
+import { analyticsPeriod, calendarBuckets, calendarDays, rollingTimeline } from "./periods";
 const at = (day: number, hour = 0) => new Date(2026, 8, day, hour).getTime();
 const row = (day: number, seconds: number): FocusSession => ({
   id: String(day),
@@ -88,9 +88,9 @@ it("excludes invalid data consistently and revalidates without changing stored r
 it.each(["7D", "30D", "90D", "1Y"] as const)("anchors %s historical, ongoing and All Years ranges", (range) => {
   const year = { id: "y", name: "Year", archived: false, startDate: "2026-09-01", endDate: "2026-09-20" };
   expect(analyticsPeriod(range, [], at(29), undefined, year).end).toBe(at(21));
-  expect(
-    analyticsPeriod(range, [], at(29), undefined, { ...year, endDate: "2026-10-30" }).start,
-  ).toBeGreaterThanOrEqual(at(1));
+  const ongoing = analyticsPeriod(range, [], at(29), undefined, { ...year, endDate: "2026-10-30" });
+  expect(calendarDays(ongoing)).toBe({ "7D": 7, "30D": 30, "90D": 90, "1Y": 365 }[range]);
+  expect(ongoing.end).toBe(at(30));
   expect(analyticsPeriod(range, [], at(29)).end).toBe(at(30));
   const custom = { start: at(1), end: at(3) };
   expect(analyticsPeriod("Custom", [], at(29), custom, year)).toEqual(custom);
@@ -137,7 +137,14 @@ it("keeps daily and weekly overachievement and rounded chart headroom", () => {
   expect(daily[0].goalPercent).toBeCloseTo(111.6666667);
   const weekly = goalAchievement([row(21, 80400)], { start: at(21), end: at(28) }, "weekly", "weekly", 72000, at(29));
   expect(weekly[0].goalPercent).toBeCloseTo(111.6666667);
-  const monthly = goalAchievement([row(7, 200), row(14, 100)], { start: at(7), end: at(21) }, "weekly", "monthly", 100, at(22));
+  const monthly = goalAchievement(
+    [row(7, 200), row(14, 100)],
+    { start: at(7), end: at(21) },
+    "weekly",
+    "monthly",
+    100,
+    at(22),
+  );
   expect(monthly[0].goalPercent).toBe(150);
   expect(goalAxisMaximum([{ goalPercent: 50 }])).toBe(100);
   expect(goalAxisMaximum(daily)).toBeGreaterThan(daily[0].goalPercent);

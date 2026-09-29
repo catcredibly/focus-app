@@ -124,7 +124,9 @@ export function NotePreview({ note }: { note: string }) {
       if (event?.target instanceof Element && event.target.closest(".history-note-preview-tooltip")) return;
       setPosition(undefined);
     };
-    const key = (event: KeyboardEvent) => { if (event.key === "Escape") close(); };
+    const key = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
     window.addEventListener("scroll", close, true);
     window.addEventListener("resize", close);
     window.addEventListener("keydown", key);
@@ -138,14 +140,42 @@ export function NotePreview({ note }: { note: string }) {
     keepOpen();
     if (!truncated || !ref.current) return;
     const rect = ref.current.getBoundingClientRect();
-    setPosition({ left: Math.max(8, Math.min(rect.left, window.innerWidth - 368)), top: Math.max(8, Math.min(rect.bottom + 6, window.innerHeight - 248)) });
+    setPosition({
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - 368)),
+      top: Math.max(8, Math.min(rect.bottom + 6, window.innerHeight - 248)),
+    });
   };
-  return <>
-    <span className="history-note-column history-truncated" ref={ref} tabIndex={truncated ? 0 : undefined}
-      aria-describedby={position ? id : undefined} onMouseEnter={reveal} onFocus={reveal}
-      onMouseLeave={dismiss} onBlur={dismiss}>
-      {value || "—"}
-    </span>
-    {position && createPortal(<div id={id} role="tooltip" tabIndex={0} onMouseEnter={keepOpen} onFocus={keepOpen} onMouseLeave={dismiss} onBlur={dismiss} className="history-note-preview-tooltip" style={position}>{value}</div>, document.body)}
-  </>;
+  return (
+    <>
+      <span
+        className="history-note-column history-truncated"
+        ref={ref}
+        tabIndex={truncated ? 0 : undefined}
+        aria-describedby={position ? id : undefined}
+        onMouseEnter={reveal}
+        onFocus={reveal}
+        onMouseLeave={dismiss}
+        onBlur={dismiss}
+      >
+        {value || "—"}
+      </span>
+      {position &&
+        createPortal(
+          <div
+            id={id}
+            role="tooltip"
+            tabIndex={0}
+            onMouseEnter={keepOpen}
+            onFocus={keepOpen}
+            onMouseLeave={dismiss}
+            onBlur={dismiss}
+            className="history-note-preview-tooltip"
+            style={position}
+          >
+            {value}
+          </div>,
+          document.body,
+        )}
+    </>
+  );
 }

@@ -153,9 +153,9 @@ GitHub Release notes and updater metadata use the same UTF-8 Markdown notes file
 Following creation of a signed release build, updater metadata can be generated from the current-version artifact:
 
 ```powershell
-node tools/generate-updater-manifest.mjs --notes RELEASE_NOTES.md --artifact "src-tauri/target/release/bundle/nsis/Shunhen_<version>_x64-setup.exe" --repository catcredibly/shihen
+node tools/generate-updater-manifest.mjs --notes RELEASE_NOTES.md --artifact "src-tauri/target/release/bundle/nsis/Shunhen_<version>_x64-setup.exe" --repository catcredibly/shunhen
 
-gh release create "v<version>" --repo catcredibly/shihen --notes-file RELEASE_NOTES.md <installer> <installer.sig> <latest.json>
+gh release create "v<version>" --repo catcredibly/shunhen --notes-file RELEASE_NOTES.md <installer> <installer.sig> <latest.json>
 ```
 
 The manifest helper reads the authoritative package version and the existing matching `.sig`. It does not build or sign the application, upload release assets, or modify the embedded updater endpoint or public key.

@@ -53,13 +53,10 @@ export function UpdateControls() {
 }
 
 export function UpdatePrompt({ ready = true }: { ready?: boolean }) {
-  const { t } = useTranslation();
   const realState = useUpdater();
   const preview = useSyncExternalStore(updatePreview.subscribe, updatePreview.getSnapshot);
   const state = preview ?? realState;
-  const dismiss = () => (preview ? updatePreview.close() : updater.later());
-  const [preferenceError, setPreferenceError] = useState(false);
-  const dialog = useRef<HTMLDialogElement>(null);
+  const actions = preview ? updatePreview : updater;
   useEffect(() => {
     if (!ready) return;
     let secondFrame = 0,
@@ -76,6 +73,32 @@ export function UpdatePrompt({ ready = true }: { ready?: boolean }) {
       window.clearTimeout(backgroundTask);
     };
   }, [ready]);
+  return (
+    <UpdateDialog
+      key={preview ? "preview" : "production"}
+      state={state}
+      dismiss={preview ? updatePreview.close : updater.later}
+      install={actions.install}
+      dontShowAgain={preview ? updatePreview.dontShowAgain : updater.dontShowAgain}
+    />
+  );
+}
+
+/** Production and development preview share this complete presentation path. */
+export function UpdateDialog({
+  state,
+  dismiss,
+  install,
+  dontShowAgain,
+}: {
+  state: UpdateState;
+  dismiss: () => void;
+  install: () => Promise<void>;
+  dontShowAgain: () => Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const [preferenceError, setPreferenceError] = useState(false);
+  const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (state.promptOpen && !dialog.current?.open) dialog.current?.showModal();
     if (!state.promptOpen && dialog.current?.open) dialog.current?.close();
@@ -114,7 +137,7 @@ export function UpdatePrompt({ ready = true }: { ready?: boolean }) {
       {state.availableVersion && (
         <a
           className="update-release-link"
-          href={`https://github.com/catcredibly/shihen/releases/tag/v${encodeURIComponent(state.availableVersion.replace(/^v/, ""))}`}
+          href={`https://github.com/catcredibly/shunhen/releases/tag/v${encodeURIComponent(state.availableVersion.replace(/^v/, ""))}`}
           onClick={(event) => {
             event.preventDefault();
             void openExternalUrl(event.currentTarget.href).catch(console.error);
@@ -138,7 +161,7 @@ export function UpdatePrompt({ ready = true }: { ready?: boolean }) {
           </small>
         </>
       )}
-      {preferenceError && !preview && (
+      {preferenceError && (
         <p role="alert" className="field-error">
           {t("Unable to save update preference. Try again.")}
         </p>
@@ -149,7 +172,7 @@ export function UpdatePrompt({ ready = true }: { ready?: boolean }) {
             disabled={busy(state)}
             onClick={() => {
               setPreferenceError(false);
-              void updater.dontShowAgain().catch(() => setPreferenceError(true));
+              void dontShowAgain().catch(() => setPreferenceError(true));
             }}
           >
             {t("Don't show again")}
@@ -160,9 +183,9 @@ export function UpdatePrompt({ ready = true }: { ready?: boolean }) {
         </button>
         <button
           className="primary-action"
-          disabled={Boolean(preview) || busy(state)}
+          disabled={busy(state)}
           onClick={() => {
-            if (!preview) void updater.install();
+            void install();
           }}
         >
           {t(state.error === "restart" ? "Restart Shunhen" : "Update now")}

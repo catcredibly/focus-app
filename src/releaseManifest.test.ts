@@ -31,7 +31,7 @@ it("uses the same notes file verbatim and preserves only matching-version platfo
         "--artifact",
         artifact,
         "--repository",
-        "catcredibly/shihen",
+        "catcredibly/shunhen",
       ],
       { stdio: "pipe" },
     );

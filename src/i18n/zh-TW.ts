@@ -321,7 +321,6 @@ const zhTW: Record<keyof typeof en, string> = {
   Average: "平均",
   "Active days": "活躍天數",
   "{{count}} Sessions": "{{count}} 次專注時段",
-  "{{count}} active days": "{{count}} 個活躍天數",
   "Activity and Subject detail": "活動和科目詳細信息",
   "Average active day": "平均活躍日",
   "90th percentile": "第 90 個百分位",

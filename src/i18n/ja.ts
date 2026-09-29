@@ -323,7 +323,6 @@ const ja: Record<keyof typeof en, string> = {
   Average: "平均",
   "Active days": "アクティブな日",
   "{{count}} Sessions": "{{count}} セッション",
-  "{{count}} active days": "{{count}} アクティブ日",
   "Activity and Subject detail": "アクティビティと科目の詳細",
   "Average active day": "平均アクティブ日",
   "90th percentile": "90 パーセンタイル",

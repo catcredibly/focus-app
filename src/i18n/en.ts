@@ -325,7 +325,6 @@ const en = {
   Average: "Average",
   "Active days": "Active days",
   "{{count}} Sessions": "{{count}} Sessions",
-  "{{count}} active days": "{{count}} active days",
   "Activity and Subject detail": "Activity and Subject detail",
   "Average active day": "Average active day",
   "90th percentile": "90th percentile",
