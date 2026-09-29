@@ -7,6 +7,8 @@ import {
   averageStudyPattern,
   calendarBuckets,
   calendarDays,
+  cumulativeDailyFocus,
+  dailyTickIndices,
   defaultAggregation,
   goalAggregationModes,
   goalDefaultAggregation,
@@ -30,23 +32,25 @@ const row = (day: number, seconds: number, month = 9): FocusSession => ({
 });
 
 describe("calendar periods", () => {
-  it("keeps every supported goal mode available and selects timeframe defaults", () => {
-    const cases = [
-      ["7D", 7, "daily", ["daily"]],
-      ["30D", 30, "daily", ["daily", "weekly"]],
-      ["90D", 90, "weekly", ["daily", "weekly", "monthly"]],
-      ["1Y", 365, "monthly", ["daily", "weekly", "monthly"]],
-      ["All", 1, "monthly", ["daily", "weekly", "monthly"]],
-      ["Custom", 1, "daily", ["daily", "weekly"]],
-      ["Custom", 30, "daily", ["daily", "weekly"]],
-      ["Custom", 31, "weekly", ["daily", "weekly"]],
-      ["Custom", 90, "weekly", ["daily", "weekly"]],
-      ["Custom", 91, "monthly", ["daily", "weekly", "monthly"]],
-    ] as const;
-    for (const [range, days, initial, options] of cases) {
-      expect(goalDefaultAggregation(range, days)).toBe(initial);
-      expect(goalAggregationModes(range, days)).toEqual(options);
+  it("selects smart defaults without hiding valid aggregation choices", () => {
+    for (const [days, daily, weekly] of [
+      [1, "daily", "weekly"],
+      [31, "daily", "weekly"],
+      [32, "weekly", "weekly"],
+      [180, "weekly", "weekly"],
+      [181, "monthly", "monthly"],
+    ] as const) {
+      expect(goalDefaultAggregation("Custom", days)).toBe(daily);
+      expect(goalDefaultAggregation("All", days, "weekly")).toBe(weekly);
+      expect(goalAggregationModes("7D", days)).toEqual(["daily", "weekly", "monthly"]);
     }
+  });
+  it("keeps zero days and endpoints in a daily cumulative dataset independently of ticks", () => {
+    const points = cumulativeDailyFocus([row(23, 100), row(29, 50)], { start: at(9, 22), end: at(10, 1) });
+    expect(points).toHaveLength(9);
+    expect(points.map((p) => p.cumulativeSeconds)).toEqual([0, 100, 100, 100, 100, 100, 100, 150, 150]);
+    expect(dailyTickIndices(9, 300)).toEqual([0, 4, 8]);
+    expect(dailyTickIndices(9, 1000)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
   });
   it("uses inclusive rolling calendar dates and equal previous periods across DST", () => {
     for (const [range, count] of [

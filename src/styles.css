@@ -5100,20 +5100,66 @@ html[data-utility-window] #root {
   align-items: start;
 }
 
-.history-filters > label:nth-child(3) { flex-basis: 120px; }
-.history-note-search.is-open { flex: 1 1 230px; }
-.history-note-search button[aria-pressed] { background: transparent; padding: 3px; flex: none; }
-.history-note-search button[aria-pressed]:hover { background: var(--surface-raised); }
-.history-note-search button[aria-pressed="true"] { color: var(--accent); box-shadow: inset 0 -2px var(--accent); }
-.day-offset-compact { display: none; }
-@media (max-width: 1200px) {
-  .history-table .day-offset-full { display: none; }
-  .history-table .day-offset-compact { display: inline; }
+.history-filters > label:nth-child(3) {
+  flex-basis: 120px;
 }
-.analytics-page .subject-card { max-height: 600px; display:flex; flex-direction:column; overflow:hidden; }
-.analytics-page .subject-card > header { flex:none; }
-.analytics-page .subject-card .analytics-table { min-height:0; max-height:none; overflow:auto; }
-.analytics-page .subject-card .analytics-table-head { position:sticky; top:0; z-index:1; }
-.analytics-page .subject-share-card .donut-wrap { min-height:0; display:flex; flex-direction:column; overflow:hidden; }
-.analytics-page .subject-share-card .recharts-responsive-container { flex:none; }
-.analytics-page .subject-share-card .chart-legend { min-height:0; max-height:none; overflow:auto; }
+.history-note-search.is-open {
+  flex: 1 1 230px;
+}
+.history-note-search button[aria-pressed] {
+  background: transparent;
+  padding: 3px;
+  flex: none;
+}
+.history-note-search button[aria-pressed]:hover {
+  background: var(--surface-raised);
+}
+.history-note-search button[aria-pressed="true"] {
+  color: var(--accent);
+  box-shadow: inset 0 -2px var(--accent);
+}
+.day-offset-compact {
+  display: none;
+}
+@media (max-width: 1200px) {
+  .history-table .day-offset-full {
+    display: none;
+  }
+  .history-table .day-offset-compact {
+    display: inline;
+  }
+}
+.analytics-page .subject-card {
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.analytics-page .subject-card > header {
+  flex: none;
+}
+.analytics-page .subject-card .analytics-table {
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+}
+.analytics-page .subject-card .analytics-table-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.analytics-page .subject-share-card .donut-wrap {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+}
+.analytics-page .subject-share-card .recharts-responsive-container {
+  flex: none;
+}
+.analytics-page .subject-share-card .chart-legend {
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+}

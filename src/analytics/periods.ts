@@ -17,7 +17,11 @@ export type Aggregation = "daily" | "weekly" | "monthly";
 export function goalAggregationModes(_range: AnalyticsRange, _days: number): Aggregation[] {
   return ["daily", "weekly", "monthly"];
 }
-export function goalDefaultAggregation(_range: AnalyticsRange, days: number, mode: "daily" | "weekly" = "daily"): Aggregation {
+export function goalDefaultAggregation(
+  _range: AnalyticsRange,
+  days: number,
+  mode: "daily" | "weekly" = "daily",
+): Aggregation {
   return days > 180 ? "monthly" : mode === "daily" && days <= 31 ? "daily" : "weekly";
 }
 export type Period = { start: number; end: number };
@@ -98,7 +102,8 @@ export function calendarBuckets(
     value.count++;
     startedTotals.set(key, value);
   }
-  let bucketSessionSeconds = 0, progressTotal = 0;
+  let bucketSessionSeconds = 0,
+    progressTotal = 0;
   for (const day of calendarDailySeries(sessions, period.start, period.end)) {
     const date = new Date(day.start);
     const key = localDayKey(
@@ -217,7 +222,10 @@ export function averageStudyPattern(sessions: FocusSession[], period: Period) {
 /** Daily data stays intact; only axis labels are sampled to fit the viewport. */
 export function cumulativeDailyFocus(sessions: FocusSession[], period: Period) {
   let total = 0;
-  return calendarBuckets(sessions, period, "daily").map(point => ({ ...point, cumulativeSeconds: (total += point.seconds) }));
+  return calendarBuckets(sessions, period, "daily").map((point) => ({
+    ...point,
+    cumulativeSeconds: (total += point.seconds),
+  }));
 }
 export function dailyTickIndices(count: number, width: number): number[] {
   if (count <= 0) return [];

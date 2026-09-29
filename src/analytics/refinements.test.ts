@@ -38,15 +38,16 @@ describe("analytics refinements", () => {
       [3600, 0, 0],
     ]);
   });
-  it("uses only elapsed days for daily achievement and pending weeks for weekly achievement", () => {
+  it("includes partial progress for elapsed days and the current week", () => {
     const history = [row(7, 100), row(14, 100), row(21, 50)];
     const period = { start: at(7), end: at(28) };
     const pending = goalAchievement(history, period, "weekly", "monthly", 100, at(23));
-    expect(pending[0]).toMatchObject({ achieved: 2, applicable: 2, pending: 1, goalPercent: 100 });
+    expect(pending[0]).toMatchObject({ achieved: 2, applicable: 3, pending: 1 });
+    expect(pending[0].goalPercent).toBeCloseTo(250 / 3);
     const achieved = goalAchievement([...history, row(22, 50)], period, "weekly", "monthly", 100, at(23));
     expect(achieved[0]).toMatchObject({ achieved: 3, applicable: 3, pending: 0, goalPercent: 100 });
     const finished = goalAchievement(history, period, "weekly", "monthly", 100, at(28));
-    expect(finished[0].goalPercent).toBeCloseTo(200 / 3);
+    expect(finished[0].goalPercent).toBeCloseTo(250 / 3);
     const daily = goalAchievement([row(21, 100)], { start: at(21), end: at(28) }, "daily", "weekly", 100, at(23, 15));
     expect(daily[0]).toMatchObject({ applicable: 3, achieved: 1 });
   });
@@ -112,4 +113,14 @@ it("bounds All to elapsed Academic Year days and preserves ended and custom rang
   expect(analyticsPeriod("All", [], end + 86400000, undefined, year).end).toBe(end);
   const custom = { start: at(1), end: new Date(2026, 11, 1).getTime() };
   expect(analyticsPeriod("Custom", [], at(29), custom, year)).toEqual(custom);
+});
+
+it("averages capped daily progress, including empty days and multi-day focus", () => {
+  const session = { ...row(20, 54 * 3600), manual: true as const, startTime: at(20, 20), endTime: at(23, 2) };
+  const daily = goalAchievement([session], { start: at(20), end: at(25) }, "daily", "daily", 8 * 3600, at(26));
+  expect(daily.map((p) => p.goalPercent)).toEqual([50, 100, 100, 25, 0]);
+  const month = goalAchievement([session], { start: at(20), end: at(25) }, "daily", "monthly", 8 * 3600, at(26));
+  expect(month[0].goalPercent).toBeCloseTo(55);
+  const weeks = goalAchievement([session], { start: at(20), end: at(28) }, "weekly", "weekly", 100 * 3600, at(28));
+  expect(weeks.map((p) => p.goalPercent)).toEqual([4, 50]);
 });

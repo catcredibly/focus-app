@@ -707,7 +707,13 @@ function SessionEndField({
               −
             </button>
             <span aria-live="polite">{label}</span>
-            <button type="button" ref={increment} disabled={offset >= 9} aria-label={t("Next day")} onClick={() => onOffset(Math.min(9, offset + 1))}>
+            <button
+              type="button"
+              ref={increment}
+              disabled={offset >= 9}
+              aria-label={t("Next day")}
+              onClick={() => onOffset(Math.min(9, offset + 1))}
+            >
               +
             </button>
           </div>
@@ -1150,9 +1156,11 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
         )}
         <div className={`history-note-search ${searchOpen ? "is-open" : ""}`}>
           {searchOpen ? (
-            <div onBlur={(event) => {
-              if (!event.currentTarget.contains(event.relatedTarget as Node) && !query.trim()) setSearchOpen(false);
-            }}>
+            <div
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node) && !query.trim()) setSearchOpen(false);
+              }}
+            >
               <Search size={16} />
               <input
                 autoFocus
@@ -1163,19 +1171,18 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
                   setQuery(event.target.value);
                   setPage(0);
                 }}
-
               />
-          <button
-            aria-label={t("Match case")}
-            title={t("Match case")}
-            aria-pressed={matchCase}
-            onClick={() => {
-              setMatchCase(!matchCase);
-              setPage(0);
-            }}
-          >
-            <CaseSensitive size={18} />
-          </button>
+              <button
+                aria-label={t("Match case")}
+                title={t("Match case")}
+                aria-pressed={matchCase}
+                onClick={() => {
+                  setMatchCase(!matchCase);
+                  setPage(0);
+                }}
+              >
+                <CaseSensitive size={18} />
+              </button>
               {query && (
                 <button
                   aria-label={t("Clear note search")}
@@ -1273,8 +1280,18 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
               {localDateInputValue(s.endTime) !== localDateInputValue(s.startTime) && (
                 <small className="overnight-label">
                   {" "}
-                  · <span className="day-offset-full">{t(sessionDayOffset(s.startTime, s.endTime) === 1 ? "+1 day" : "+{{count}} days", { count: sessionDayOffset(s.startTime, s.endTime) })}</span>
-                  <span className="day-offset-compact" aria-label={t("+{{count}} days", { count: sessionDayOffset(s.startTime, s.endTime) })}>+{sessionDayOffset(s.startTime, s.endTime)}</span>
+                  ·{" "}
+                  <span className="day-offset-full">
+                    {t(sessionDayOffset(s.startTime, s.endTime) === 1 ? "+1 day" : "+{{count}} days", {
+                      count: sessionDayOffset(s.startTime, s.endTime),
+                    })}
+                  </span>
+                  <span
+                    className="day-offset-compact"
+                    aria-label={t("+{{count}} days", { count: sessionDayOffset(s.startTime, s.endTime) })}
+                  >
+                    +{sessionDayOffset(s.startTime, s.endTime)}
+                  </span>
                 </small>
               )}
             </span>

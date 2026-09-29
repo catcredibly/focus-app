@@ -46,3 +46,10 @@ it("preserves timer duration and relative pause timing when relocated", () => {
   });
   expect(sessionEditTiming({ ...s, manual: true }, 11000, 999999).focusedDurationSeconds).toBe(988.999);
 });
+
+it("represents nine manual days and derives longer timer offsets without a runtime cap", () => {
+  const manual = editedSessionTimes("2026-10-01", "01:00", "01:00", undefined, 9);
+  expect(sessionDayOffset(manual.startTime, manual.endTime)).toBe(9);
+  expect(sessionDayOffset(new Date(2026, 9, 1).getTime(), new Date(2026, 9, 14).getTime())).toBe(13);
+  expect(manualEndOffset("23:00", "01:00", 9)).toBe(9);
+});

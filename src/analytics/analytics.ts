@@ -1,4 +1,4 @@
-import { dailyFocusAllocations, exactFocusInRange, allocationIntervals } from "../sessionAllocation";
+import { dailyFocusAllocations, dailyFocusIntervals } from "../sessionAllocation";
 import type { AcademicYear, FocusSession, Subject } from "../types";
 
 export type AnalyticsFilters = { academicYearId?: string; subjectId?: string; start?: number; end?: number };
@@ -253,19 +253,20 @@ export function weekdayTotals(sessions: FocusSession[], period?: { start: number
 export function timeOfDayMatrix(sessions: FocusSession[], period?: { start: number; end: number }) {
   const matrix = Array.from({ length: 7 }, () => Array(8).fill(0) as number[]);
   for (const s of sessions) {
-    if (!allocationIntervals(s)) continue;
-    let cursor = Math.max(s.startTime, period?.start ?? -Infinity);
-    while (cursor < Math.min(s.endTime, period?.end ?? Infinity)) {
-      const d = new Date(cursor),
-        bucketEnd = new Date(
-          d.getFullYear(),
-          d.getMonth(),
-          d.getDate(),
-          (Math.floor(d.getHours() / 3) + 1) * 3,
-        ).getTime(),
-        end = Math.min(bucketEnd, s.endTime, period?.end ?? Infinity);
-      matrix[(d.getDay() + 6) % 7][Math.floor(d.getHours() / 3)] += exactFocusInRange(s, cursor, end);
-      cursor = end;
+    for (const segment of dailyFocusIntervals(s)) {
+      let cursor = Math.max(segment.startTime, period?.start ?? -Infinity);
+      while (cursor < Math.min(segment.endTime, period?.end ?? Infinity)) {
+        const d = new Date(cursor),
+          bucketEnd = new Date(
+            d.getFullYear(),
+            d.getMonth(),
+            d.getDate(),
+            (Math.floor(d.getHours() / 3) + 1) * 3,
+          ).getTime(),
+          end = Math.min(bucketEnd, segment.endTime, period?.end ?? Infinity);
+        matrix[(d.getDay() + 6) % 7][Math.floor(d.getHours() / 3)] += (end - cursor) / 1000;
+        cursor = end;
+      }
     }
   }
   return matrix;

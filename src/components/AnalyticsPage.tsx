@@ -4,7 +4,6 @@ import {
   subjectsForYear,
   DEFAULT_WEEKDAY_METRIC,
   availableGoalMode,
-  
 } from "../analytics/controls";
 import { goalAchievement } from "../analytics/goalAchievement";
 import { academicYearProgress } from "../analytics/yearProgress";
@@ -641,23 +640,25 @@ function YearsAnalytics({ sessions, history, years, subjects }: DataProps & { hi
       </Panel>
       <Panel title={t("Average focus per active day")}>
         <div className="analytics-list-scroll">
-          {[...rows].sort((a, b) => b.averageActiveDaySeconds - a.averageActiveDaySeconds).map((row, index) => (
-            <div
-              className="breakdown-row year-comparison-row"
-              key={row.academicYearId}
-              title={`${row.name}: ${formatDuration(row.averageActiveDaySeconds)}`}
-              tabIndex={0}
-            >
-              <span>{row.name}</span>
-              <strong>{formatDuration(row.averageActiveDaySeconds)}</strong>
-              <i
-                style={{
-                  width: `${(row.averageActiveDaySeconds / averageMaximum) * 100}%`,
-                  background: COLORS[index % COLORS.length],
-                }}
-              />
-            </div>
-          ))}
+          {[...rows]
+            .sort((a, b) => b.averageActiveDaySeconds - a.averageActiveDaySeconds)
+            .map((row, index) => (
+              <div
+                className="breakdown-row year-comparison-row"
+                key={row.academicYearId}
+                title={`${row.name}: ${formatDuration(row.averageActiveDaySeconds)}`}
+                tabIndex={0}
+              >
+                <span>{row.name}</span>
+                <strong>{formatDuration(row.averageActiveDaySeconds)}</strong>
+                <i
+                  style={{
+                    width: `${(row.averageActiveDaySeconds / averageMaximum) * 100}%`,
+                    background: COLORS[index % COLORS.length],
+                  }}
+                />
+              </div>
+            ))}
         </div>
         {!rows.length && <Empty />}
       </Panel>
@@ -708,8 +709,8 @@ function TimeTrends({ sessions, history, period, range }: TimelineProps) {
     if (!(dailyAvailable && weeklyAvailable)) setChosenGoal(weeklyAvailable ? "weekly" : "daily");
   }, [dailyAvailable, weeklyAvailable]);
   const smartDefault = goalDefaultAggregation(range, calendarDays(period), goalMode);
-  const grouping = manualAggregation && !(goalMode === "weekly" && manualAggregation === "daily")
-    ? manualAggregation : smartDefault;
+  const grouping =
+    manualAggregation && !(goalMode === "weekly" && manualAggregation === "daily") ? manualAggregation : smartDefault;
   useEffect(() => {
     if (goalMode === "weekly" && manualAggregation === "daily") setGoalAggregation(smartDefault);
   }, [goalMode, manualAggregation, smartDefault]);
@@ -720,10 +721,13 @@ function TimeTrends({ sessions, history, period, range }: TimelineProps) {
     ...point,
     label: periodLabel(point),
   }));
-  const points = calendarBuckets(history, period, aggregation).map(point => ({ ...point, label: periodLabel(point) }));
-  const cumulative = cumulativeDailyFocus(history, period).map(point => ({ ...point, label: periodLabel(point) }));
+  const points = calendarBuckets(history, period, aggregation).map((point) => ({
+    ...point,
+    label: periodLabel(point),
+  }));
+  const cumulative = cumulativeDailyFocus(history, period).map((point) => ({ ...point, label: periodLabel(point) }));
   const [cumulativeWidth, setCumulativeWidth] = useState(500);
-  const ticks = dailyTickIndices(cumulative.length, cumulativeWidth).map(index => cumulative[index].label);
+  const ticks = dailyTickIndices(cumulative.length, cumulativeWidth).map((index) => cumulative[index].label);
   return (
     <div className="analytics-content trend-grid">
       <Panel
@@ -741,7 +745,14 @@ function TimeTrends({ sessions, history, period, range }: TimelineProps) {
                   key={mode}
                   aria-pressed={goalMode === mode}
                   className={goalMode === mode ? "active" : ""}
-                  onClick={() => setChosenGoal(mode)}
+                  onClick={() => {
+                    setGoalAggregation(
+                      mode === "weekly" && grouping === "daily"
+                        ? goalDefaultAggregation(range, calendarDays(period), mode)
+                        : grouping,
+                    );
+                    setChosenGoal(mode);
+                  }}
                 >
                   {t(mode === "daily" ? "Daily" : "Weekly")}
                 </button>
@@ -777,7 +788,7 @@ function TimeTrends({ sessions, history, period, range }: TimelineProps) {
         )}
       </Panel>
       <Panel title={t("Cumulative Focus Time")}>
-        <ResponsiveContainer width="100%" height={290} onResize={width => setCumulativeWidth(width)}>
+        <ResponsiveContainer width="100%" height={290} onResize={(width) => setCumulativeWidth(width)}>
           <LineChart data={cumulative}>
             <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
             <XAxis dataKey="label" ticks={ticks} interval={0} fontSize={11} />

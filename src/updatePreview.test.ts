@@ -10,7 +10,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 it("previews published notes without changing the real updater or invoking update transports", async () => {
-  const fetchNotes = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ body: "## Actual release notes\n- Fixed timing" }) });
+  const fetchNotes = vi
+    .fn()
+    .mockResolvedValue({ ok: true, json: async () => ({ body: "## Actual release notes\n- Fixed timing" }) });
   vi.stubGlobal("fetch", fetchNotes);
   vi.stubEnv("DEV", true);
   const check = vi.fn(),
@@ -56,7 +58,15 @@ it("uses valid baseline versions and falls back safely when notes cannot load", 
 it("does not reopen a dismissed preview after notes arrive", async () => {
   vi.stubEnv("DEV", true);
   let resolve!: (value: unknown) => void;
-  vi.stubGlobal("fetch", vi.fn(() => new Promise(r => { resolve = r; })));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      () =>
+        new Promise((r) => {
+          resolve = r;
+        }),
+    ),
+  );
   const opening = updatePreview.open("2.2.4");
   updatePreview.close();
   resolve({ ok: true, json: async () => ({ body: "late" }) });
