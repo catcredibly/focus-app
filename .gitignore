@@ -70,7 +70,7 @@ tmp/
 .npm-cache/
 
 AGENTS.md
-RELEASE_NOTES.md
+docs/RELEASE_NOTES.md
 
 # Shihen exports (legacy Focus patterns remain above).
 shihen-backup*.json

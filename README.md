@@ -6,11 +6,15 @@
 
 **Time well spent.**
 
-Shunhen is a desktop focus timer and study tracker that combines a clean countdown with Subjects, Academic Years, Session history, study goals, and long-term analytics. Everything works locally without requiring an account or cloud service.
+Shunhen is a desktop focus timer and study tracker that combines a clean countdown with Subjects, Academic Years, Session history, study goals, and long-term analytics. Your study data stays local, with no account or cloud service required.
+
+<p align="center">
+  <img src="docs/screenshots/timer.png" alt="Shunhen Timer" width="1200" />
+</p>
 
 ## Features
 
-- Focus timer with pause, extend, recovery, notes, and completion notifications and Stopwatch mode
+- Focus timer and Stopwatch mode with pause, extend, recovery, notes, and completion notifications
 - Compact always-on-top timer Popout with corner docking and auto-hide
 - Subjects organized into Academic Years
 - Filterable, editable Session history with note search
@@ -19,6 +23,26 @@ Shunhen is a desktop focus timer and study tracker that combines a clean countdo
 - Dark and light themes with six accent colors
 - English, Simplified Chinese, Traditional Chinese, and Japanese interfaces
 - Full JSON backup and restore, plus CSV Session import and export
+
+## Understand your study habits
+
+Track focus time, goals, personal bests, activity, study patterns, Subjects, and Academic Years over time.
+
+<p align="center">
+  <img src="docs/screenshots/analytics-overview.png" alt="Shunhen Analytics overview" width="1200" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/analytics-study-patterns.png" alt="Shunhen study pattern analytics" width="1200" />
+</p>
+
+## Keep your timer close
+
+Use the compact always-on-top Popout to keep track of a Session without leaving your work.
+
+<p align="center">
+  <img src="docs/screenshots/popout.png" alt="Shunhen timer Popout on Windows" width="900" />
+</p>
 
 ## Privacy
 
@@ -36,9 +60,15 @@ Linux releases are available as AppImage and Debian (`.deb`) packages and are cu
 
 Support for additional platforms may be considered in the future.
 
+## Demo data
+
+Want to explore Shunhen with sample history and Analytics? [Download the demo data](docs/demo/shunhen-demo.json) and import it from Import / Export.
+
+If you already use Shunhen, export a backup before importing the demo data.
+
 ## Feedback
 
-Found a bug or have an idea for Shihen? [Open an issue](https://github.com/catcredibly/shunhen/issues/new/choose) to report a problem or request a feature.
+Found a bug or have an idea for Shunhen? [Open an issue](https://github.com/catcredibly/shunhen/issues/new/choose) to report a problem or request a feature.
 
 ## Development
 
