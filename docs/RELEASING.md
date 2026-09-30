@@ -36,15 +36,14 @@ Create or update:
 RELEASE_NOTES.md
 ```
 
-Place it in the repository root alongside `package.json`:
+Place it in the docs folder alongside `package.json`:
 
 ```text
-Shunhen/
-├── RELEASE_NOTES.md
-├── package.json
-├── tools/
-├── src/
-└── src-tauri/
+Shunhen/docs
+/demo
+/screenshots
+ARCHITECTURE.md
+RELEASING.md
 ```
 
 Write the release notes in normal UTF-8 Markdown.

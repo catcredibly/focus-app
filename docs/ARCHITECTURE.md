@@ -76,7 +76,6 @@ The main window alone schedules recovery checkpoints every 60 seconds, anchored 
 
 Running-session recovery offers two explicit choices, including after a countdown deadline has passed. Continue preserves the original running timeline (and caps countdown focus at its original deadline). Resume from where I left off restores only the last persisted checkpoint and starts a new focus interval at recovery time, excluding the unavailable period. Paused Sessions reopen paused; finished unsaved Sessions retain their save flow. Checkpoints remain in the existing localStorage Timer record until successful persistence or discard.
 
-
 ## Analytics
 
 ```text
