@@ -1,6 +1,6 @@
 # Contributing to Shunhen
 
-Contributions are welcome and always appreciated.
+Contributions are very welcome and always appreciated.
 
 ## Feedback
 
