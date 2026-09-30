@@ -1,6 +1,7 @@
 import en from "./en";
 
 const zhTW: Record<keyof typeof en, string> = {
+  "Not affected by Subject or Academic Year filters.": "不受科目或學年篩選條件影響。",
   "{{count}} active days": "{{count}} 個學習日",
   "An active day is a day with recorded Focus Time.": "學習日是指記錄了專注時長的日期。",
   "{{active}} of {{eligible}} eligible days": "{{eligible}} 個計入天數中有 {{active}} 個學習日",

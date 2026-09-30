@@ -1,3 +1,5 @@
+import { Info } from "lucide-react";
+import { analyticsScopes } from "../analytics/scopes";
 import { ValueTooltip } from "./ValueTooltip";
 import { AnalyticsLoading } from "./PageSkeletons";
 import type { FocusSettings } from "../settings";
@@ -53,7 +55,6 @@ import {
 } from "../analytics/analytics";
 import {
   addDays,
-  analyticsPeriod,
   analyticsRanges,
   averageStudyPattern,
   calendarBuckets,
@@ -169,25 +170,25 @@ export function AnalyticsPage() {
   // Comparison tabs override the effective scope without destroying saved filter selections.
   const yearDisabled = tab === "Academic Years",
     subjectDisabled = yearDisabled || !yearId || yearId === "__unselected";
-  const history = useMemo(
+  const { history, period, filtered, goalHistory, goalPeriod } = useMemo(
     () =>
-      filterSessions(yearId === "__unselected" ? [] : effectiveSessions, {
-        academicYearId: yearDisabled ? undefined : yearId || undefined,
-        subjectId: subjectDisabled ? undefined : subjectId || undefined,
-      }),
-    [effectiveSessions, yearDisabled, subjectDisabled, yearId, subjectId],
+      analyticsScopes(
+        effectiveSessions,
+        {
+          academicYearId: yearDisabled ? undefined : yearId || undefined,
+          subjectId: subjectDisabled ? undefined : subjectId || undefined,
+        },
+        range,
+        now,
+        customRange,
+        yearDisabled ? undefined : years?.find((year) => year.id === yearId),
+      ),
+    [effectiveSessions, yearDisabled, subjectDisabled, yearId, subjectId, range, now, customRange, years],
   );
-  const period = analyticsPeriod(
-    range,
-    history,
-    now,
-    customRange,
-    yearDisabled ? undefined : years?.find((year) => year.id === yearId),
-  );
-  const filtered = useMemo(() => filterSessions(history, period), [history, period.start, period.end]);
   if (!years || !subjects || !sessions || !settingsLoaded || !initialized)
     return <AnalyticsLoading tab={tab} settings={settingsLoaded ? settings : undefined} />;
   const timeline = { sessions: filtered, history, period, range, settings };
+  const emptyScope = yearId === "__unselected" || period.end <= period.start || (range === "All" && !history.length);
   return (
     <main className="page analytics-page">
       {demoEnabled && (
@@ -326,12 +327,13 @@ export function AnalyticsPage() {
           </button>
         ))}
       </nav>
-      {yearId === "__unselected" || period.end <= period.start || (range === "All" && !history.length) ? (
+      {emptyScope && tab !== "Overview" && tab !== "Time Trends" ? (
         <Empty />
       ) : tab === "Overview" ? (
         <Overview
           {...timeline}
-          allSessions={history}
+          allSessions={goalHistory}
+          goalOnly={emptyScope}
           activity={dailyActivityScope(
             yearId === "__unselected" ? [] : effectiveSessions,
             years,
@@ -348,9 +350,22 @@ export function AnalyticsPage() {
       ) : tab === "Academic Years" ? (
         <YearsAnalytics sessions={filtered} history={history} years={years} subjects={subjects} />
       ) : (
-        <TimeTrends {...timeline} />
+        <TimeTrends {...timeline} goalHistory={goalHistory} goalPeriod={goalPeriod} goalOnly={emptyScope} />
       )}
     </main>
+  );
+}
+
+function GoalFilterInfo() {
+  const { t } = useTranslation();
+  return (
+    <ValueTooltip lines={[t("Not affected by Subject or Academic Year filters.")]}>
+      <Info
+        size={14}
+        className="goal-filter-info"
+        aria-label={t("Not affected by Subject or Academic Year filters.")}
+      />
+    </ValueTooltip>
   );
 }
 
@@ -369,7 +384,10 @@ function GoalSummary({
   return (
     <section className={`goal-${kind}`}>
       <div>
-        <strong>{label}</strong>
+        <strong className="goal-title">
+          {label}
+          <GoalFilterInfo />
+        </strong>
         <span>
           {target > 0 && current >= target
             ? t("Goal reached")
@@ -390,9 +408,14 @@ function Overview({
   period,
   range,
   allSessions,
+  goalOnly,
   activity,
   settings,
-}: TimelineProps & { allSessions: FocusSession[]; activity: ReturnType<typeof dailyActivityScope> }) {
+}: TimelineProps & {
+  goalOnly: boolean;
+  allSessions: FocusSession[];
+  activity: ReturnType<typeof dailyActivityScope>;
+}) {
   const { t } = useTranslation();
   const goals = goalProgress(allSessions),
     current = summaryMetrics(history, period),
@@ -424,6 +447,35 @@ function Overview({
       date: fourth && periodLabel(fourth),
     },
   ];
+  const goalSummaries = ((settings.dailyGoalEnabled && settings.dailyGoalSeconds > 0) ||
+    (settings.weeklyGoalEnabled && settings.weeklyGoalSeconds > 0)) && (
+    <div className="analytics-goals">
+      {settings.dailyGoalEnabled && settings.dailyGoalSeconds > 0 && (
+        <GoalSummary
+          kind="daily"
+          label={t("Daily goal")}
+          current={goals.dailySeconds}
+          target={settings.dailyGoalSeconds}
+        />
+      )}{" "}
+      {settings.weeklyGoalEnabled && settings.weeklyGoalSeconds > 0 && (
+        <GoalSummary
+          kind="weekly"
+          label={t("Weekly goal")}
+          current={goals.weeklySeconds}
+          target={settings.weeklyGoalSeconds}
+        />
+      )}
+    </div>
+  );
+  if (goalOnly)
+    return (
+      <div className="analytics-content overview-content">
+        {goalSummaries}
+        <Empty />
+      </div>
+    );
+
   return (
     <div className="analytics-content overview-content">
       <div className="metric-strip metric-strip--five">
@@ -445,27 +497,7 @@ function Overview({
         ))}
         <ComparisonFooter period={period} range={range} />
       </div>
-      {((settings.dailyGoalEnabled && settings.dailyGoalSeconds > 0) ||
-        (settings.weeklyGoalEnabled && settings.weeklyGoalSeconds > 0)) && (
-        <div className="analytics-goals">
-          {settings.dailyGoalEnabled && settings.dailyGoalSeconds > 0 && (
-            <GoalSummary
-              kind="daily"
-              label={t("Daily goal")}
-              current={goals.dailySeconds}
-              target={settings.dailyGoalSeconds}
-            />
-          )}{" "}
-          {settings.weeklyGoalEnabled && settings.weeklyGoalSeconds > 0 && (
-            <GoalSummary
-              kind="weekly"
-              label={t("Weekly goal")}
-              current={goals.weeklySeconds}
-              target={settings.weeklyGoalSeconds}
-            />
-          )}
-        </div>
-      )}
+      {goalSummaries}
       <Panel title={t("Personal bests")}>
         <div className="analytics-best-list">
           {recordRows.map((row) => (
@@ -727,7 +759,16 @@ function YearsAnalytics({ sessions, history, years, subjects }: DataProps & { hi
   );
 }
 
-function TimeTrends({ sessions, history, period, range, settings }: TimelineProps) {
+function TimeTrends({
+  sessions,
+  history,
+  period,
+  range,
+  settings,
+  goalHistory,
+  goalPeriod,
+  goalOnly,
+}: TimelineProps & { goalHistory: FocusSession[]; goalPeriod: Period; goalOnly: boolean }) {
   const { t } = useTranslation();
   const aggregation = defaultAggregation(range, period);
   const [manualAggregation, setGoalAggregation] = useState<Aggregation>();
@@ -738,7 +779,7 @@ function TimeTrends({ sessions, history, period, range, settings }: TimelineProp
   useEffect(() => {
     if (!(dailyAvailable && weeklyAvailable)) setChosenGoal(weeklyAvailable ? "weekly" : "daily");
   }, [dailyAvailable, weeklyAvailable]);
-  const smartDefault = goalDefaultAggregation(range, calendarDays(period), goalMode);
+  const smartDefault = goalDefaultAggregation(range, calendarDays(goalPeriod), goalMode);
   const grouping =
     manualAggregation && !(goalMode === "weekly" && manualAggregation === "daily") ? manualAggregation : smartDefault;
   useEffect(() => {
@@ -747,7 +788,7 @@ function TimeTrends({ sessions, history, period, range, settings }: TimelineProp
   const allowedModes: Aggregation[] = goalMode === "daily" ? ["daily", "weekly", "monthly"] : ["weekly", "monthly"];
   const target = goalMode === "daily" ? settings.dailyGoalSeconds : settings.weeklyGoalSeconds;
   const validGoal = dailyAvailable || weeklyAvailable;
-  const goals = goalAchievement(history, period, goalMode, grouping, target).map((point) => ({
+  const goals = goalAchievement(goalHistory, goalPeriod, goalMode, grouping, target).map((point) => ({
     ...point,
     label: periodLabel(point),
   }));
@@ -762,7 +803,12 @@ function TimeTrends({ sessions, history, period, range, settings }: TimelineProp
     <div className="analytics-content trend-grid">
       {validGoal && (
         <Panel
-          title={t("Goal achievement over time")}
+          title={
+            <span className="goal-title">
+              {t("Goal achievement over time")}
+              <GoalFilterInfo />
+            </span>
+          }
           subtitle={t(
             goalMode === "daily"
               ? "Daily Goal achievement by {{grouping}}."
@@ -781,7 +827,7 @@ function TimeTrends({ sessions, history, period, range, settings }: TimelineProp
                     onClick={() => {
                       setGoalAggregation(
                         mode === "weekly" && grouping === "daily"
-                          ? goalDefaultAggregation(range, calendarDays(period), mode)
+                          ? goalDefaultAggregation(range, calendarDays(goalPeriod), mode)
                           : grouping,
                       );
                       setChosenGoal(mode);
@@ -821,45 +867,56 @@ function TimeTrends({ sessions, history, period, range, settings }: TimelineProp
           </ScrollChart>
         </Panel>
       )}
-      <Panel title={t("Cumulative Focus Time")}>
-        <ResponsiveContainer width="100%" height={290} onResize={(width) => setCumulativeWidth(width)}>
-          <LineChart data={cumulative}>
-            <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
-            <XAxis dataKey="label" ticks={ticks} interval={0} fontSize={11} />
-            <YAxis tickFormatter={formatDurationAxis} fontSize={11} />
-            <Line dataKey="cumulativeSeconds" name={t("Cumulative Focus Time")} stroke="var(--accent)" dot={false} />
-            <Tooltip content={(props) => <ChartTooltip {...props} />} />
-          </LineChart>
-        </ResponsiveContainer>
-      </Panel>
-      <Panel title={t("Sessions over time")}>
-        <ScrollChart width={points.length * 28}>
-          <BarChart data={points}>
-            <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
-            <XAxis dataKey="label" />
-            <YAxis allowDecimals={false} />
-            <Bar dataKey="sessionCount" name={t("Sessions")} fill="#4da3ff" />
-            <Tooltip content={(props) => <ChartTooltip {...props} kind="count" />} />
-          </BarChart>
-        </ScrollChart>
-      </Panel>
-      <Panel title={t("Average session length")}>
-        <ScrollChart width={points.length * 28}>
-          <BarChart
-            data={points.map((point) => ({
-              ...point,
-              averageSeconds: point.sessionCount ? point.averageSeconds : null,
-            }))}
-          >
-            <ChartAxes />
-            <Bar dataKey="averageSeconds" name={t("Average Session")} fill="#a879ff" />
-            <Tooltip content={(props) => <ChartTooltip {...props} />} />
-          </BarChart>
-        </ScrollChart>
-      </Panel>
-      <Panel title={t("Rolling calendar-day averages")}>
-        <RollingChart history={history} period={period} />
-      </Panel>
+      {goalOnly ? (
+        <Empty />
+      ) : (
+        <>
+          <Panel title={t("Cumulative Focus Time")}>
+            <ResponsiveContainer width="100%" height={290} onResize={(width) => setCumulativeWidth(width)}>
+              <LineChart data={cumulative}>
+                <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
+                <XAxis dataKey="label" ticks={ticks} interval={0} fontSize={11} />
+                <YAxis tickFormatter={formatDurationAxis} fontSize={11} />
+                <Line
+                  dataKey="cumulativeSeconds"
+                  name={t("Cumulative Focus Time")}
+                  stroke="var(--accent)"
+                  dot={false}
+                />
+                <Tooltip content={(props) => <ChartTooltip {...props} />} />
+              </LineChart>
+            </ResponsiveContainer>
+          </Panel>
+          <Panel title={t("Sessions over time")}>
+            <ScrollChart width={points.length * 28}>
+              <BarChart data={points}>
+                <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
+                <XAxis dataKey="label" />
+                <YAxis allowDecimals={false} />
+                <Bar dataKey="sessionCount" name={t("Sessions")} fill="#4da3ff" />
+                <Tooltip content={(props) => <ChartTooltip {...props} kind="count" />} />
+              </BarChart>
+            </ScrollChart>
+          </Panel>
+          <Panel title={t("Average session length")}>
+            <ScrollChart width={points.length * 28}>
+              <BarChart
+                data={points.map((point) => ({
+                  ...point,
+                  averageSeconds: point.sessionCount ? point.averageSeconds : null,
+                }))}
+              >
+                <ChartAxes />
+                <Bar dataKey="averageSeconds" name={t("Average Session")} fill="#a879ff" />
+                <Tooltip content={(props) => <ChartTooltip {...props} />} />
+              </BarChart>
+            </ScrollChart>
+          </Panel>
+          <Panel title={t("Rolling calendar-day averages")}>
+            <RollingChart history={history} period={period} />
+          </Panel>
+        </>
+      )}
     </div>
   );
 }
@@ -1122,7 +1179,7 @@ function Panel({
   children,
   className = "",
 }: {
-  title: string;
+  title: React.ReactNode;
   subtitle?: string;
   children: React.ReactNode;
   className?: string;

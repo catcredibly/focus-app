@@ -1,6 +1,7 @@
 import en from "./en";
 
 const ja: Record<keyof typeof en, string> = {
+  "Not affected by Subject or Academic Year filters.": "科目または学年のフィルターの影響を受けません。",
   "{{count}} active days": "学習日数：{{count}} 日",
   "An active day is a day with recorded Focus Time.": "学習日とは、集中時間が記録された日です。",
   "{{active}} of {{eligible}} eligible days": "対象日数 {{eligible}} 日のうち {{active}} 日",

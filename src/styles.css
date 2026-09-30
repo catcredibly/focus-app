@@ -5341,3 +5341,14 @@ html[data-utility-window] #root {
   outline-offset: 2px;
   border-radius: 2px;
 }
+
+.goal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.goal-filter-info {
+  display: block;
+  color: var(--text-muted);
+}

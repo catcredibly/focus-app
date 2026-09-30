@@ -1,6 +1,7 @@
 import en from "./en";
 
 const zhCN: Record<keyof typeof en, string> = {
+  "Not affected by Subject or Academic Year filters.": "不受科目或学年筛选条件影响。",
   "{{count}} active days": "{{count}} 个学习日",
   "An active day is a day with recorded Focus Time.": "学习日是指记录了专注时长的日期。",
   "{{active}} of {{eligible}} eligible days": "{{eligible}} 个计入天数中有 {{active}} 个学习日",

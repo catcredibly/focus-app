@@ -1,4 +1,5 @@
 const en = {
+  "Not affected by Subject or Academic Year filters.": "Not affected by Subject or Academic Year filters.",
   "{{count}} active days": "{{count}} active days",
   "An active day is a day with recorded Focus Time.": "An active day is a day with recorded Focus Time.",
   "{{active}} of {{eligible}} eligible days": "{{active}} of {{eligible}} eligible days",
