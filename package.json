@@ -34,7 +34,7 @@
     "dexie": "^4.0.10",
     "dexie-react-hooks": "^4.4.0",
     "i18next": "^26.4.2",
-    "lucide-react": "^0.468.0",
+    "lucide-react": "^1.48.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-i18next": "^17.0.15",
