@@ -63,7 +63,9 @@ export const initialTimerState: TimerState = {
 export function normalizeTimerState(value: Partial<TimerState> | null | undefined): TimerState {
   const state = { ...initialTimerState, ...value };
   state.focusIntervals = Array.isArray(value?.focusIntervals) ? value.focusIntervals : [];
-  state.checkpointIntervals = Array.isArray(value?.checkpointIntervals) ? value.checkpointIntervals : [];
+  state.checkpointIntervals = Array.isArray(value?.checkpointIntervals)
+    ? value.checkpointIntervals
+    : state.focusIntervals;
   state.accumulatedFocusedSeconds = Number.isFinite(value?.accumulatedFocusedSeconds)
     ? Math.max(0, value!.accumulatedFocusedSeconds!)
     : Math.max(0, state.plannedDurationSeconds - state.remainingSeconds);

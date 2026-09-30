@@ -1,3 +1,4 @@
+import { closeAfterCheckpoint } from "./timerRecovery";
 import { AnalyticsLoading } from "./components/PageSkeletons";
 import { TimerProvider } from "./hooks/TimerContext";
 import { cancelShortcutRevealTimer, reconcileAutoHideSetting, revealTimerFromShortcut } from "./native";
@@ -21,6 +22,8 @@ import i18n from "./i18n";
 import { useTranslation } from "react-i18next";
 import { hasActiveTimer } from "./settings";
 import { usePopoutLifecycle } from "./hooks/usePopoutLifecycle";
+
+const closeMainWindow = () => closeAfterCheckpoint(() => invoke("close_main_window")).catch(console.error);
 
 const AnalyticsPage = lazy(() =>
   import("./components/AnalyticsPage").then((module) => ({ default: module.AnalyticsPage })),
@@ -117,7 +120,7 @@ export default function App() {
       .onCloseRequested((event) => {
         event.preventDefault();
         if (hasActiveTimer()) setCloseWarning(true);
-        else void invoke("close_main_window");
+        else void closeMainWindow();
       })
       .then((stop) => {
         stopClose = stop;
@@ -191,7 +194,7 @@ export default function App() {
               </p>
               <div className="modal-actions">
                 <button onClick={() => setCloseWarning(false)}>{t("Cancel")}</button>
-                <button className="danger-action" onClick={() => void invoke("close_main_window")}>
+                <button className="danger-action" onClick={() => void closeMainWindow()}>
                   {t("Close Shunhen")}
                 </button>
               </div>

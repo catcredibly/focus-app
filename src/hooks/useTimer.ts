@@ -10,7 +10,6 @@ import {
   completedSession,
   extendTimerState,
   finishTimerState,
-  focusedSecondsAt,
   idleTimerState,
   normalizeTimerState,
   startTimerState,
@@ -22,7 +21,15 @@ import { handleTimerCompletion } from "../timerCompletion";
 import { saveFocusSession } from "../saveFocusSession";
 import { showToast } from "../toasts";
 import { TIMER_STATE_CHANGED } from "../popoutLifecycle";
-import { readTimerRecovery as readStored, persistTimerRecovery } from "../timerRecovery";
+import {
+  readTimerRecovery as readStored,
+  persistTimerRecovery,
+  checkpointTimerState,
+  continueTimerRecovery,
+  resumeTimerCheckpoint,
+  scheduleRecoveryCheckpoints,
+  registerCloseCheckpoint,
+} from "../timerRecovery";
 
 const CHANNEL = "focus-timer";
 const TIMER_INITIALIZED_KEY = "focus.timerInitialized";
@@ -56,6 +63,7 @@ export function useTimer() {
 
   const commit = useCallback(
     (next: TimerState, shouldPersist = true) => {
+      if (shouldPersist) next = checkpointTimerState(next);
       stateRef.current = next;
       setState(stateAt(next));
       if (shouldPersist) persist(next);
@@ -66,12 +74,13 @@ export function useTimer() {
 
   useEffect(() => {
     if (
+      !recovery &&
       currentSubject &&
       stateRef.current.subjectId === currentSubject.id &&
       stateRef.current.subjectColor !== currentSubject.color
     )
       commit({ ...stateRef.current, subjectColor: currentSubject.color });
-  }, [currentSubject, commit]);
+  }, [currentSubject, commit, recovery]);
 
   const saveAndClear = useCallback(
     async (snapshot: TimerState, endTime: number, live = false) => {
@@ -151,9 +160,7 @@ export function useTimer() {
         setRecovery(null);
         return;
       }
-      const restored = restoreExpiredTimer(stored);
-      if (restored.finished) {
-        commit(restored);
+      if (stored.finished) {
         setRecovery(null);
         return;
       }
@@ -206,39 +213,19 @@ export function useTimer() {
 
   useEffect(() => {
     if (isPopout || recovery) return;
-    const checkpoint = () => {
-      const current = stateRef.current;
-      if (!current.running || current.paused || current.finished || !current.runningSince) return;
-      const now = Date.now(),
-        snapshot = stateAt(current, now),
-        focused = focusedSecondsAt(current, now);
-      const intervals =
-        now > current.runningSince
-          ? [
-              ...current.focusIntervals,
-              {
-                startTime: current.runningSince,
-                endTime: Math.min(now, current.targetEnd ?? now),
-              },
-            ]
-          : current.focusIntervals;
-      commit({
-        ...snapshot,
-        checkpointAt: now,
-        checkpointRemainingSeconds: snapshot.remainingSeconds,
-        checkpointFocusedSeconds: focused,
-        checkpointIntervals: intervals,
-      });
-    };
-    const id = window.setInterval(checkpoint, 60_000);
-    return () => window.clearInterval(id);
-  }, [commit, isPopout, recovery]);
+    return scheduleRecoveryCheckpoints(() => stateRef.current, commit);
+  }, [commit, isPopout, recovery, state.sessionId, state.running, state.paused, state.finished, state.runningSince]);
 
   useEffect(() => {
-    const beforeUnload = () => persist(stateAt(stateRef.current));
-    window.addEventListener("beforeunload", beforeUnload);
-    return () => window.removeEventListener("beforeunload", beforeUnload);
-  }, [persist]);
+    if (isPopout) return;
+    return registerCloseCheckpoint(() => {
+      if (recovery || !stateRef.current.running) return;
+      window.clearTimeout(noteTimerRef.current);
+      const checkpoint = checkpointTimerState(stateRef.current);
+      persist(checkpoint);
+      stateRef.current = checkpoint;
+    });
+  }, [isPopout, recovery, persist]);
 
   const start = useCallback(
     (seconds: number, subject: Subject, year: AcademicYear) => {
@@ -318,25 +305,12 @@ export function useTimer() {
   );
 
   const continueRecovery = useCallback(() => {
-    const next = stateAt(stateRef.current);
+    const next = continueTimerRecovery(stateRef.current);
     setRecovery(null);
     commit(next);
   }, [commit]);
   const resumeCheckpoint = useCallback(() => {
-    const current = stateRef.current,
-      now = Date.now();
-    const next = {
-      ...current,
-      paused: false,
-      finished: false,
-      finishedAt: null,
-      remainingSeconds: current.checkpointRemainingSeconds,
-      accumulatedFocusedSeconds: current.checkpointFocusedSeconds,
-      focusIntervals: current.checkpointIntervals,
-      runningSince: now,
-      targetEnd: current.mode === "stopwatch" ? null : now + current.checkpointRemainingSeconds * 1000,
-      checkpointAt: now,
-    };
+    const next = resumeTimerCheckpoint(stateRef.current);
     setRecovery(null);
     commit(next);
   }, [commit]);

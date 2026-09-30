@@ -636,17 +636,6 @@ pub fn run() {
             if window.label() == "timer" && matches!(event, tauri::WindowEvent::Moved(_) | tauri::WindowEvent::Resized(_) | tauri::WindowEvent::ScaleFactorChanged { .. }) {
                 let _ = window.emit("focus://display-geometry-changed", "timer-geometry-change");
             }
-            if window.label() == "main" {
-                match event {
-                    tauri::WindowEvent::CloseRequested { api, .. } => {
-                        api.prevent_close();
-                        std::process::exit(0);
-                    }
-                    tauri::WindowEvent::Destroyed => std::process::exit(0),
-                    _ => {}
-                }
-                return;
-            }
             if window.label() == "timer" || window.label() == "timer-menu" || window.label() == "timer-tab" {
                 if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                     api.prevent_close();
@@ -663,13 +652,7 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("error while building Shunhen")
-        .run(|_app, event| {
-            if let tauri::RunEvent::WindowEvent { label, event, .. } = event {
-                if label == "main" && matches!(event, tauri::WindowEvent::CloseRequested { .. } | tauri::WindowEvent::Destroyed) {
-                    std::process::exit(0);
-                }
-            }
-        });
+        .run(|_app, _event| {});
 }
 
 #[cfg(test)]
