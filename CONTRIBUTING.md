@@ -2,6 +2,10 @@
 
 Contributions are welcome and always appreciated.
 
+## Feedback
+
+Found a bug or have an idea for Shunhen? [Open an issue](https://github.com/catcredibly/shunhen/issues/new/choose) to report a problem or request a feature.
+
 ## Before you start
 
 - For bugs or feature ideas, open an issue first when practical.
@@ -10,20 +14,17 @@ Contributions are welcome and always appreciated.
 
 ## Development
 
-Before submitting a pull request, run:
-
-```powershell
-npm ci
-npm run format:check
-npm run typecheck
-npm test
-npm run build
-cargo check --locked --all-targets --manifest-path src-tauri/Cargo.toml
-```
-
-New or changed user-facing text should include translations for English, Simplified Chinese, Traditional Chinese, and Japanese.
+Please include translations for English, Simplified Chinese, Traditional Chinese, and Japanese in new or changed user-facing text.
 
 Do not commit build output, installers, signing keys, credentials, or personal backup files.
+
+## Recommended development setup
+
+- Visual Studio Code
+- Prettier
+- Node.js LTS and npm
+- Rust toolchain
+- [Tauri development prerequisites](https://v2.tauri.app/start/prerequisites/)
 
 ## License
 
