@@ -1,13 +1,6 @@
 import { expect, it } from "vitest";
 import { inHistoryScope, matchesHistoryStatus, historyStatusAfterScope } from "./historyFilters";
-import {
-  initialAnalyticsYear,
-  subjectsForYear,
-  groupedByArchive,
-  availableGoalMode,
-  compatibleGoalGrouping,
-  DEFAULT_WEEKDAY_METRIC,
-} from "./analytics/controls";
+import { availableGoalMode, compatibleGoalGrouping, DEFAULT_WEEKDAY_METRIC } from "./analytics/controls";
 import { noteSearchTerms, readableNote } from "./notes";
 it("combines invalid status, year, subject and case-sensitive readable-note search", () => {
   const rows = [
@@ -34,25 +27,6 @@ it("combines invalid status, year, subject and case-sensitive readable-note sear
   expect(matchesHistoryStatus("active", true, false)).toBe(false);
   expect(matchesHistoryStatus("archived", true, true)).toBe(false);
   expect(matchesHistoryStatus("all", true, true)).toBe(true);
-});
-it("initializes a named current year and keeps archived same-name subjects distinct", () => {
-  const years = [
-    { id: "old", name: "Old", archived: true },
-    { id: "y", name: "Current named year", archived: false },
-  ];
-  expect(initialAnalyticsYear(years, "y")).toBe("y");
-  expect(initialAnalyticsYear(years, "")).toBe("__unselected");
-  expect(initialAnalyticsYear([], "y")).toBe("__unselected");
-  expect(groupedByArchive(years).map((year) => year.id)).toEqual(["y", "old"]);
-  const subjects = [
-    { id: "a", name: "Math", academicYearId: "y", archived: true, color: "#fff" },
-    { id: "b", name: "Math", academicYearId: "other", archived: false, color: "#fff" },
-    { id: "c", name: "Math", academicYearId: "y", archived: false, color: "#fff" },
-  ];
-  expect(subjectsForYear(subjects, "")).toEqual([]);
-  expect(subjectsForYear(subjects, "y").map((subject) => subject.id)).toEqual(["c", "a"]);
-  expect(subjectsForYear(subjects, "other").some((subject) => subject.id === "a")).toBe(false);
-  expect(initialAnalyticsYear(years, "y")).toBe("y"); // Fresh page derives from current setting again.
 });
 it("uses available goal modes and retains compatible temporary grouping", () => {
   expect(availableGoalMode(true, true, "daily")).toBe("daily");

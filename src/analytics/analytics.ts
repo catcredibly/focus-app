@@ -1,7 +1,15 @@
 import { dailyFocusAllocations, dailyFocusIntervals } from "../sessionAllocation";
 import type { AcademicYear, FocusSession, Subject } from "../types";
+import { matchesSelection } from "../selectorOptions";
 
-export type AnalyticsFilters = { academicYearId?: string; subjectId?: string; start?: number; end?: number };
+export type AnalyticsFilters = {
+  academicYearId?: string;
+  subjectId?: string;
+  academicYearIds?: string[];
+  subjectIds?: string[];
+  start?: number;
+  end?: number;
+};
 export type TimePoint = { key: string; label: string; start: number; seconds: number; sessionCount: number };
 const DAY = 86_400_000;
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -29,6 +37,8 @@ export const filterSessions = (sessions: FocusSession[], filters: AnalyticsFilte
       s.focusedDurationSeconds > 0 &&
       (!filters.academicYearId || s.academicYearId === filters.academicYearId) &&
       (!filters.subjectId || s.subjectId === filters.subjectId) &&
+      matchesSelection(s.academicYearId, filters.academicYearIds ?? []) &&
+      matchesSelection(s.subjectId, filters.subjectIds ?? []) &&
       (!filters.start || s.startTime >= filters.start) &&
       (!filters.end || s.startTime < filters.end),
   );

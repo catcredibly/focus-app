@@ -47,6 +47,16 @@ The active in-progress timer is treated as transient recovery state rather than 
 
 The production Dexie database is named `focus`. A fresh installation creates an empty study schema and uses application-defined default settings. No development database is bundled.
 
+## Academic Year and Subject selectors
+
+Academic Years remain the parents of Subjects. There is no Current Academic Year setting or selection. Legacy `currentAcademicYearId` rows in existing settings/backups are ignored and preserved for backwards compatibility; no historical records are migrated or rewritten.
+
+New Timer and manual Sessions can use any non-archived Subject whose Academic Year is non-archived, regardless of the year's dates. Date-range validity for historical Analytics remains unchanged. Subject defaults are eligible across all such Academic Years.
+
+Timer Subject choices are alphabetical within alphabetical Academic Year groups, with headers omitted when only one year contains eligible Subjects. Analytics, History, and Subjects management Academic Year filters support multiple selections; an empty selection means All. History and Analytics Subject filters support multiple selections independently of the Academic Year filter. Matching uses OR within each filter and AND between filters. Changing year selections removes only Subject selections outside that scope. Historical filters include archived entities.
+
+`selectorOptions.ts` shares alphabetical ordering and groups non-archived Academic Years before archived Academic Years. `FilterSelect` renders non-selectable group headers, one archived separator, and a viewport-constrained scrolling menu with keyboard navigation.
+
 ## Data relationships
 
 ```text

@@ -4966,6 +4966,16 @@ html[data-utility-window] #root {
   font-size: 11px;
   padding: 8px 12px 4px;
 }
+.filter-group-heading {
+  padding: 8px 12px 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.analytics-filter-select.subject-select {
+  width: 100%;
+}
 .filter-archive-heading.has-divider {
   border-top: 1px solid var(--border-soft);
   margin-top: 4px;

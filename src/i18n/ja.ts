@@ -1,6 +1,9 @@
 import en from "./en";
 
 const ja: Record<keyof typeof en, string> = {
+  "No active Academic Years": "有効な学年度がありません",
+  "Create or unarchive a Subject in a non-archived Academic Year to continue.":
+    "続けるには、アーカイブされていない学年度で科目を作成するか、科目のアーカイブを解除してください。",
   "Not affected by Subject or Academic Year filters.": "科目または学年のフィルターの影響を受けません。",
   "{{count}} active days": "学習日数：{{count}} 日",
   "An active day is a day with recorded Focus Time.": "学習日とは、集中時間が記録された日です。",
@@ -112,7 +115,6 @@ const ja: Record<keyof typeof en, string> = {
   "Small steps, big progress.": "小さな一歩、大きな進歩。",
   "Session note": "セッションメモ",
   "Add a note (optional)...": "メモを追加します (オプション)...",
-  "Add a Subject for the current Academic Year": "現在の学年度の科目を追加します",
   Today: "今日",
   "Focus time": "集中時間",
   Sessions: "セッション",
@@ -204,7 +206,6 @@ const ja: Record<keyof typeof en, string> = {
   "Built with": "で構築",
   Active: "有効",
   Archived: "アーカイブ済み",
-  Current: "現在",
   "Current monitor": "現在のモニター",
   Monitor: "モニター",
   "Notifications & Sounds": "通知とサウンド",
@@ -411,11 +412,8 @@ const ja: Record<keyof typeof en, string> = {
   "Flexible dates": "柔軟な日付",
   "{{count}} subjects": "{{count}} 人の被験者",
   Edit: "編集",
-  "Set current": "現在の設定",
   "This Academic Year is used by the active timer. Finish or discard the timer before archiving it.":
     "この学年度はアクティブ タイマーによって使用されます。タイマーをアーカイブする前に終了するか破棄してください。",
-  "Choose another current Academic Year before archiving this one.":
-    "この学年度をアーカイブする前に、別の現在の学年度を選択してください。",
   "This Academic Year is used by the active timer. Finish or discard the timer before deleting it.":
     "この学年度はアクティブ タイマーによって使用されます。タイマーを削除する前に、タイマーを終了するか破棄してください。",
   Name: "名前",
@@ -425,7 +423,6 @@ const ja: Record<keyof typeof en, string> = {
   "Permanently delete Academic Year with data": "データを含む学年度を完全に削除します",
   "Manage lightweight subjects within each Academic Year.": "各学年内の軽量科目を管理します。",
   "Add Subject": "科目を追加",
-  "Current Academic Year": "現在の学年度",
   "Unknown Academic Year": "学年不明",
   "This Subject is used by the active timer. Finish or discard the timer before archiving it.":
     "この科目はアクティブ タイマーによって使用されます。タイマーをアーカイブする前に終了するか破棄してください。",
@@ -663,11 +660,8 @@ const ja: Record<keyof typeof en, string> = {
   "View invalid sessions": "無効なセッションを表示",
   "Imported 1 invalid session.": "1 件の無効なセッションをインポートしました。",
   "Imported {{count}} invalid sessions.": "{{count}} 件の無効なセッションをインポートしました。",
-  "No current academic year": "現在の学年がありません",
   "Create or update an academic year to continue.": "続行するには学年を作成または更新してください。",
   "No active subjects": "利用可能な科目がありません",
-  "Create or unarchive a subject in the current academic year to continue.":
-    "続行するには、現在の学年で科目を作成するかアーカイブを解除してください。",
   "Next day": "翌日",
   "+1 day": "+1日",
   "In progress": "進行中",
@@ -676,7 +670,6 @@ const ja: Record<keyof typeof en, string> = {
   "Average session by weekday": "曜日別の平均セッション時間",
   "Match case": "大文字と小文字を区別",
   "No academic years": "学年がありません",
-  "Select a specific academic year to filter by subject.": "科目で絞り込むには、特定の学年を選択してください。",
   "By day": "日別",
   "By week": "週別",
   "By month": "月別",

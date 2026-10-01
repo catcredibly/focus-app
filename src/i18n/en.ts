@@ -1,4 +1,7 @@
 const en = {
+  "No active Academic Years": "No active Academic Years",
+  "Create or unarchive a Subject in a non-archived Academic Year to continue.":
+    "Create or unarchive a Subject in a non-archived Academic Year to continue.",
   "Not affected by Subject or Academic Year filters.": "Not affected by Subject or Academic Year filters.",
   "{{count}} active days": "{{count}} active days",
   "An active day is a day with recorded Focus Time.": "An active day is a day with recorded Focus Time.",
@@ -112,7 +115,6 @@ const en = {
   "Small steps, big progress.": "Small steps, big progress.",
   "Session note": "Session note",
   "Add a note (optional)...": "Add a note (optional)...",
-  "Add a Subject for the current Academic Year": "Add a Subject for the current Academic Year",
   Today: "Today",
   "Focus time": "Focus time",
   Sessions: "Sessions",
@@ -205,7 +207,6 @@ const en = {
   "Built with": "Built with",
   Active: "Active",
   Archived: "Archived",
-  Current: "Current",
   "Current monitor": "Current monitor",
   Monitor: "Monitor",
   "Notifications & Sounds": "Notifications & Sounds",
@@ -411,11 +412,8 @@ const en = {
   "Flexible dates": "Flexible dates",
   "{{count}} subjects": "{{count}} subjects",
   Edit: "Edit",
-  "Set current": "Set current",
   "This Academic Year is used by the active timer. Finish or discard the timer before archiving it.":
     "This Academic Year is used by the active timer. Finish or discard the timer before archiving it.",
-  "Choose another current Academic Year before archiving this one.":
-    "Choose another current Academic Year before archiving this one.",
   "This Academic Year is used by the active timer. Finish or discard the timer before deleting it.":
     "This Academic Year is used by the active timer. Finish or discard the timer before deleting it.",
   Name: "Name",
@@ -425,7 +423,6 @@ const en = {
   "Permanently delete Academic Year with data": "Permanently delete Academic Year with data",
   "Manage lightweight subjects within each Academic Year.": "Manage lightweight subjects within each Academic Year.",
   "Add Subject": "Add Subject",
-  "Current Academic Year": "Current Academic Year",
   "Unknown Academic Year": "Unknown Academic Year",
   "This Subject is used by the active timer. Finish or discard the timer before archiving it.":
     "This Subject is used by the active timer. Finish or discard the timer before archiving it.",
@@ -663,11 +660,8 @@ const en = {
   "View invalid sessions": "View invalid sessions",
   "Imported 1 invalid session.": "Imported 1 invalid session.",
   "Imported {{count}} invalid sessions.": "Imported {{count}} invalid sessions.",
-  "No current academic year": "No current academic year",
   "Create or update an academic year to continue.": "Create or update an academic year to continue.",
   "No active subjects": "No active subjects",
-  "Create or unarchive a subject in the current academic year to continue.":
-    "Create or unarchive a subject in the current academic year to continue.",
   "Next day": "Next day",
   "+1 day": "+1 day",
   "In progress": "In progress",
@@ -676,7 +670,6 @@ const en = {
   "Average session by weekday": "Average session by weekday",
   "Match case": "Match case",
   "No academic years": "No academic years",
-  "Select a specific academic year to filter by subject.": "Select a specific academic year to filter by subject.",
   "By day": "By day",
   "By week": "By week",
   "By month": "By month",

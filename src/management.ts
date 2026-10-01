@@ -1,7 +1,6 @@
 import { sessionInvalidReason, newlyInvalidCount } from "./sessionValidity";
 import { noteMetrics } from "./notes";
 import { db, type FocusDatabase } from "./db";
-import { CURRENT_YEAR_KEY } from "./data";
 import type { AcademicYear, FocusSession, Subject } from "./types";
 import { sessionEditTiming } from "./sessionDuration";
 
@@ -23,25 +22,13 @@ export async function deleteSubjectCascade(id: string, database: FocusDatabase =
 }
 
 export async function deleteAcademicYearCascade(id: string, database: FocusDatabase = db) {
-  await database.transaction(
-    "rw",
-    database.academicYears,
-    database.subjects,
-    database.sessions,
-    database.settings,
-    async () => {
-      const subjectIds = (await database.subjects.where("academicYearId").equals(id).primaryKeys()) as string[];
-      if (subjectIds.length) await database.sessions.where("subjectId").anyOf(subjectIds).delete();
-      await database.sessions.where("academicYearId").equals(id).delete();
-      await database.subjects.where("academicYearId").equals(id).delete();
-      await database.academicYears.delete(id);
-      if ((await database.settings.get(CURRENT_YEAR_KEY))?.value === id) {
-        const replacement = await database.academicYears.filter((year) => !year.archived).first();
-        if (replacement) await database.settings.put({ key: CURRENT_YEAR_KEY, value: replacement.id });
-        else await database.settings.delete(CURRENT_YEAR_KEY);
-      }
-    },
-  );
+  await database.transaction("rw", database.academicYears, database.subjects, database.sessions, async () => {
+    const subjectIds = (await database.subjects.where("academicYearId").equals(id).primaryKeys()) as string[];
+    if (subjectIds.length) await database.sessions.where("subjectId").anyOf(subjectIds).delete();
+    await database.sessions.where("academicYearId").equals(id).delete();
+    await database.subjects.where("academicYearId").equals(id).delete();
+    await database.academicYears.delete(id);
+  });
 }
 
 export async function deleteSession(id: string, database: FocusDatabase = db) {

@@ -1,4 +1,3 @@
-import { CURRENT_YEAR_KEY } from "./data";
 import { defaultEdgeForCorner } from "./popoutPlacement";
 import { db, type FocusDatabase } from "./db";
 import { ACTIVE_TIMER_STORAGE_KEY, LAST_TIMER_DURATION_KEY, type TimerState } from "./timerState";
@@ -346,15 +345,14 @@ export function normalizeLegacyRevealShortcut(value: string): string {
     : value.replace(/\+`$/, "+Backquote");
 }
 
-/** Defaults are scoped to the current active Academic Year; history is untouched. */
+/** Defaults may belong to any non-archived Academic Year; history is untouched. */
 export async function reconcileDefaultSubject(database: FocusDatabase = db) {
   await database.transaction("rw", database.settings, database.subjects, database.academicYears, async () => {
     const configured = (await database.settings.get(SETTINGS_KEYS.defaultSubjectId))?.value;
     if (!configured) return;
-    const currentYear = (await database.settings.get(CURRENT_YEAR_KEY))?.value;
     const subject = await database.subjects.get(configured);
-    const year = currentYear ? await database.academicYears.get(currentYear) : undefined;
-    if (!subject || subject.archived || subject.academicYearId !== currentYear || !year || year.archived) {
+    const year = subject ? await database.academicYears.get(subject.academicYearId) : undefined;
+    if (!subject || subject.archived || !year || year.archived) {
       await database.settings.bulkPut([
         { key: SETTINGS_KEYS.defaultSubjectId, value: "" },
         { key: SETTINGS_KEYS.subjectPickerMode, value: "remember" },

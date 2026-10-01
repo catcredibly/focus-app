@@ -1,6 +1,9 @@
 import en from "./en";
 
 const zhCN: Record<keyof typeof en, string> = {
+  "No active Academic Years": "没有未归档的学年",
+  "Create or unarchive a Subject in a non-archived Academic Year to continue.":
+    "请在未归档的学年中创建科目或取消科目归档以继续。",
   "Not affected by Subject or Academic Year filters.": "不受科目或学年筛选条件影响。",
   "{{count}} active days": "{{count}} 个学习日",
   "An active day is a day with recorded Focus Time.": "学习日是指记录了专注时长的日期。",
@@ -111,7 +114,6 @@ const zhCN: Record<keyof typeof en, string> = {
   "Small steps, big progress.": "积跬步，至千里。",
   "Session note": "专注记录",
   "Add a note (optional)...": "添加记录（可选）…",
-  "Add a Subject for the current Academic Year": "请为当前学年添加科目",
   Today: "今天",
   "Focus time": "专注时间",
   Sessions: "次数",
@@ -201,7 +203,6 @@ const zhCN: Record<keyof typeof en, string> = {
   "Built with": "技术栈",
   Active: "使用中",
   Archived: "已归档",
-  Current: "当前",
   "Current monitor": "当前显示器",
   Monitor: "显示器",
   "Notifications & Sounds": "通知与声音",
@@ -400,10 +401,8 @@ const zhCN: Record<keyof typeof en, string> = {
   "Flexible dates": "灵活日期",
   "{{count}} subjects": "{{count}} 个科目",
   Edit: "编辑",
-  "Set current": "设置电流",
   "This Academic Year is used by the active timer. Finish or discard the timer before archiving it.":
     "本学年由活动计时器使用。在归档之前完成或丢弃计时器。",
-  "Choose another current Academic Year before archiving this one.": "在存档本学年之前选择另一个当前学年。",
   "This Academic Year is used by the active timer. Finish or discard the timer before deleting it.":
     "本学年由活动计时器使用。在删除计时器之前完成或丢弃计时器。",
   Name: "姓名",
@@ -413,7 +412,6 @@ const zhCN: Record<keyof typeof en, string> = {
   "Permanently delete Academic Year with data": "永久删除学年数据",
   "Manage lightweight subjects within each Academic Year.": "在每个学年管理轻量级科目。",
   "Add Subject": "添加科目",
-  "Current Academic Year": "当前学年",
   "Unknown Academic Year": "学年未知",
   "This Subject is used by the active timer. Finish or discard the timer before archiving it.":
     "该科目由活动计时器使用。在归档之前完成或丢弃计时器。",
@@ -646,10 +644,8 @@ const zhCN: Record<keyof typeof en, string> = {
   "View invalid sessions": "查看无效记录",
   "Imported 1 invalid session.": "已导入 1 条无效记录。",
   "Imported {{count}} invalid sessions.": "已导入 {{count}} 条无效记录。",
-  "No current academic year": "当前没有学年",
   "Create or update an academic year to continue.": "创建或更新学年以继续。",
   "No active subjects": "没有可用科目",
-  "Create or unarchive a subject in the current academic year to continue.": "在当前学年中创建科目或取消归档以继续。",
   "Next day": "次日",
   "+1 day": "+1 天",
   "In progress": "进行中",
@@ -658,7 +654,6 @@ const zhCN: Record<keyof typeof en, string> = {
   "Average session by weekday": "按星期几统计的平均专注时长",
   "Match case": "区分大小写",
   "No academic years": "没有学年",
-  "Select a specific academic year to filter by subject.": "选择特定学年以按科目筛选。",
   "By day": "按日",
   "By week": "按周",
   "By month": "按月",

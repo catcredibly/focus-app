@@ -1,5 +1,7 @@
 import { validSessions } from "../sessionValidity";
 import { NoteEditor } from "./NoteEditor";
+import { FilterSelect } from "./FilterSelect";
+import { selectableSubjects, subjectOptions } from "../selectorOptions";
 import { TimerSetup } from "./TimerSetup";
 import { defaultSessionSubject } from "../subjectDefaults";
 import { Check, ExternalLink, Maximize2, Minimize2, Pause, Play, Plus, Square } from "lucide-react";
@@ -9,7 +11,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
 import { db } from "../db";
-import { CURRENT_YEAR_KEY, formatDuration } from "../data";
+import { formatDuration } from "../data";
 import { formatTimerDateTime } from "../dateTime";
 import { goalProgress } from "../goals";
 import { useMainTimer as useTimer } from "../hooks/TimerContext";
@@ -29,15 +31,6 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
   const { t } = useTranslation();
   const timer = useTimer();
   const { settings } = useSettings();
-  const setupStep = useLiveQuery(async () => {
-    const id = (await db.settings.get(CURRENT_YEAR_KEY))?.value ?? "";
-    const year = id ? await db.academicYears.get(id) : undefined;
-    const subjects = id ? await db.subjects.where("academicYearId").equals(id).toArray() : [];
-    if (!(await db.academicYears.count())) return 1 as const;
-    if (!year || year.archived) return 3 as const;
-    if (!subjects.some((subject) => !subject.archived)) return 4 as const;
-    return undefined;
-  }, []);
   const [hours, setHours] = useState("01");
   const [minutes, setMinutes] = useState("15");
   const [seconds, setSeconds] = useState("00");
@@ -64,27 +57,16 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
   const [now, setNow] = useState(() => new Date());
   const [fullscreen, setFullscreen] = useState(false);
   const [fullscreenReveal, setFullscreenReveal] = useState(false);
-  const currentYearId = useLiveQuery(async () => (await db.settings.get(CURRENT_YEAR_KEY))?.value ?? "", []) ?? "";
-  const currentYear = useLiveQuery(
-    () => (currentYearId ? db.academicYears.get(currentYearId) : undefined),
-    [currentYearId],
-  );
-  const subjects =
-    useLiveQuery(
-      async () =>
-        currentYearId
-          ? (await db.subjects.where("academicYearId").equals(currentYearId).toArray()).filter(
-              (subject) => !subject.archived,
-            )
-          : [],
-      [currentYearId],
-    ) ?? [];
   const sessions = useLiveQuery(() => db.sessions.orderBy("startTime").reverse().toArray(), []) ?? [];
   const allYears = useLiveQuery(() => db.academicYears.toArray(), []) ?? [];
   const allSubjects = useLiveQuery(() => db.subjects.toArray(), []) ?? [];
+  const subjects = selectableSubjects(allYears, allSubjects);
+  const availableYears = allYears.filter((year) => !year.archived);
+  const setupStep = !allYears.length ? 1 : !availableYears.length ? 3 : !subjects.length ? 4 : undefined;
   const [recoverySubjectId, setRecoverySubjectId] = useState("");
   const defaultDuration = timerDefaultDuration(settings);
   const selectedSubject = subjects.find((subject) => subject.id === subjectId);
+  const selectedYear = allYears.find((year) => year.id === selectedSubject?.academicYearId);
   const analyticsSessions = validSessions(sessions, allYears);
   const summary = todaySummary(analyticsSessions);
   const goals = goalProgress(analyticsSessions, now.getTime());
@@ -101,7 +83,7 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
     setMinutes(pad(value.minutes));
     setSeconds(pad(value.seconds));
   }, [defaultDuration, timer.state.running]);
-  const subjectDefaultsKey = `${currentYearId}:${settings.subjectPickerMode}:${settings.defaultSubjectId}:${settings.lastSubjectId}`;
+  const subjectDefaultsKey = `${settings.subjectPickerMode}:${settings.defaultSubjectId}:${settings.lastSubjectId}`;
   const lastDefaults = useRef("");
   useEffect(() => {
     if (timer.state.running) {
@@ -109,7 +91,7 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
       return;
     }
     if (lastDefaults.current !== subjectDefaultsKey || !subjects.some((subject) => subject.id === subjectId)) {
-      setSubjectId(defaultSessionSubject(subjects, currentYearId, settings));
+      setSubjectId(defaultSessionSubject(subjects, allYears, settings));
       lastDefaults.current = subjectDefaultsKey;
     }
   }, [subjectDefaultsKey, subjects, subjectId, timer.state.running]);
@@ -172,12 +154,15 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
   const openPopout = () => openTimerPopout(settings).catch(() => undefined);
   const startSession = async (stopwatch: boolean) => {
     const value = commitInput();
-    if (!selectedSubject || !currentYear || currentYear.archived || (!stopwatch && value <= 0)) return;
+    if (!selectedSubject || !selectedYear || selectedYear.archived || (!stopwatch && value <= 0)) return;
+    const subject = await db.subjects.get(selectedSubject.id);
+    const year = subject ? await db.academicYears.get(subject.academicYearId) : undefined;
+    if (!subject || subject.archived || !year || year.archived) return;
     await saveSetting("lastSubjectId", selectedSubject.id);
-    if (stopwatch) timer.startStopwatch(selectedSubject, currentYear);
+    if (stopwatch) timer.startStopwatch(subject, year);
     else {
       await saveSetting("lastTimerDurationSeconds", value);
-      timer.start(value, selectedSubject, currentYear);
+      timer.start(value, subject, year);
     }
     if (settings.popoutAutoOpen) await openPopout();
   };
@@ -460,12 +445,12 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
             <TimerSetup step={1} onNavigate={onNavigate} />
           ) : (
             <section className="timer-unavailable">
-              <h2>{t(setupStep === 3 ? "No current academic year" : "No active subjects")}</h2>
+              <h2>{t(setupStep === 3 ? "No active Academic Years" : "No active subjects")}</h2>
               <p>
                 {t(
                   setupStep === 3
                     ? "Create or update an academic year to continue."
-                    : "Create or unarchive a subject in the current academic year to continue.",
+                    : "Create or unarchive a Subject in a non-archived Academic Year to continue.",
                 )}
               </p>
               <button
@@ -526,26 +511,20 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
             <span>{t("Seconds")}</span>
           </label>
         </div>
-        <select
+        <FilterSelect
+          label={t("Subject")}
           className="subject-select"
           value={selectedSubject?.id ?? ""}
-          onChange={(event) => setSubjectId(event.target.value)}
+          onChange={setSubjectId}
           disabled={!subjects.length}
-        >
-          {!selectedSubject && (
-            <option value="">
-              {t(subjects.length ? "Choose Subject" : "Add a Subject for the current Academic Year")}
-            </option>
-          )}
-          {subjects.map((subject) => (
-            <option key={subject.id} value={subject.id}>
-              {subject.name}
-            </option>
-          ))}
-        </select>
+          options={[
+            ...(!selectedSubject ? [{ value: "", label: t("Choose Subject") }] : []),
+            ...subjectOptions(allYears, allSubjects, [], true),
+          ]}
+        />
         <NoteEditor value={timer.state.note} onChange={timer.setNote} />
         <StartSessionButton
-          disabled={!timer.noteValid || !selectedSubject || !currentYear || Boolean(currentYear.archived)}
+          disabled={!timer.noteValid || !selectedSubject || !selectedYear || Boolean(selectedYear.archived)}
           timerDisabled={duration <= 0}
           onTimer={() => void startSession(false)}
           onStopwatch={() => void startSession(true)}

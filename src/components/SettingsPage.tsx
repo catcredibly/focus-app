@@ -1,6 +1,7 @@
 import { Row, Toggle } from "./SettingsControls";
 import { updatePreview } from "../updatePreview";
-import { CURRENT_YEAR_KEY } from "../data";
+import { subjectOptions } from "../selectorOptions";
+import { FilterSelect } from "./FilterSelect";
 import { resetPreferences } from "../resetPreferences";
 import { formatTimerDate, effectiveTimerDateFormat, timerDateFormats } from "../dateTime";
 import { edgesForCorner, dockEdgeOffset } from "../popoutPlacement";
@@ -459,17 +460,8 @@ function AutoHideDelayEditor({
 
 function Timer({ settings, setSetting }: SettingsProps) {
   const { t } = useTranslation();
-  const subjects =
-    useLiveQuery(async () => {
-      const yearId = (await db.settings.get(CURRENT_YEAR_KEY))?.value;
-      return yearId
-        ? db.subjects
-            .where("academicYearId")
-            .equals(yearId)
-            .filter((subject) => !subject.archived)
-            .sortBy("name")
-        : [];
-    }, []) ?? [];
+  const years = useLiveQuery(() => db.academicYears.toArray(), []) ?? [];
+  const subjects = useLiveQuery(() => db.subjects.toArray(), []) ?? [];
   return (
     <>
       <SettingsHeader title={t("Timer")}>{t("Behaviour during focus Sessions.")}</SettingsHeader>
@@ -505,18 +497,13 @@ function Timer({ settings, setSetting }: SettingsProps) {
         </select>
       </Row>
       <Row label={t("Default Subject")} disabled={settings.subjectPickerMode !== "fixed"}>
-        <select
+        <FilterSelect
+          label={t("Default Subject")}
           disabled={settings.subjectPickerMode !== "fixed"}
           value={settings.defaultSubjectId}
-          onChange={(event) => void setSetting("defaultSubjectId", event.target.value)}
-        >
-          <option value="">{t("Choose Subject")}</option>
-          {subjects.map((subject) => (
-            <option value={subject.id} key={subject.id}>
-              {subject.name}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => void setSetting("defaultSubjectId", value)}
+          options={[{ value: "", label: t("Choose Subject") }, ...subjectOptions(years, subjects, [], true)]}
+        />
       </Row>
       <div className="settings-subheading settings-group-heading">
         <strong>{t("Date and clock")}</strong>

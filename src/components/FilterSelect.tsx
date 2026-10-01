@@ -2,22 +2,21 @@ import { useTranslation } from "react-i18next";
 import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
+import type { SelectorOption } from "../selectorOptions";
 
-export function FilterSelect({
-  label,
-  value,
-  onChange,
-  options,
-  disabled,
-  title,
-}: {
+type FilterSelectProps = {
   label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string; archived?: boolean }[];
+  options: SelectorOption[];
   disabled?: boolean;
   title?: string;
-}) {
+  className?: string;
+} & (
+  | { multiple: true; value: string[]; onChange: (value: string[]) => void }
+  | { multiple?: false; value: string; onChange: (value: string) => void }
+);
+
+export function FilterSelect(props: FilterSelectProps) {
+  const { label, value, options, disabled, title, className } = props;
   const { t } = useTranslation();
   const id = useId();
   const button = useRef<HTMLButtonElement>(null);
@@ -25,7 +24,22 @@ export function FilterSelect({
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [position, setPosition] = useState({ left: 0, top: 0, width: 190, maxHeight: 320 });
-  const selected = options.find((option) => option.value === value)?.label ?? options[0]?.label;
+  const selectedValues = props.multiple ? props.value : [props.value];
+  const selected =
+    props.multiple && props.value.length
+      ? options
+          .filter((option) => selectedValues.includes(option.value))
+          .map((option) => option.label)
+          .join(", ")
+      : (options.find((option) => option.value === (props.multiple ? "" : value))?.label ?? options[0]?.label);
+  const selectedIndex = Math.max(
+    0,
+    options.findIndex((option) => selectedValues.includes(option.value)),
+  );
+  useEffect(() => {
+    setActive((index) => Math.max(0, Math.min(index, options.length - 1)));
+    if (disabled) setOpen(false);
+  }, [options.length, disabled]);
   useLayoutEffect(() => {
     if (!open) return;
     const place = () => {
@@ -60,19 +74,31 @@ export function FilterSelect({
     return () => document.removeEventListener("pointerdown", outside);
   }, [open]);
   useEffect(() => {
-    if (open) document.getElementById(`${id}-${active}`)?.scrollIntoView({ block: "nearest" });
+    if (open) document.getElementById(`${id}-${active}`)?.scrollIntoView?.({ block: "nearest" });
   }, [open, active, id]);
   const choose = (index: number) => {
-    onChange(options[index].value);
-    setOpen(false);
-    button.current?.focus();
+    const option = options[index];
+    if (!option) return;
+    if (props.multiple) {
+      props.onChange(
+        !option.value
+          ? []
+          : props.value.includes(option.value)
+            ? props.value.filter((item) => item !== option.value)
+            : [...props.value, option.value],
+      );
+    } else {
+      props.onChange(option.value);
+      setOpen(false);
+      button.current?.focus();
+    }
   };
   return (
     <>
       <button
         ref={button}
         type="button"
-        className="analytics-filter-select"
+        className={`analytics-filter-select ${className ?? ""}`}
         disabled={disabled}
         aria-label={label}
         title={title ?? selected}
@@ -80,23 +106,13 @@ export function FilterSelect({
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         onClick={() => {
-          setActive(
-            Math.max(
-              0,
-              options.findIndex((option) => option.value === value),
-            ),
-          );
+          setActive(Math.max(0, selectedIndex));
           setOpen(!open);
         }}
         onKeyDown={(event) => {
           if (["ArrowDown", "ArrowUp"].includes(event.key)) {
             event.preventDefault();
-            setActive(
-              Math.max(
-                0,
-                options.findIndex((option) => option.value === value),
-              ),
-            );
+            setActive(Math.max(0, selectedIndex));
             setOpen(true);
           }
         }}
@@ -112,6 +128,7 @@ export function FilterSelect({
             role="listbox"
             tabIndex={-1}
             aria-label={label}
+            aria-multiselectable={props.multiple || undefined}
             aria-activedescendant={`${id}-${active}`}
             className="analytics-filter-menu"
             style={position}
@@ -134,22 +151,37 @@ export function FilterSelect({
               <Fragment key={option.value}>
                 {option.archived && !options[index - 1]?.archived && (
                   <div
-                    className={`filter-archive-heading ${options.slice(0, index).some((item) => item.value && item.value !== "__unselected") ? "has-divider" : ""}`}
+                    className={`filter-archive-heading ${options.slice(0, index).some((item) => item.value && !item.archived) ? "has-divider" : ""}`}
                     role="presentation"
                   >
                     {t("Archived")}
                   </div>
                 )}
+                {option.group !== undefined &&
+                  (index === 0 ||
+                    option.groupId !== options[index - 1]?.groupId ||
+                    option.archived !== options[index - 1]?.archived) && (
+                    <div className="filter-group-heading" role="presentation">
+                      {option.group}
+                    </div>
+                  )}
                 <div
                   key={option.value}
                   id={`${id}-${index}`}
                   role="option"
-                  aria-selected={option.value === value}
+                  aria-selected={
+                    props.multiple
+                      ? !option.value
+                        ? !props.value.length
+                        : props.value.includes(option.value)
+                      : option.value === value
+                  }
                   className={active === index ? "active" : ""}
                   onMouseMove={() => setActive(index)}
                   onClick={() => choose(index)}
                 >
                   {option.label}
+                  {props.multiple && props.value.includes(option.value) && <span aria-hidden="true"> ✓</span>}
                 </div>
               </Fragment>
             ))}
