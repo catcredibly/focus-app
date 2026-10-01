@@ -3,7 +3,6 @@ import { db, type FocusDatabase } from "./db";
 import type { AcademicYear, FocusSession, Subject } from "./types";
 import { localeCode } from "./i18n";
 
-export const CURRENT_YEAR_KEY = "currentAcademicYearId";
 export const makeId = () => crypto.randomUUID();
 
 export function formatDurationForLocale(totalSeconds: number, locale = localeCode()) {
@@ -50,16 +49,6 @@ export function formatDurationAxis(totalSeconds: number) {
   return formatDurationAxisForLocale(totalSeconds);
 }
 
-export async function getCurrentAcademicYearId() {
-  return (await db.settings.get(CURRENT_YEAR_KEY))?.value ?? "";
-}
-
-export async function setCurrentAcademicYear(id: string) {
-  const year = await db.academicYears.get(id);
-  if (!year || year.archived) throw new Error("Only an active academic year can be current.");
-  await db.settings.put({ key: CURRENT_YEAR_KEY, value: id });
-}
-
 export async function createSession(
   input: {
     subject: Subject;
@@ -76,6 +65,10 @@ export async function createSession(
   }
   if (input.subject.academicYearId !== input.academicYear.id)
     throw new Error("Choose a Subject from the selected Academic Year.");
+  const subject = await database.subjects.get(input.subject.id);
+  const year = await database.academicYears.get(input.academicYear.id);
+  if (!subject || subject.archived || !year || year.archived || subject.academicYearId !== year.id)
+    throw new Error("Choose a Subject in an active Academic Year.");
   const session: FocusSession = {
     id: makeId(),
     subjectId: input.subject.id,

@@ -78,7 +78,8 @@ export function validateBackup(value: unknown): FocusBackup {
       typeof row.name !== "string" ||
       typeof row.academicYearId !== "string" ||
       typeof row.color !== "string" ||
-      !isBoolean(row.archived)
+      !isBoolean(row.archived) ||
+      (row.archivedBeforeParent !== undefined && !isBoolean(row.archivedBeforeParent))
     )
       throw new Error(`Invalid Subject at item ${index + 1}.`);
     if (!yearIds.has(row.academicYearId)) throw new Error(`Subject "${row.name}" references a missing Academic Year.`);
@@ -198,6 +199,16 @@ export async function restoreBackup(
       };
       await apply(database.academicYears, backup.data.academicYears, "academicYearsCreated");
       await apply(database.subjects, backup.data.subjects, "subjectsCreated");
+      const parentYears = new Map((await database.academicYears.toArray()).map((year) => [year.id, year]));
+      await database.subjects.toCollection().modify((subject) => {
+        if (parentYears.get(subject.academicYearId)?.archived) {
+          subject.archivedBeforeParent ??= subject.archived;
+          subject.archived = true;
+        } else if (subject.archivedBeforeParent !== undefined) {
+          subject.archived = subject.archivedBeforeParent;
+          delete subject.archivedBeforeParent;
+        }
+      });
       await apply(
         database.sessions,
         backup.data.sessions.map((session) => ({

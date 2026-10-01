@@ -4,18 +4,12 @@ import { ValueTooltip } from "./ValueTooltip";
 import { AnalyticsLoading } from "./PageSkeletons";
 import type { FocusSettings } from "../settings";
 import { GoalProgressTooltip } from "./GoalProgressTooltip";
-import {
-  initialAnalyticsYear,
-  groupedByArchive,
-  subjectsForYear,
-  DEFAULT_WEEKDAY_METRIC,
-  availableGoalMode,
-} from "../analytics/controls";
+import { DEFAULT_WEEKDAY_METRIC, availableGoalMode } from "../analytics/controls";
 import { goalAchievement, goalAxisMaximum } from "../analytics/goalAchievement";
 import { academicYearProgress } from "../analytics/yearProgress";
 import { dailyFocusAllocations } from "../sessionAllocation";
 import { validSessions } from "../sessionValidity";
-import { CURRENT_YEAR_KEY } from "../data";
+import { academicYearOptions, subjectOptions, pruneSubjectSelection } from "../selectorOptions";
 import { FilterSelect } from "./FilterSelect";
 import { dailyActivityScope } from "../analytics/dailyActivity";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -118,14 +112,13 @@ export function AnalyticsPage() {
   const { settings, loaded: settingsLoaded } = useSettings();
   const snapshot = useLiveQuery(async () => {
     if (!settingsLoaded) return;
-    return db.transaction("r", [db.academicYears, db.subjects, db.sessions, db.settings], async () => {
-      const [years, subjects, sessions, current] = await Promise.all([
+    return db.transaction("r", [db.academicYears, db.subjects, db.sessions], async () => {
+      const [years, subjects, sessions] = await Promise.all([
         db.academicYears.toArray(),
         db.subjects.toArray(),
         db.sessions.orderBy("startTime").toArray(),
-        db.settings.get(CURRENT_YEAR_KEY),
       ]);
-      return { years, subjects, sessions, currentYear: current?.value ?? "" };
+      return { years, subjects, sessions };
     });
   }, [settingsLoaded]);
   const demoEnabled = import.meta.env.DEV && new URLSearchParams(window.location.search).get("analyticsDemo") === "1";
@@ -134,15 +127,8 @@ export function AnalyticsPage() {
     subjects = demo?.subjects ?? snapshot?.subjects,
     sessions = demo?.sessions ?? snapshot?.sessions;
   const [tab, setTab] = useState<(typeof tabs)[number]>("Overview");
-  const currentYear = snapshot?.currentYear;
-  const [yearId, setYearId] = useState("__unselected");
-  const [initialized, setInitialized] = useState(false);
-  useEffect(() => {
-    if (initialized || !years || currentYear === undefined) return;
-    setInitialized(true);
-    setYearId(initialAnalyticsYear(years, currentYear));
-  }, [years, currentYear, initialized]);
-  const [subjectId, setSubjectId] = useState("");
+  const [yearIds, setYearIds] = useState<string[]>([]);
+  const [subjectIds, setSubjectIds] = useState<string[]>([]);
   const [range, setRange] = useState<AnalyticsRange>("All");
   const [customOpen, setCustomOpen] = useState(false);
   const [customRange, setCustomRange] = useState<Period>();
@@ -164,31 +150,34 @@ export function AnalyticsPage() {
     [sessions, years],
   );
   useEffect(() => {
-    if (subjectId && subjects && !subjects.some((s) => s.id === subjectId && yearId && s.academicYearId === yearId))
-      setSubjectId("");
-  }, [subjectId, subjects, yearId]);
+    if (!subjects) return;
+    setSubjectIds((selection) => {
+      const next = pruneSubjectSelection(selection, subjects, yearIds);
+      return next.length === selection.length ? selection : next;
+    });
+  }, [subjects, yearIds]);
   // Comparison tabs override the effective scope without destroying saved filter selections.
   const yearDisabled = tab === "Academic Years",
-    subjectDisabled = yearDisabled || !yearId || yearId === "__unselected";
+    subjectDisabled = yearDisabled;
   const { history, period, filtered, goalHistory, goalPeriod } = useMemo(
     () =>
       analyticsScopes(
         effectiveSessions,
         {
-          academicYearId: yearDisabled ? undefined : yearId || undefined,
-          subjectId: subjectDisabled ? undefined : subjectId || undefined,
+          academicYearIds: yearDisabled ? undefined : yearIds,
+          subjectIds: subjectDisabled ? undefined : subjectIds,
         },
         range,
         now,
         customRange,
-        yearDisabled ? undefined : years?.find((year) => year.id === yearId),
+        yearDisabled || yearIds.length !== 1 ? undefined : years?.find((year) => year.id === yearIds[0]),
       ),
-    [effectiveSessions, yearDisabled, subjectDisabled, yearId, subjectId, range, now, customRange, years],
+    [effectiveSessions, yearDisabled, subjectDisabled, yearIds, subjectIds, range, now, customRange, years],
   );
-  if (!years || !subjects || !sessions || !settingsLoaded || !initialized)
+  if (!years || !subjects || !sessions || !settingsLoaded)
     return <AnalyticsLoading tab={tab} settings={settingsLoaded ? settings : undefined} />;
   const timeline = { sessions: filtered, history, period, range, settings };
-  const emptyScope = yearId === "__unselected" || period.end <= period.start || (range === "All" && !history.length);
+  const emptyScope = period.end <= period.start || (range === "All" && !history.length);
   return (
     <main className="page analytics-page">
       {demoEnabled && (
@@ -203,39 +192,22 @@ export function AnalyticsPage() {
         </div>
         <div className="analytics-filters">
           <FilterSelect
+            multiple
+            entity="academicYear"
             label={t("Academic Year")}
             disabled={yearDisabled || !years.length}
-            value={yearDisabled ? "" : yearId}
-            onChange={(id) => {
-              setYearId(id);
-              if (
-                subjectId &&
-                (!id || !subjects.some((subject) => subject.id === subjectId && subject.academicYearId === id))
-              )
-                setSubjectId("");
-            }}
-            options={[
-              ...(yearId === "__unselected"
-                ? [{ value: "__unselected", label: t(years.length ? "No current academic year" : "No academic years") }]
-                : []),
-              { value: "", label: t("All Years") },
-              ...groupedByArchive(years).map((year) => ({ value: year.id, label: year.name, archived: year.archived })),
-            ]}
+            value={yearDisabled ? [] : yearIds}
+            onChange={setYearIds}
+            options={[{ value: "", label: t("All Academic Years") }, ...academicYearOptions(years)]}
           />
           <FilterSelect
+            multiple
+            entity="subject"
             label={t("Subject")}
             disabled={subjectDisabled}
-            title={subjectDisabled ? t("Select a specific academic year to filter by subject.") : undefined}
-            value={subjectDisabled ? "" : subjectId}
-            onChange={setSubjectId}
-            options={[
-              { value: "", label: t("All Subjects") },
-              ...subjectsForYear(subjects, yearId).map((subject) => ({
-                value: subject.id,
-                label: subject.name,
-                archived: subject.archived,
-              })),
-            ]}
+            value={subjectDisabled ? [] : subjectIds}
+            onChange={setSubjectIds}
+            options={[{ value: "", label: t("All Subjects") }, ...subjectOptions(years, subjects, yearIds)]}
           />
           <div className="custom-range-wrap">
             <div className="range-control" aria-label={t("Date range")}>
@@ -334,14 +306,7 @@ export function AnalyticsPage() {
           {...timeline}
           allSessions={goalHistory}
           goalOnly={emptyScope}
-          activity={dailyActivityScope(
-            yearId === "__unselected" ? [] : effectiveSessions,
-            years,
-            subjects,
-            yearId,
-            subjectId,
-            now,
-          )}
+          activity={dailyActivityScope(effectiveSessions, years, subjects, yearIds, subjectIds, now)}
         />
       ) : tab === "Study Patterns" ? (
         <StudyPatterns {...timeline} />

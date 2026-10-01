@@ -96,6 +96,10 @@ export default function App() {
     void i18n.changeLanguage(settings.language);
   }, [settings.language]);
   useEffect(() => {
+    document.documentElement.dataset.scale = settings.uiScale;
+  }, [settings.uiScale]);
+
+  useEffect(() => {
     if (!loaded) return;
     document.documentElement.dataset.theme = settings.theme;
     try {

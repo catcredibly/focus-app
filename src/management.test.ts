@@ -12,6 +12,8 @@ import {
   isSessionEffectivelyArchived,
   moveSessions,
   setAcademicYearArchived,
+  setSubjectArchived,
+  saveSubject,
   updateSessionDetails,
   saveSessionEdit,
   saveAcademicYearEdit,
@@ -309,8 +311,95 @@ it("Add Session explicitly stores manual true and derives continuous focus", asy
   const testDb = database();
   const subject = { id: "s", name: "S", academicYearId: "y", color: "#fff", archived: false };
   const academicYear = { id: "y", name: "Y", archived: false };
+  await testDb.subjects.put(subject);
+  await testDb.academicYears.put(academicYear);
   const session = await createSession({ subject, academicYear, startTime: 1000, endTime: 1000 + 4 * 86400000 }, testDb);
   expect(session.manual).toBe(true);
   expect(session.focusedDurationSeconds).toBe(4 * 86400);
   expect((await testDb.sessions.get(session.id))?.manual).toBe(true);
+});
+
+it("allows new Sessions across dated years and rejects archives without changing historical Sessions", async () => {
+  const testDb = database();
+  const first = { id: "past", name: "Past", archived: false, endDate: "2000-01-01" };
+  const second = { id: "future", name: "Future", archived: false, startDate: "2100-01-01" };
+  const one = { id: "one", name: "Physics", academicYearId: first.id, color: "red", archived: false };
+  const two = { ...one, id: "two", academicYearId: second.id };
+  await testDb.academicYears.bulkPut([first, second]);
+  await testDb.subjects.bulkPut([one, two]);
+  await testDb.settings.put({ key: "currentAcademicYearId", value: "missing" });
+  const input = { startTime: 1000, endTime: 61000 };
+  const savedOne = await createSession({ ...input, subject: one, academicYear: first }, testDb);
+  const savedTwo = await createSession({ ...input, subject: two, academicYear: second }, testDb);
+  expect(savedOne).toMatchObject({ subjectId: "one", academicYearId: "past" });
+  expect(savedTwo).toMatchObject({ subjectId: "two", academicYearId: "future" });
+  await setAcademicYearArchived(second.id, true, testDb);
+  await expect(createSession({ ...input, subject: two, academicYear: second }, testDb)).rejects.toThrow(
+    "active Academic Year",
+  );
+  await testDb.subjects.update(one.id, { archived: true });
+  await expect(createSession({ ...input, subject: one, academicYear: first }, testDb)).rejects.toThrow(
+    "active Academic Year",
+  );
+  expect(await testDb.sessions.get(savedOne.id)).toEqual(savedOne);
+  expect(await testDb.sessions.get(savedTwo.id)).toEqual(savedTwo);
+  expect(await testDb.sessions.count()).toBe(2);
+});
+
+
+it("cascades parent archival reversibly, protects independent intent, and never changes Sessions", async () => {
+  const testDb = database();
+  await testDb.academicYears.put({ id: "year", name: "Year", archived: false });
+  await testDb.subjects.bulkPut([
+    { id: "active", name: "Physics", academicYearId: "year", color: "red", archived: false },
+    { id: "own", name: "Chemistry", academicYearId: "year", color: "red", archived: true },
+  ]);
+  const session = { id: "history", subjectId: "active", subjectName: "Physics", academicYearId: "year", academicYearName: "Year", startTime: 100, endTime: 200, focusedDurationSeconds: 1, archived: false };
+  await testDb.sessions.put(session);
+  await setAcademicYearArchived("year", true, testDb);
+  expect((await testDb.subjects.toArray()).every((subject) => subject.archived)).toBe(true);
+  expect((await testDb.subjects.get("active"))?.archivedBeforeParent).toBe(false);
+  expect((await testDb.subjects.get("own"))?.archivedBeforeParent).toBe(true);
+  await setAcademicYearArchived("year", true, testDb);
+  await setSubjectArchived("active", false, testDb);
+  expect((await testDb.subjects.get("active"))?.archived).toBe(true);
+  await saveSubject({ id: "new", name: "New", academicYearId: "year", color: "red", archived: false }, testDb);
+  expect((await testDb.subjects.get("new"))?.archived).toBe(true);
+  await setAcademicYearArchived("year", false, testDb);
+  expect((await testDb.subjects.get("active"))?.archived).toBe(false);
+  expect((await testDb.subjects.get("own"))?.archived).toBe(true);
+  expect((await testDb.subjects.get("new"))?.archived).toBe(false);
+  expect((await testDb.subjects.get("active"))?.archivedBeforeParent).toBeUndefined();
+  await setAcademicYearArchived("year", true, testDb);
+  await setSubjectArchived("active", true, testDb);
+  await setAcademicYearArchived("year", false, testDb);
+  expect((await testDb.subjects.get("active"))?.archived).toBe(true);
+  expect(await testDb.sessions.toArray()).toEqual([session]);
+});
+
+it("migrates existing archived parents without changing independent state or Sessions", async () => {
+  const name = `focus-archive-migration-${crypto.randomUUID()}`;
+  const legacy = new Dexie(name);
+  legacy.version(5).stores({
+    academicYears: "id, name, startDate, endDate, archived",
+    subjects: "id, academicYearId, name, archived, [academicYearId+archived]",
+    sessions: "id, subjectId, academicYearId, startTime, endTime, archived, [archived+startTime]",
+    settings: "key",
+  });
+  await legacy.table("academicYears").put({ id: "year", name: "Year", archived: true });
+  await legacy.table("subjects").bulkPut([
+    { id: "active", name: "Physics", academicYearId: "year", color: "red", archived: false },
+    { id: "own", name: "Chemistry", academicYearId: "year", color: "red", archived: true },
+  ]);
+  const historical = { id: "history", subjectId: "active", startTime: 1, endTime: 2, focusedDurationSeconds: 1 };
+  await legacy.table("sessions").put(historical);
+  legacy.close();
+  const upgraded = new FocusDatabase(name);
+  opened.push(upgraded);
+  await upgraded.open();
+  expect((await upgraded.subjects.toArray()).every((subject) => subject.archived)).toBe(true);
+  expect(await upgraded.sessions.toArray()).toEqual([historical]);
+  await setAcademicYearArchived("year", false, upgraded);
+  expect((await upgraded.subjects.get("active"))?.archived).toBe(false);
+  expect((await upgraded.subjects.get("own"))?.archived).toBe(true);
 });

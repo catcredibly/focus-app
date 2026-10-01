@@ -1,6 +1,14 @@
 import en from "./en";
 
 const zhTW: Record<keyof typeof en, string> = {
+  "Multi-select": "多選",
+  "Search Academic Years...": "搜尋學年…",
+  "Search Subjects...": "搜尋科目…",
+  "{{count}} Academic Years": "{{count}} 個學年",
+  "{{count}} Subjects": "{{count}} 個科目",
+  "No active Academic Years": "沒有未封存的學年",
+  "Create or unarchive a Subject in a non-archived Academic Year to continue.":
+    "請在未封存的學年中建立科目或取消科目封存以繼續。",
   "Not affected by Subject or Academic Year filters.": "不受科目或學年篩選條件影響。",
   "{{count}} active days": "{{count}} 個學習日",
   "An active day is a day with recorded Focus Time.": "學習日是指記錄了專注時長的日期。",
@@ -111,7 +119,6 @@ const zhTW: Record<keyof typeof en, string> = {
   "Small steps, big progress.": "小步驟，大進步。",
   "Session note": "專注時段記錄",
   "Add a note (optional)...": "新增註解（可選）...",
-  "Add a Subject for the current Academic Year": "新增目前學年的科目",
   Today: "今天",
   "Focus time": "專注時間",
   Sessions: "專注記錄",
@@ -203,7 +210,6 @@ const zhTW: Record<keyof typeof en, string> = {
   "Built with": "建構於",
   Active: "使用中",
   Archived: "已封存",
-  Current: "目前",
   "Current monitor": "目前顯示器",
   Monitor: "顯示器",
   "Notifications & Sounds": "通知與聲音",
@@ -402,10 +408,8 @@ const zhTW: Record<keyof typeof en, string> = {
   "Flexible dates": "靈活日期",
   "{{count}} subjects": "{{count}} 個科目",
   Edit: "編輯",
-  "Set current": "設置电流",
   "This Academic Year is used by the active timer. Finish or discard the timer before archiving it.":
     "本學年由活動計時器使用。在歸檔之前完成或丟弃計時器。",
-  "Choose another current Academic Year before archiving this one.": "在存檔本學年之前選擇另一個當前學年。",
   "This Academic Year is used by the active timer. Finish or discard the timer before deleting it.":
     "本學年由活動計時器使用。在刪除計時器之前完成或丟棄計時器。",
   Name: "姓名",
@@ -415,7 +419,6 @@ const zhTW: Record<keyof typeof en, string> = {
   "Permanently delete Academic Year with data": "永久刪除學年數據",
   "Manage lightweight subjects within each Academic Year.": "在每個學年管理輕量級科目。",
   "Add Subject": "新增科目",
-  "Current Academic Year": "當前學年",
   "Unknown Academic Year": "學年未知",
   "This Subject is used by the active timer. Finish or discard the timer before archiving it.":
     "此科目由活動計時器使用。在歸檔之前完成或丟棄計時器。",
@@ -647,10 +650,8 @@ const zhTW: Record<keyof typeof en, string> = {
   "View invalid sessions": "查看無效記錄",
   "Imported 1 invalid session.": "已匯入 1 筆無效記錄。",
   "Imported {{count}} invalid sessions.": "已匯入 {{count}} 筆無效記錄。",
-  "No current academic year": "目前沒有學年",
   "Create or update an academic year to continue.": "建立或更新學年以繼續。",
   "No active subjects": "沒有可用科目",
-  "Create or unarchive a subject in the current academic year to continue.": "在目前學年中建立科目或取消封存以繼續。",
   "Next day": "次日",
   "+1 day": "+1 天",
   "In progress": "進行中",
@@ -659,7 +660,6 @@ const zhTW: Record<keyof typeof en, string> = {
   "Average session by weekday": "按星期幾統計的平均專注時長",
   "Match case": "區分大小寫",
   "No academic years": "沒有學年",
-  "Select a specific academic year to filter by subject.": "選擇特定學年以按科目篩選。",
   "By day": "按日",
   "By week": "按週",
   "By month": "按月",

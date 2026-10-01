@@ -89,7 +89,14 @@ export function startTimerState(
   sessionId: string = crypto.randomUUID(),
   mode: "timer" | "stopwatch" = "timer",
 ): TimerState {
-  if (!Number.isFinite(seconds) || seconds <= 0) return state;
+  if (
+    !Number.isFinite(seconds) ||
+    seconds <= 0 ||
+    subject.archived ||
+    year.archived ||
+    subject.academicYearId !== year.id
+  )
+    return state;
   return {
     ...state,
     mode: "timer",
@@ -128,6 +135,7 @@ export function startStopwatchState(
   now = Date.now(),
   sessionId: string = crypto.randomUUID(),
 ): TimerState {
+  if (subject.archived || year.archived || subject.academicYearId !== year.id) return state;
   return {
     ...startTimerState(state, state.plannedDurationSeconds, subject, year, now, sessionId, "stopwatch"),
     mode: "stopwatch",

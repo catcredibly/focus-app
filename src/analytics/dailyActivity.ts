@@ -1,18 +1,29 @@
 import type { AcademicYear, FocusSession, Subject } from "../types";
 import { startOfLocalDay } from "./analytics";
+import { matchesSelection } from "../selectorOptions";
 
 export function dailyActivityScope(
   sessions: FocusSession[],
   years: AcademicYear[],
   subjects: Subject[],
-  yearId: string,
-  subjectId: string,
+  yearId: string | string[],
+  subjectId: string | string[],
   now = Date.now(),
 ) {
-  const parentId = yearId || subjects.find((subject) => subject.id === subjectId)?.academicYearId;
+  const yearIds = typeof yearId === "string" ? (yearId ? [yearId] : []) : yearId;
+  const subjectIds = typeof subjectId === "string" ? (subjectId ? [subjectId] : []) : subjectId;
+  const subjectParents = new Set(
+    subjects.filter((subject) => subjectIds.includes(subject.id)).map((subject) => subject.academicYearId),
+  );
+  const parentId =
+    yearIds.length === 1
+      ? yearIds[0]
+      : !yearIds.length && subjectIds.length && subjectParents.size === 1
+        ? [...subjectParents][0]
+        : undefined;
   const year = years.find((item) => item.id === parentId);
   const matching = sessions.filter(
-    (session) => (!parentId || session.academicYearId === parentId) && (!subjectId || session.subjectId === subjectId),
+    (session) => matchesSelection(session.academicYearId, yearIds) && matchesSelection(session.subjectId, subjectIds),
   );
   if (!year) return { sessions: matching, start: undefined, end: undefined, futureStart: undefined };
   const day = (date?: string) => (date ? new Date(`${date}T00:00:00`).getTime() : NaN);

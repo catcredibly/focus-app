@@ -1,3 +1,11 @@
+import { FilterSelect } from "./FilterSelect";
+import {
+  academicYearOptions,
+  orderedAcademicYears,
+  alphabetical,
+  subjectOptions,
+  pruneSubjectSelection,
+} from "../selectorOptions";
 import { HistoryLoading } from "./PageSkeletons";
 import { inHistoryScope, historyStatusAfterScope, matchesHistoryStatus } from "../historyFilters";
 import { sessionInvalidReason, invalidReasonText } from "../sessionValidity";
@@ -23,7 +31,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { db } from "../db";
-import { createSession, CURRENT_YEAR_KEY, formatDuration, makeId, setCurrentAcademicYear } from "../data";
+import { createSession, formatDuration, makeId } from "../data";
 import type { AcademicYear, FocusSession, Subject } from "../types";
 import { localDateInputValue } from "../timerState";
 import {
@@ -35,6 +43,8 @@ import {
   isSessionEffectivelyArchived,
   moveSessions,
   setAcademicYearArchived,
+  setSubjectArchived,
+  saveSubject,
   saveSessionEdit,
   saveAcademicYearEdit,
 } from "../management";
@@ -190,7 +200,6 @@ export function AcademicYearsPage() {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const years = useLiveQuery(() => db.academicYears.orderBy("name").toArray(), []) ?? [];
-  const currentId = useLiveQuery(async () => (await db.settings.get(CURRENT_YEAR_KEY))?.value ?? "", []) ?? "";
   const subjects = useLiveQuery(() => db.subjects.toArray(), []) ?? [];
   const sessions = useLiveQuery(() => db.sessions.toArray(), []) ?? [];
   const [archived, setArchivedState] = useState(managementViewState.academicYearsArchived);
@@ -218,7 +227,6 @@ export function AcademicYearsPage() {
       setPendingYear({ year, count });
       return;
     }
-    if (!currentId && !year.archived) await setCurrentAcademicYear(year.id);
     setEditing(undefined);
   };
   return (
@@ -253,9 +261,7 @@ export function AcademicYearsPage() {
               <article className="data-row" key={year.id}>
                 <CalendarDays />
                 <div className="row-main">
-                  <strong>
-                    {year.name} {currentId === year.id && <span className="badge">{t("Current")}</span>}
-                  </strong>
+                  <strong>{year.name}</strong>
                   <span>
                     {year.startDate ? `${dateText(year.startDate)} - ${dateText(year.endDate)}` : t("Flexible dates")}
                   </span>
@@ -267,11 +273,6 @@ export function AcademicYearsPage() {
                   <button title={t("Edit")} onClick={() => setEditing(year)}>
                     <Pencil />
                   </button>
-                  {!year.archived && currentId !== year.id && (
-                    <button title={t("Set current")} onClick={() => setCurrentAcademicYear(year.id)}>
-                      <Check />
-                    </button>
-                  )}
                   <button
                     title={t(year.archived ? "Restore" : "Archive")}
                     onClick={async () => {
@@ -281,10 +282,6 @@ export function AcademicYearsPage() {
                             "This Academic Year is used by the active timer. Finish or discard the timer before archiving it.",
                           ),
                         );
-                        return;
-                      }
-                      if (!year.archived && currentId === year.id) {
-                        setWarning(t("Choose another current Academic Year before archiving this one."));
                         return;
                       }
                       await setAcademicYearArchived(year.id, !year.archived);
@@ -400,7 +397,6 @@ export function AcademicYearsPage() {
           onCancel={() => setPendingYear(undefined)}
           onConfirm={async () => {
             await saveAcademicYearEdit(pendingYear.year, true);
-            if (!currentId && !pendingYear.year.archived) await setCurrentAcademicYear(pendingYear.year.id);
             setPendingYear(undefined);
             setEditing(undefined);
           }}
@@ -416,8 +412,7 @@ export function SubjectsPage() {
   const years = useLiveQuery(() => db.academicYears.toArray(), []) ?? [];
   const subjects = useLiveQuery(() => db.subjects.orderBy("name").toArray(), []) ?? [];
   const sessions = useLiveQuery(() => db.sessions.toArray(), []) ?? [];
-  const currentId = useLiveQuery(async () => (await db.settings.get(CURRENT_YEAR_KEY))?.value ?? "", []) ?? "";
-  const [yearId, setYearId] = useState("current");
+  const [yearIds, setYearIds] = useState<string[]>([]);
   const [archived, setArchivedState] = useState(managementViewState.subjectsArchived);
   const setArchived = (value: boolean) => {
     managementViewState.subjectsArchived = value;
@@ -425,23 +420,28 @@ export function SubjectsPage() {
   };
   const [deleting, setDeleting] = useState<Subject>();
   const [editing, setEditing] = useState<Subject | null | undefined>();
+  const [editingYearId, setEditingYearId] = useState("");
+  const openSubjectEditor = (subject: Subject | null) => {
+    setEditing(subject);
+    setEditingYearId(subject?.academicYearId ?? (yearIds.length === 1 && years.some((year) => year.id === yearIds[0] && !year.archived) ? yearIds[0] : ""));
+  };
   const [warning, setWarning] = useState("");
-  const selectedYear = yearId === "current" ? currentId : yearId;
   const save = async (form: FormData) => {
     const name = String(form.get("name") ?? "").trim();
     const academicYearId = String(form.get("year"));
     if (!name || !academicYearId) return;
-    await db.subjects.put({
+    await saveSubject({
       id: editing?.id ?? makeId(),
       academicYearId,
       name,
       color: editing?.color ?? nextSubjectColor(subjects, academicYearId),
       archived: editing?.archived ?? false,
+      archivedBeforeParent: editing?.archivedBeforeParent,
     });
     setEditing(undefined);
   };
   const visible = subjects.filter(
-    (s) => s.archived === archived && (selectedYear === "all" || !selectedYear || s.academicYearId === selectedYear),
+    (s) => s.archived === archived && (!yearIds.length || yearIds.includes(s.academicYearId)),
   );
   const subjectIsActive = (id: string) => activeTimerRelationship()?.subjectId === id;
   return (
@@ -453,7 +453,7 @@ export function SubjectsPage() {
           <button
             className="primary-action"
             disabled={!years.some((y) => !y.archived)}
-            onClick={() => setEditing(null)}
+            onClick={() => openSubjectEditor(null)}
           >
             <Plus /> {t("Add Subject")}
           </button>
@@ -462,16 +462,14 @@ export function SubjectsPage() {
       <div className="filter-bar">
         <label>
           {t("Academic Year")}
-          <select value={yearId} onChange={(e) => setYearId(e.target.value)}>
-            <option value="current">{t("Current Academic Year")}</option>
-            <option value="all">{t("All Academic Years")}</option>
-            {years.map((y) => (
-              <option key={y.id} value={y.id}>
-                {y.name}
-                {y.id === currentId ? ` (${t("Current")})` : ""}
-              </option>
-            ))}
-          </select>
+          <FilterSelect
+            entity="academicYear"
+            label={t("Academic Year")}
+            multiple
+            value={yearIds}
+            onChange={setYearIds}
+            options={[{ value: "", label: t("All Academic Years") }, ...academicYearOptions(years)]}
+          />
         </label>
       </div>
       <div className="tabs">
@@ -498,11 +496,12 @@ export function SubjectsPage() {
                 </small>
               </div>
               <div className="row-actions">
-                <button title={t("Edit")} onClick={() => setEditing(subject)}>
+                <button title={t("Edit")} onClick={() => openSubjectEditor(subject)}>
                   <Pencil />
                 </button>
                 <button
                   title={t(subject.archived ? "Restore" : "Archive")}
+                  disabled={subject.archived && Boolean(years.find((year) => year.id === subject.academicYearId)?.archived)}
                   onClick={() =>
                     active && !subject.archived
                       ? setWarning(
@@ -510,7 +509,7 @@ export function SubjectsPage() {
                             "This Subject is used by the active timer. Finish or discard the timer before archiving it.",
                           ),
                         )
-                      : void db.subjects.update(subject.id, { archived: !subject.archived })
+                      : void setSubjectArchived(subject.id, !subject.archived)
                   }
                 >
                   {subject.archived ? <RotateCcw /> : <Archive />}
@@ -551,21 +550,20 @@ export function SubjectsPage() {
             </label>
             <label>
               {t("Academic Year")}
-              <select name="year" defaultValue={editing?.academicYearId || currentId} required>
-                {years
-                  .filter((y) => !y.archived || y.id === editing?.academicYearId)
-                  .map((y) => (
-                    <option key={y.id} value={y.id}>
-                      {y.name}
-                    </option>
-                  ))}
-              </select>
+              <FilterSelect
+                entity="academicYear"
+                label={t("Academic Year")}
+                name="year"
+                value={editingYearId}
+                onChange={setEditingYearId}
+                options={[{ value: "", label: t("Choose Academic Year") }, ...academicYearOptions(years.filter((year) => !year.archived || year.id === editing?.academicYearId))]}
+              />
             </label>
             <div className="modal-actions">
               <button type="button" onClick={() => setEditing(undefined)}>
                 {t("Cancel")}
               </button>
-              <button className="primary-action">{t("Save")}</button>
+              <button className="primary-action" disabled={!editingYearId}>{t("Save")}</button>
             </div>
           </form>
         </Modal>
@@ -728,17 +726,15 @@ function SessionEditor({
   session,
   years,
   subjects,
-  currentYearId,
   onClose,
 }: {
-  currentYearId: string;
   session: FocusSession | null;
   years: AcademicYear[];
   subjects: Subject[];
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const initialYearId = session?.academicYearId ?? currentYearId;
+  const initialYearId = session?.academicYearId ?? "";
   const initialSubjectId =
     session?.subjectId ??
     subjects.find((subject) => subject.academicYearId === initialYearId && !subject.archived)?.id ??
@@ -764,15 +760,9 @@ function SessionEditor({
   const [note, setNote] = useState(session?.note ?? "");
   const [invalidPending, setInvalidPending] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const availableSubjects = subjects.filter(
-    (subject) => subject.academicYearId === academicYearId && (session || !subject.archived),
+  const availableSubjects = alphabetical(
+    subjects.filter((subject) => subject.academicYearId === academicYearId && (session || !subject.archived)),
   );
-  useEffect(() => {
-    if (!session && academicYearId !== currentYearId) {
-      setAcademicYearId(currentYearId);
-      setSubjectId("");
-    }
-  }, [session, academicYearId, currentYearId]);
   const entered = editedSessionTimes(date, start, end, session ?? undefined, dayOffset);
   const { startTime, endTime } =
     session && !manual ? sessionEditTiming(session, entered.startTime, entered.endTime) : entered;
@@ -785,7 +775,10 @@ function SessionEditor({
   const focusedDurationSeconds = manual ? sessionSpanSeconds(startTime, endTime) : session!.focusedDurationSeconds;
   const duration = durationInputFields(focusedDurationSeconds);
   const relationshipValid = Boolean(
-    academicYearId && subjectId && availableSubjects.some((subject) => subject.id === subjectId),
+    academicYearId &&
+    subjectId &&
+    availableSubjects.some((subject) => subject.id === subjectId) &&
+    (session || years.some((year) => year.id === academicYearId && !year.archived)),
   );
   const save = async (event?: React.FormEvent<HTMLFormElement>, confirmed = false) => {
     event?.preventDefault();
@@ -868,42 +861,31 @@ function SessionEditor({
       <form onSubmit={save} className="form session-editor">
         <label>
           {t("Academic Year")}
-          <select
+          <FilterSelect
+            entity="academicYear"
+            label={t("Academic Year")}
             value={academicYearId}
-            onChange={(event) => {
-              const next = event.target.value;
+            onChange={(next) => {
               setAcademicYearId(next);
               if (!subjects.some((subject) => subject.id === subjectId && subject.academicYearId === next))
                 setSubjectId("");
             }}
-            required
-            autoFocus
-          >
-            <option value="">{t("Choose Academic Year")}</option>
-            {years
-              .filter((year) => session || (!year.archived && year.id === currentYearId))
-              .map((year) => (
-                <option key={year.id} value={year.id}>
-                  {year.name}
-                </option>
-              ))}
-          </select>
+            options={[
+              { value: "", label: t("Choose Academic Year") },
+              ...academicYearOptions(years.filter((year) => session || !year.archived)),
+            ]}
+          />
         </label>
         <label>
           {t("Subject")}
-          <select
+          <FilterSelect
+            entity="subject"
+            label={t("Subject")}
             value={subjectId}
-            onChange={(event) => setSubjectId(event.target.value)}
+            onChange={setSubjectId}
             disabled={!academicYearId}
-            required
-          >
-            <option value="">{t("Choose Subject")}</option>
-            {availableSubjects.map((subject) => (
-              <option key={subject.id} value={subject.id}>
-                {subject.name}
-              </option>
-            ))}
-          </select>
+            options={[{ value: "", label: t("Choose Subject") }, ...subjectOptions(years, availableSubjects, academicYearId ? [academicYearId] : [])]}
+          />
         </label>
         <label>
           {t("Date")}
@@ -959,7 +941,6 @@ function SessionEditor({
 }
 
 export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boolean }) {
-  const currentId = useLiveQuery(async () => (await db.settings.get(CURRENT_YEAR_KEY))?.value ?? "", []) ?? "";
   const { t } = useTranslation();
   const { settings, loaded: settingsLoaded, setSetting } = useSettings();
   const snapshot = useLiveQuery(async () => {
@@ -984,8 +965,8 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
     managementViewState.historyStatus = value;
     setStatusState(value);
   };
-  const [yearId, setYearId] = useState("");
-  const [subjectId, setSubjectId] = useState("");
+  const [yearIds, setYearIds] = useState<string[]>([]);
+  const [subjectIds, setSubjectIds] = useState<string[]>([]);
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState<FocusSession | null | undefined>();
   const [deleting, setDeleting] = useState<FocusSession>();
@@ -993,7 +974,7 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmBulk, setConfirmBulk] = useState(false);
   const [moving, setMoving] = useState(false);
-  const activeYears = years.filter((year) => !year.archived);
+  const activeYears = orderedAcademicYears(years).filter((year) => !year.archived);
   const [moveYearId, setMoveYearId] = useState("");
   const [moveSubjectId, setMoveSubjectId] = useState("");
   const pageSize = settings.historyPageSize;
@@ -1035,15 +1016,15 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
     [sessions, years],
   );
   const invalidCount = sessions.filter(
-    (session) =>
-      (!yearId || session.academicYearId === yearId) &&
-      (!subjectId || session.subjectId === subjectId) &&
-      invalid.get(session.id),
+    (session) => inHistoryScope(session, { yearIds, subjectIds }) && invalid.get(session.id),
   ).length;
   useEffect(() => {
-    if (!yearId || !subjects.some((subject) => subject.id === subjectId && subject.academicYearId === yearId))
-      setSubjectId("");
-  }, [yearId, subjectId, subjects]);
+    if (!loadedSubjects) return;
+    setSubjectIds((selection) => {
+      const next = pruneSubjectSelection(selection, subjects, yearIds);
+      return next.length === selection.length ? selection : next;
+    });
+  }, [yearIds, loadedSubjects]);
   useEffect(() => {
     if (loadedYears && loadedSessions && historyStatusAfterScope(status, invalidCount) !== status) {
       setStatus("all");
@@ -1059,10 +1040,10 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
             Boolean(invalid.get(session.id)),
             isSessionEffectivelyArchived(session, subjects, years),
           ) &&
-          inHistoryScope(session, { yearId, subjectId }) &&
+          inHistoryScope(session, { yearIds, subjectIds }) &&
           terms.every((term) => readable.get(session.id)?.includes(term)),
       ),
-    [sessions, status, yearId, subjectId, subjects, years, terms, readable, invalid],
+    [sessions, status, yearIds, subjectIds, subjects, years, terms, readable, invalid],
   );
   const initialViewShown = useRef(false);
   const dataReady =
@@ -1076,7 +1057,7 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
   useEffect(() => {
     setPage(pagination.page);
     setPageDraft(String(pagination.page + 1));
-  }, [pagination.page, pageSize, yearId, subjectId, status, search]);
+  }, [pagination.page, pageSize, yearIds, subjectIds, status, search]);
   const commitPage = () => {
     const next = enteredHistoryPage(pageDraft, pagination.page, pagination.pages);
     setPage(next);
@@ -1099,7 +1080,16 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
             >
               {t(selecting ? "Cancel" : "Select")}
             </button>
-            <button className="primary-action" disabled={!subjects.length} onClick={() => setEditing(null)}>
+            <button
+              className="primary-action"
+              disabled={
+                !subjects.some(
+                  (subject) =>
+                    !subject.archived && years.some((year) => year.id === subject.academicYearId && !year.archived),
+                )
+              }
+              onClick={() => setEditing(null)}
+            >
               <Plus /> {t("Add Session")}
             </button>
           </div>
@@ -1108,41 +1098,31 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
       <div className="filter-bar history-filters">
         <label>
           {t("Academic Year")}
-          <select
-            value={yearId}
-            onChange={(e) => {
-              setYearId(e.target.value);
+          <FilterSelect
+            multiple
+            entity="academicYear"
+            label={t("Academic Year")}
+            value={yearIds}
+            onChange={(ids) => {
+              setYearIds(ids);
               setPage(0);
             }}
-          >
-            <option value="">{t("All Academic Years")}</option>
-            {years.map((y) => (
-              <option key={y.id} value={y.id}>
-                {y.name}
-              </option>
-            ))}
-          </select>
+            options={[{ value: "", label: t("All Academic Years") }, ...academicYearOptions(years)]}
+          />
         </label>
         <label>
           {t("Subject")}
-          <select
-            value={subjectId}
-            disabled={!yearId}
-            title={!yearId ? t("Select a specific academic year to filter by subject.") : undefined}
-            onChange={(e) => {
-              setSubjectId(e.target.value);
+          <FilterSelect
+            multiple
+            entity="subject"
+            label={t("Subject")}
+            value={subjectIds}
+            onChange={(ids) => {
+              setSubjectIds(ids);
               setPage(0);
             }}
-          >
-            <option value="">{t("All Subjects")}</option>
-            {subjects
-              .filter((s) => !yearId || s.academicYearId === yearId)
-              .map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-          </select>
+            options={[{ value: "", label: t("All Subjects") }, ...subjectOptions(years, subjects, yearIds)]}
+          />
         </label>
         <label>
           {t("Status")}
@@ -1363,7 +1343,7 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
         <div className="empty-state">
           <h2>
             {t(
-              yearId || subjectId || terms.length || sessions.length
+              yearIds.length || subjectIds.length || terms.length || sessions.length
                 ? "No results found"
                 : status === "archived"
                   ? "No archived sessions"
@@ -1422,13 +1402,7 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
       {viewingNote && <NoteViewer {...viewingNote} onClose={() => setViewingNote(undefined)} />}
       {editing !== undefined && (
         <Modal title={t(editing ? "Edit Session" : "Add Session")} onClose={() => setEditing(undefined)}>
-          <SessionEditor
-            session={editing}
-            years={years}
-            subjects={subjects}
-            currentYearId={currentId}
-            onClose={() => setEditing(undefined)}
-          />
+          <SessionEditor session={editing} years={years} subjects={subjects} onClose={() => setEditing(undefined)} />
         </Modal>
       )}
       {deleting && (
@@ -1463,37 +1437,27 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
           <div className="form">
             <label>
               {t("Academic Year")}
-              <select
+              <FilterSelect
+                entity="academicYear"
+                label={t("Academic Year")}
                 value={moveYearId}
-                onChange={(event) => {
-                  setMoveYearId(event.target.value);
-                  setMoveSubjectId("");
+                onChange={(next) => {
+                  setMoveYearId(next);
+                  if (!subjects.some((subject) => subject.id === moveSubjectId && subject.academicYearId === next && !subject.archived)) setMoveSubjectId("");
                 }}
-              >
-                <option value="">{t("Choose Academic Year")}</option>
-                {activeYears.map((year) => (
-                  <option key={year.id} value={year.id}>
-                    {year.name}
-                  </option>
-                ))}
-              </select>
+                options={[{ value: "", label: t("Choose Academic Year") }, ...academicYearOptions(activeYears)]}
+              />
             </label>
             <label>
               {t("Subject")}
-              <select
+              <FilterSelect
+                entity="subject"
+                label={t("Subject")}
                 value={moveSubjectId}
                 disabled={!moveYearId}
-                onChange={(event) => setMoveSubjectId(event.target.value)}
-              >
-                <option value="">{t("Choose Subject")}</option>
-                {subjects
-                  .filter((subject) => !subject.archived && subject.academicYearId === moveYearId)
-                  .map((subject) => (
-                    <option key={subject.id} value={subject.id}>
-                      {subject.name}
-                    </option>
-                  ))}
-              </select>
+                onChange={setMoveSubjectId}
+                options={[{ value: "", label: t("Choose Subject") }, ...subjectOptions(activeYears, subjects.filter((subject) => !subject.archived), moveYearId ? [moveYearId] : [])]}
+              />
             </label>
             <p>{t("Only the Subject and Academic Year assignment will change.")}</p>
             <div className="modal-actions">

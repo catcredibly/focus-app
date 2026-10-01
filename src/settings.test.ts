@@ -296,6 +296,8 @@ it("clears invalid defaults without changing history or a valid disabled selecti
     { key: "subjectPickerMode", value: "fixed" },
     { key: "currentAcademicYearId", value: "other" },
   ]);
+  expect(await loadSettings(testDb)).toMatchObject({ subjectPickerMode: "fixed", defaultSubjectId: "subject" });
+  await testDb.academicYears.update("year", { archived: true });
   expect(await loadSettings(testDb)).toMatchObject({ subjectPickerMode: "remember", defaultSubjectId: "" });
 });
 
