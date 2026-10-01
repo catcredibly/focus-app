@@ -500,7 +500,7 @@ function Timer({ settings, setSetting }: SettingsProps) {
         <FilterSelect
           className="settings-default-subject"
           entity="subject"
-            label={t("Default Subject")}
+          label={t("Default Subject")}
           disabled={settings.subjectPickerMode !== "fixed"}
           value={settings.defaultSubjectId}
           onChange={(value) => void setSetting("defaultSubjectId", value)}

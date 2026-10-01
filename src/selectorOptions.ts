@@ -58,8 +58,14 @@ export function matchesSelection(id: string, selection: readonly string[]) {
 
 export function searchSelectorOptions(options: SelectorOption[], query: string) {
   const text = query.trim().toLocaleLowerCase(localeCode());
-  return !text ? options : options.filter((option) => !option.value ||
-    option.label.toLocaleLowerCase(localeCode()).includes(text) || option.group?.toLocaleLowerCase(localeCode()).includes(text));
+  return !text
+    ? options
+    : options.filter(
+        (option) =>
+          !option.value ||
+          option.label.toLocaleLowerCase(localeCode()).includes(text) ||
+          option.group?.toLocaleLowerCase(localeCode()).includes(text),
+      );
 }
 
 export function pruneSubjectSelection(selection: string[], subjects: Subject[], yearIds: readonly string[]) {

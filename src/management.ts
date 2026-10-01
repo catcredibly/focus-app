@@ -12,16 +12,19 @@ export function isSessionEffectivelyArchived(session: FocusSession, subjects: Su
 
 export async function setAcademicYearArchived(id: string, archived: boolean, database: FocusDatabase = db) {
   await database.transaction("rw", database.academicYears, database.subjects, async () => {
-    if (!await database.academicYears.get(id)) return;
-    await database.subjects.where("academicYearId").equals(id).modify((subject) => {
-      if (archived) {
-        subject.archivedBeforeParent ??= subject.archived;
-        subject.archived = true;
-      } else if (subject.archivedBeforeParent !== undefined) {
-        subject.archived = subject.archivedBeforeParent;
-        delete subject.archivedBeforeParent;
-      }
-    });
+    if (!(await database.academicYears.get(id))) return;
+    await database.subjects
+      .where("academicYearId")
+      .equals(id)
+      .modify((subject) => {
+        if (archived) {
+          subject.archivedBeforeParent ??= subject.archived;
+          subject.archived = true;
+        } else if (subject.archivedBeforeParent !== undefined) {
+          subject.archived = subject.archivedBeforeParent;
+          delete subject.archivedBeforeParent;
+        }
+      });
     await database.academicYears.update(id, { archived });
   });
 }

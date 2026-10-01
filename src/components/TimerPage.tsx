@@ -507,7 +507,7 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
         </div>
         <FilterSelect
           entity="subject"
-            label={t("Subject")}
+          label={t("Subject")}
           className="subject-select"
           hideMultiSelect
           value={selectedSubject?.id ?? ""}

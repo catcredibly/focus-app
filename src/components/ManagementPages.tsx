@@ -423,7 +423,10 @@ export function SubjectsPage() {
   const [editingYearId, setEditingYearId] = useState("");
   const openSubjectEditor = (subject: Subject | null) => {
     setEditing(subject);
-    setEditingYearId(subject?.academicYearId ?? (yearIds.length === 1 && years.some((year) => year.id === yearIds[0] && !year.archived) ? yearIds[0] : ""));
+    setEditingYearId(
+      subject?.academicYearId ??
+        (yearIds.length === 1 && years.some((year) => year.id === yearIds[0] && !year.archived) ? yearIds[0] : ""),
+    );
   };
   const [warning, setWarning] = useState("");
   const save = async (form: FormData) => {
@@ -501,7 +504,9 @@ export function SubjectsPage() {
                 </button>
                 <button
                   title={t(subject.archived ? "Restore" : "Archive")}
-                  disabled={subject.archived && Boolean(years.find((year) => year.id === subject.academicYearId)?.archived)}
+                  disabled={
+                    subject.archived && Boolean(years.find((year) => year.id === subject.academicYearId)?.archived)
+                  }
                   onClick={() =>
                     active && !subject.archived
                       ? setWarning(
@@ -556,14 +561,19 @@ export function SubjectsPage() {
                 name="year"
                 value={editingYearId}
                 onChange={setEditingYearId}
-                options={[{ value: "", label: t("Choose Academic Year") }, ...academicYearOptions(years.filter((year) => !year.archived || year.id === editing?.academicYearId))]}
+                options={[
+                  { value: "", label: t("Choose Academic Year") },
+                  ...academicYearOptions(years.filter((year) => !year.archived || year.id === editing?.academicYearId)),
+                ]}
               />
             </label>
             <div className="modal-actions">
               <button type="button" onClick={() => setEditing(undefined)}>
                 {t("Cancel")}
               </button>
-              <button className="primary-action" disabled={!editingYearId}>{t("Save")}</button>
+              <button className="primary-action" disabled={!editingYearId}>
+                {t("Save")}
+              </button>
             </div>
           </form>
         </Modal>
@@ -884,7 +894,10 @@ function SessionEditor({
             value={subjectId}
             onChange={setSubjectId}
             disabled={!academicYearId}
-            options={[{ value: "", label: t("Choose Subject") }, ...subjectOptions(years, availableSubjects, academicYearId ? [academicYearId] : [])]}
+            options={[
+              { value: "", label: t("Choose Subject") },
+              ...subjectOptions(years, availableSubjects, academicYearId ? [academicYearId] : []),
+            ]}
           />
         </label>
         <label>
@@ -1443,7 +1456,12 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
                 value={moveYearId}
                 onChange={(next) => {
                   setMoveYearId(next);
-                  if (!subjects.some((subject) => subject.id === moveSubjectId && subject.academicYearId === next && !subject.archived)) setMoveSubjectId("");
+                  if (
+                    !subjects.some(
+                      (subject) => subject.id === moveSubjectId && subject.academicYearId === next && !subject.archived,
+                    )
+                  )
+                    setMoveSubjectId("");
                 }}
                 options={[{ value: "", label: t("Choose Academic Year") }, ...academicYearOptions(activeYears)]}
               />
@@ -1456,7 +1474,14 @@ export function HistoryPage({ initialInvalid = false }: { initialInvalid?: boole
                 value={moveSubjectId}
                 disabled={!moveYearId}
                 onChange={setMoveSubjectId}
-                options={[{ value: "", label: t("Choose Subject") }, ...subjectOptions(activeYears, subjects.filter((subject) => !subject.archived), moveYearId ? [moveYearId] : [])]}
+                options={[
+                  { value: "", label: t("Choose Subject") },
+                  ...subjectOptions(
+                    activeYears,
+                    subjects.filter((subject) => !subject.archived),
+                    moveYearId ? [moveYearId] : [],
+                  ),
+                ]}
               />
             </label>
             <p>{t("Only the Subject and Academic Year assignment will change.")}</p>

@@ -346,7 +346,6 @@ it("allows new Sessions across dated years and rejects archives without changing
   expect(await testDb.sessions.count()).toBe(2);
 });
 
-
 it("cascades parent archival reversibly, protects independent intent, and never changes Sessions", async () => {
   const testDb = database();
   await testDb.academicYears.put({ id: "year", name: "Year", archived: false });
@@ -354,7 +353,17 @@ it("cascades parent archival reversibly, protects independent intent, and never 
     { id: "active", name: "Physics", academicYearId: "year", color: "red", archived: false },
     { id: "own", name: "Chemistry", academicYearId: "year", color: "red", archived: true },
   ]);
-  const session = { id: "history", subjectId: "active", subjectName: "Physics", academicYearId: "year", academicYearName: "Year", startTime: 100, endTime: 200, focusedDurationSeconds: 1, archived: false };
+  const session = {
+    id: "history",
+    subjectId: "active",
+    subjectName: "Physics",
+    academicYearId: "year",
+    academicYearName: "Year",
+    startTime: 100,
+    endTime: 200,
+    focusedDurationSeconds: 1,
+    archived: false,
+  };
   await testDb.sessions.put(session);
   await setAcademicYearArchived("year", true, testDb);
   expect((await testDb.subjects.toArray()).every((subject) => subject.archived)).toBe(true);

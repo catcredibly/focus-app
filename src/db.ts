@@ -66,16 +66,21 @@ export class FocusDatabase extends Dexie {
             }
           });
       });
-    this.version(6).stores({}).upgrade(async (tx) => {
-      const years = await tx.table("academicYears").toArray() as AcademicYear[];
-      const archivedIds = new Set(years.filter((year) => year.archived).map((year) => year.id));
-      await tx.table("subjects").toCollection().modify((subject: Subject) => {
-        if (archivedIds.has(subject.academicYearId)) {
-          subject.archivedBeforeParent ??= subject.archived;
-          subject.archived = true;
-        }
+    this.version(6)
+      .stores({})
+      .upgrade(async (tx) => {
+        const years = (await tx.table("academicYears").toArray()) as AcademicYear[];
+        const archivedIds = new Set(years.filter((year) => year.archived).map((year) => year.id));
+        await tx
+          .table("subjects")
+          .toCollection()
+          .modify((subject: Subject) => {
+            if (archivedIds.has(subject.academicYearId)) {
+              subject.archivedBeforeParent ??= subject.archived;
+              subject.archived = true;
+            }
+          });
       });
-    });
   }
 }
 
