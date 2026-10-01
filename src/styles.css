@@ -5491,3 +5491,28 @@ html[data-utility-window] #root {
 .filter-archive-heading {
   font-size: calc(var(--selector-font-size, 14px) - 1px);
 }
+
+/* Match only the Settings Default Subject trigger to its neighboring dropdowns. */
+.setting-control .settings-default-subject {
+  width: 220px;
+  height: var(--ui-control-height, 40px);
+  min-height: var(--ui-control-height, 40px);
+  max-height: var(--ui-control-height, 40px);
+  padding: 0 10px;
+  border: 1px solid #29465b;
+  border-radius: 6px;
+  background: #0c1b28;
+  color: #eef5fb;
+  font-size: var(--ui-font-size, 14px);
+  text-align: left;
+}
+.setting-control .settings-default-subject > span {
+  font-size: inherit;
+  color: inherit;
+  line-height: normal;
+}
+[data-theme="light"] .setting-control .settings-default-subject {
+  background: var(--surface-control);
+  border-color: var(--border);
+  color: var(--text);
+}
