@@ -4956,6 +4956,7 @@ button:disabled {
 }
 .selector-multiple-switch > span {
   display: block;
+  flex: none;
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -4967,7 +4968,8 @@ button:disabled {
 }
 .selector-multiple-switch[aria-checked="true"] > span {
   transform: translateX(12px);
-  background: var(--accent-text);
+  background: #fff;
+  box-shadow: 0 0 0 1px #0002;
 }
 .selector-multiple-switch:disabled {
   cursor: not-allowed;
@@ -5506,6 +5508,16 @@ html[data-utility-window] #root {
   font-size: var(--ui-font-size, 14px);
   text-align: left;
 }
+.setting-control select,
+.setting-control .settings-default-subject {
+  font-size: var(--ui-font-size, 14px);
+  font-weight: 400;
+  line-height: normal;
+}
+.setting-control .settings-default-subject > svg {
+  display: block;
+  align-self: center;
+}
 .setting-control .settings-default-subject > span {
   font-size: inherit;
   color: inherit;
@@ -5515,4 +5527,51 @@ html[data-utility-window] #root {
   background: var(--surface-control);
   border-color: var(--border);
   color: var(--text);
+}
+
+/* Daily activity uses a pale-to-accent scale in the light theme. */
+[data-theme="light"] .heatmap-week button,
+[data-theme="light"] .heatmap-legend i {
+  background: var(--surface-raised);
+  box-shadow: inset 0 0 0 1px var(--border-soft);
+}
+[data-theme="light"] .heatmap-week .heat-1,
+[data-theme="light"] .heatmap-legend .heat-1 {
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-control)) !important;
+}
+[data-theme="light"] .heatmap-week .heat-2,
+[data-theme="light"] .heatmap-legend .heat-2 {
+  background: color-mix(in srgb, var(--accent) 45%, var(--surface-control)) !important;
+}
+[data-theme="light"] .heatmap-week .heat-3,
+[data-theme="light"] .heatmap-legend .heat-3 {
+  background: color-mix(in srgb, var(--accent) 72%, var(--surface-control)) !important;
+}
+[data-theme="light"] .heatmap-week .heat-4,
+[data-theme="light"] .heatmap-legend .heat-4 {
+  background: var(--accent) !important;
+}
+[data-theme="light"] .heatmap-months,
+[data-theme="light"] .weekday-labels,
+[data-theme="light"] .heatmap-legend,
+[data-theme="light"] .heatmap-detail {
+  color: var(--text-muted);
+}
+[data-theme="light"] .heatmap-detail {
+  background: var(--surface-control);
+  border-color: var(--border);
+}
+[data-theme="light"] .heatmap-week button:hover,
+[data-theme="light"] .heatmap-week button:focus-visible {
+  outline-color: var(--text);
+}
+[data-theme="light"] .analytics-page .heatmap-scroll,
+[data-theme="light"] .analytics-page .heatmap-scroll:hover {
+  scrollbar-color: var(--border) var(--surface-raised);
+}
+[data-theme="light"] .analytics-page .heatmap-scroll::-webkit-scrollbar-track {
+  background: var(--surface-raised);
+}
+[data-theme="light"] .analytics-page .heatmap-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
 }
