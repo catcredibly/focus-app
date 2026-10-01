@@ -193,14 +193,16 @@ export function AnalyticsPage() {
         <div className="analytics-filters">
           <FilterSelect
             multiple
+            entity="academicYear"
             label={t("Academic Year")}
             disabled={yearDisabled || !years.length}
             value={yearDisabled ? [] : yearIds}
             onChange={setYearIds}
-            options={[{ value: "", label: t("All Years") }, ...academicYearOptions(years)]}
+            options={[{ value: "", label: t("All Academic Years") }, ...academicYearOptions(years)]}
           />
           <FilterSelect
             multiple
+            entity="subject"
             label={t("Subject")}
             disabled={subjectDisabled}
             value={subjectDisabled ? [] : subjectIds}

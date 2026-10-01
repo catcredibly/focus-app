@@ -1,6 +1,11 @@
 import en from "./en";
 
 const ja: Record<keyof typeof en, string> = {
+  "Multi-select": "複数選択",
+  "Search Academic Years...": "学年度を検索…",
+  "Search Subjects...": "科目を検索…",
+  "{{count}} Academic Years": "{{count}} 学年度",
+  "{{count}} Subjects": "{{count}} 科目",
   "No active Academic Years": "有効な学年度がありません",
   "Create or unarchive a Subject in a non-archived Academic Year to continue.":
     "続けるには、アーカイブされていない学年度で科目を作成するか、科目のアーカイブを解除してください。",

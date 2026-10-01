@@ -1,3 +1,5 @@
+import { FilterSelect } from "./FilterSelect";
+import { academicYearOptions } from "../selectorOptions";
 import { showToast } from "../toasts";
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -13,6 +15,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { db } from "../db";
+import type { AcademicYear } from "../types";
 import { localeCode } from "../i18n";
 import { analyzeBackup, backupFilename, parseBackupText, restoreBackup } from "../importExport/backup";
 import { exportSessionsCsv, importCsvPreview, previewCsv } from "../importExport/csv";
@@ -414,7 +417,7 @@ function CsvPreviewPanel({
   onMapping,
 }: {
   data: CsvPreview;
-  years: { id: string; name: string }[];
+  years: AcademicYear[];
   destinationYear: string;
   onDestination: (id: string) => void;
   onMapping: (field: keyof CsvMapping, column: string) => void;
@@ -445,14 +448,13 @@ function CsvPreviewPanel({
         {!data.mapping.academicYear && (
           <label className="destination-year">
             {t("Destination Academic Year")}
-            <select value={destinationYear} onChange={(event) => onDestination(event.target.value)}>
-              <option value="">{t("Select an Academic Year")}</option>
-              {years.map((year) => (
-                <option key={year.id} value={year.id}>
-                  {year.name}
-                </option>
-              ))}
-            </select>
+            <FilterSelect
+              entity="academicYear"
+              label={t("Destination Academic Year")}
+              value={destinationYear}
+              onChange={onDestination}
+              options={[{ value: "", label: t("Select an Academic Year") }, ...academicYearOptions(years)]}
+            />
           </label>
         )}
         <div className="preview-counts">

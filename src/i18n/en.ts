@@ -1,4 +1,9 @@
 const en = {
+  "Multi-select": "Multi-select",
+  "Search Academic Years...": "Search Academic Years...",
+  "Search Subjects...": "Search Subjects...",
+  "{{count}} Academic Years": "{{count}} Academic Years",
+  "{{count}} Subjects": "{{count}} Subjects",
   "No active Academic Years": "No active Academic Years",
   "Create or unarchive a Subject in a non-archived Academic Year to continue.":
     "Create or unarchive a Subject in a non-archived Academic Year to continue.",

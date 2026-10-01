@@ -11,7 +11,48 @@ export function isSessionEffectivelyArchived(session: FocusSession, subjects: Su
 }
 
 export async function setAcademicYearArchived(id: string, archived: boolean, database: FocusDatabase = db) {
-  await database.academicYears.update(id, { archived });
+  await database.transaction("rw", database.academicYears, database.subjects, async () => {
+    if (!await database.academicYears.get(id)) return;
+    await database.subjects.where("academicYearId").equals(id).modify((subject) => {
+      if (archived) {
+        subject.archivedBeforeParent ??= subject.archived;
+        subject.archived = true;
+      } else if (subject.archivedBeforeParent !== undefined) {
+        subject.archived = subject.archivedBeforeParent;
+        delete subject.archivedBeforeParent;
+      }
+    });
+    await database.academicYears.update(id, { archived });
+  });
+}
+
+export async function setSubjectArchived(id: string, archived: boolean, database: FocusDatabase = db) {
+  await database.transaction("rw", database.academicYears, database.subjects, async () => {
+    const subject = await database.subjects.get(id);
+    if (!subject) return;
+    const parent = await database.academicYears.get(subject.academicYearId);
+    if (parent?.archived) {
+      if (!archived) return;
+      await database.subjects.update(id, { archived: true, archivedBeforeParent: true });
+    } else {
+      await database.subjects.update(id, { archived });
+    }
+  });
+}
+
+export async function saveSubject(subject: Subject, database: FocusDatabase = db) {
+  await database.transaction("rw", database.academicYears, database.subjects, async () => {
+    const parent = await database.academicYears.get(subject.academicYearId);
+    const value = { ...subject };
+    if (parent?.archived) {
+      value.archivedBeforeParent ??= value.archived;
+      value.archived = true;
+    } else if (value.archivedBeforeParent !== undefined) {
+      value.archived = value.archivedBeforeParent;
+      delete value.archivedBeforeParent;
+    }
+    await database.subjects.put(value);
+  });
 }
 
 export async function deleteSubjectCascade(id: string, database: FocusDatabase = db) {

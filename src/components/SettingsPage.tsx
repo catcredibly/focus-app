@@ -498,7 +498,8 @@ function Timer({ settings, setSetting }: SettingsProps) {
       </Row>
       <Row label={t("Default Subject")} disabled={settings.subjectPickerMode !== "fixed"}>
         <FilterSelect
-          label={t("Default Subject")}
+          entity="subject"
+            label={t("Default Subject")}
           disabled={settings.subjectPickerMode !== "fixed"}
           value={settings.defaultSubjectId}
           onChange={(value) => void setSetting("defaultSubjectId", value)}

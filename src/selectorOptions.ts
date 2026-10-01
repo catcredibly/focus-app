@@ -40,7 +40,7 @@ export function subjectOptions(
     (year) =>
       (!yearIds.length || yearIds.includes(year.id)) && eligible.some((subject) => subject.academicYearId === year.id),
   );
-  const grouped = timer ? groups.length > 1 : yearIds.length !== 1;
+  const grouped = timer ? groups.length > 1 : true;
   return groups.flatMap((year) =>
     alphabetical(eligible.filter((subject) => subject.academicYearId === year.id)).map((subject) => ({
       value: subject.id,
@@ -54,6 +54,12 @@ export function subjectOptions(
 
 export function matchesSelection(id: string, selection: readonly string[]) {
   return !selection.length || selection.includes(id);
+}
+
+export function searchSelectorOptions(options: SelectorOption[], query: string) {
+  const text = query.trim().toLocaleLowerCase(localeCode());
+  return !text ? options : options.filter((option) => !option.value ||
+    option.label.toLocaleLowerCase(localeCode()).includes(text) || option.group?.toLocaleLowerCase(localeCode()).includes(text));
 }
 
 export function pruneSubjectSelection(selection: string[], subjects: Subject[], yearIds: readonly string[]) {

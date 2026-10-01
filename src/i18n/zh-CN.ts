@@ -1,6 +1,11 @@
 import en from "./en";
 
 const zhCN: Record<keyof typeof en, string> = {
+  "Multi-select": "多选",
+  "Search Academic Years...": "搜索学年…",
+  "Search Subjects...": "搜索科目…",
+  "{{count}} Academic Years": "{{count}} 个学年",
+  "{{count}} Subjects": "{{count}} 个科目",
   "No active Academic Years": "没有未归档的学年",
   "Create or unarchive a Subject in a non-archived Academic Year to continue.":
     "请在未归档的学年中创建科目或取消科目归档以继续。",

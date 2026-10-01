@@ -97,7 +97,7 @@ it("groups All-year historical choices and keeps duplicate names and archived hi
     ["uni-physics", "University", false],
     ["old-z-physics", "Z Old", true],
   ]);
-  expect(subjectOptions(years, subjects, ["uni"]).every((option) => option.group === undefined)).toBe(true);
+  expect(subjectOptions(years, subjects, ["uni"]).every((option) => option.group === "University")).toBe(true);
   expect(subjectOptions(years, subjects, ["uni", "old-z"]).map((option) => option.value)).toEqual([
     "archived",
     "uni-chemistry",

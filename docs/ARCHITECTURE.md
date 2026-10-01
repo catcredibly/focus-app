@@ -55,7 +55,9 @@ New Timer and manual Sessions can use any non-archived Subject whose Academic Ye
 
 Timer Subject choices are alphabetical within alphabetical Academic Year groups, with headers omitted when only one year contains eligible Subjects. Analytics, History, and Subjects management Academic Year filters support multiple selections; an empty selection means All. History and Analytics Subject filters support multiple selections independently of the Academic Year filter. Matching uses OR within each filter and AND between filters. Changing year selections removes only Subject selections outside that scope. Historical filters include archived entities.
 
-`selectorOptions.ts` shares alphabetical ordering and groups non-archived Academic Years before archived Academic Years. `FilterSelect` renders non-selectable group headers, one archived separator, and a viewport-constrained scrolling menu with keyboard navigation.
+`selectorOptions.ts` shares alphabetical ordering and groups non-archived Academic Years before archived Academic Years. `FilterSelect` uses a compact 40px trigger in both horizontal filters and vertical forms. Its popover has a visible Multi-select switch, a search field, an unrestricted All option for filters, and a separately scrolling grouped option list. Filters default to single selection; enabling Multi-select preserves selections and shows checkboxes. Disabling it with multiple selections returns to All. One or two selected names stay visible in the trigger; larger selections use localized count summaries. Subject search also matches Academic Year group names. Group headers and the single archived separator remain non-selectable.
+
+Timer, Subject defaults, CSV destinations, and creation/edit/move forms use this same control with Multi-select visible but disabled: those operations require a single relationship. Required forms use Choose placeholders rather than an unrestricted All option. Hidden fields retain FormData submission where needed. Subject options are always grouped for filters/forms, including All Academic Years; the Timer keeps the single-year flat-list exception.
 
 ## Data relationships
 
@@ -67,7 +69,7 @@ Academic Year
 
 A Subject stores its parent `academicYearId`. A Session stores its `subjectId` together with Academic Year ID and display-name snapshots used for history and backwards compatibility.
 
-Archiving retains records. Permanent deletion follows the application's current relational rules and is performed using Dexie transactions. Deleting a Subject also removes its Sessions, while deleting an Academic Year removes its Subjects and their Sessions. This prevents orphaned dependent records.
+Archiving retains records. Academic Year archival transactionally archives its Subjects, saving independent intent in `archivedBeforeParent`; restoration restores that intent and clears the marker. Subjects cannot be restored while their parent is archived. Database version 6 applies this rule to existing archived parents, preserving each currently stored Subject state and leaving Sessions untouched. Permanent deletion follows the application's current relational rules and is performed using Dexie transactions. Deleting a Subject also removes its Sessions, while deleting an Academic Year removes its Subjects and their Sessions. This prevents orphaned dependent records.
 
 ## Timer architecture
 

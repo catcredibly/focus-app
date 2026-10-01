@@ -7,6 +7,8 @@ export type AcademicYear = {
 };
 
 export type Subject = {
+  /** Independent archive intent saved while the parent forces archival. */
+  archivedBeforeParent?: boolean;
   id: string;
   academicYearId: string;
   name: string;

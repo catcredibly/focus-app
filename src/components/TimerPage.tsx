@@ -248,19 +248,13 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
               "The original Subject or Academic Year is no longer active. Choose an active Subject before continuing.",
             )}
           </p>
-          <select value={recoverySubjectId} onChange={(event) => setRecoverySubjectId(event.target.value)}>
-            <option value="">{t("Choose Subject")}</option>
-            {allSubjects
-              .filter(
-                (subject) =>
-                  !subject.archived && allYears.some((year) => year.id === subject.academicYearId && !year.archived),
-              )
-              .map((subject) => (
-                <option key={subject.id} value={subject.id}>
-                  {subject.name} · {allYears.find((year) => year.id === subject.academicYearId)?.name}
-                </option>
-              ))}
-          </select>
+          <FilterSelect
+            entity="subject"
+            label={t("Subject")}
+            value={recoverySubjectId}
+            onChange={setRecoverySubjectId}
+            options={[{ value: "", label: t("Choose Subject") }, ...subjectOptions(allYears, allSubjects, [], true)]}
+          />
           <div className="modal-actions">
             <button className="danger-outline" onClick={() => setDiscarding(true)}>
               {t("Discard timer")}
@@ -512,8 +506,10 @@ export function TimerPage({ onNavigate }: { onNavigate: (page: string) => void }
           </label>
         </div>
         <FilterSelect
-          label={t("Subject")}
+          entity="subject"
+            label={t("Subject")}
           className="subject-select"
+          hideMultiSelect
           value={selectedSubject?.id ?? ""}
           onChange={setSubjectId}
           disabled={!subjects.length}
