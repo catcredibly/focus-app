@@ -783,7 +783,7 @@ function TimeTrends({
         >
           <div className="trend-controls">
             {dailyAvailable && weeklyAvailable && (
-              <div className="range-control">
+              <div className="range-control goal-mode-switch">
                 {(["daily", "weekly"] as const).map((mode) => (
                   <button
                     key={mode}

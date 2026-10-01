@@ -5575,3 +5575,46 @@ html[data-utility-window] #root {
 [data-theme="light"] .analytics-page .heatmap-scroll::-webkit-scrollbar-thumb {
   background: var(--border);
 }
+
+/* Theme polish stays scoped to the affected controls and management surfaces. */
+[data-theme="light"] .goal-mode-switch button.active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+[data-theme="light"] .filter-bar {
+  background: transparent;
+  border-color: var(--border-soft);
+}
+[data-theme="light"] .data-list,
+[data-theme="light"] .data-row,
+[data-theme="light"] .history-row {
+  background: var(--surface-page);
+  border-color: var(--border-soft);
+}
+[data-theme="light"] .history-head {
+  background: var(--surface-raised);
+  border-color: var(--border);
+}
+[data-theme="light"] .row-main > span:not(.badge) {
+  color: #435866;
+}
+[data-theme="light"] .row-main > small {
+  color: #607585;
+}
+/* Daily activity cells and legend share the dark-theme accent progression. */
+[data-theme="dark"] .heatmap-week .heat-1,
+[data-theme="dark"] .heatmap-legend .heat-1 {
+  background: color-mix(in srgb, var(--accent) 30%, var(--surface-raised)) !important;
+}
+[data-theme="dark"] .heatmap-week .heat-2,
+[data-theme="dark"] .heatmap-legend .heat-2 {
+  background: color-mix(in srgb, var(--accent) 52%, var(--surface-raised)) !important;
+}
+[data-theme="dark"] .heatmap-week .heat-3,
+[data-theme="dark"] .heatmap-legend .heat-3 {
+  background: color-mix(in srgb, var(--accent) 76%, var(--surface-raised)) !important;
+}
+[data-theme="dark"] .heatmap-week .heat-4,
+[data-theme="dark"] .heatmap-legend .heat-4 {
+  background: var(--accent) !important;
+}
