@@ -1,6 +1,7 @@
+import { synchronizeStartup } from "./autostart";
 import { db } from "./db";
 import { invoke, isTauri } from "@tauri-apps/api/core";
-import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
+import { isEnabled } from "@tauri-apps/plugin-autostart";
 import { DEFAULT_SETTINGS, loadSettings, saveSetting, resetAllSettings, type FocusSettings } from "./settings";
 import { syncPopoutLayout, reconcileAutoHideSetting, hideTimerAutomatically, timerGeometry } from "./native";
 import { registerRevealShortcut } from "./shortcuts";
@@ -13,8 +14,7 @@ export async function resetPreferences() {
     const previous = await loadSettings();
     const geometry = await timerGeometry();
     // Windows auto-launch deletes a registry value; deleting an absent value fails.
-    if (wasEnabled !== DEFAULT_SETTINGS.launchAtStartup)
-      await (DEFAULT_SETTINGS.launchAtStartup ? enable() : disable());
+    await synchronizeStartup(db, DEFAULT_SETTINGS.launchAtStartup);
     let persisted = false;
     try {
       await resetAllSettings();
@@ -41,7 +41,7 @@ export async function resetPreferences() {
         await rollback(() => syncPopoutLayout(true));
         if (geometry.tabVisible && previous.popoutDockAutoHide) await rollback(hideTimerAutomatically);
       }
-      if (wasEnabled !== DEFAULT_SETTINGS.launchAtStartup) await rollback(() => (wasEnabled ? enable() : disable()));
+      await rollback(() => synchronizeStartup(db, wasEnabled));
       if (rollbackErrors.length)
         throw new AggregateError(
           [error, ...rollbackErrors],

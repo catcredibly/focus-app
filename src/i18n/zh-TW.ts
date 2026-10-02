@@ -1,6 +1,7 @@
 import en from "./en";
 
 const zhTW: Record<keyof typeof en, string> = {
+  "Unable to synchronize launch at startup": "無法同步開機啟動狀態",
   "Multi-select": "多選",
   "Search Academic Years...": "搜尋學年…",
   "Search Subjects...": "搜尋科目…",

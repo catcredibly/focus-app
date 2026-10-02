@@ -21,7 +21,7 @@ import {
   Volume2,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { disable, enable } from "@tauri-apps/plugin-autostart";
+import { showToast } from "../toasts";
 import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { getVersion } from "@tauri-apps/api/app";
@@ -127,8 +127,13 @@ function RestoreSection({ keys }: { keys: (keyof FocusSettings)[] }) {
               <button
                 className="primary-action"
                 onClick={async () => {
-                  await restoreSettingDefaults(keys);
-                  setConfirming(false);
+                  try {
+                    await restoreSettingDefaults(keys);
+                    setConfirming(false);
+                  } catch (error) {
+                    console.error(error);
+                    showToast("Unable to synchronize launch at startup", "error");
+                  }
                 }}
               >
                 {t("Restore defaults")}
@@ -145,12 +150,17 @@ function General({ settings, setSetting }: SettingsProps) {
   const { t } = useTranslation();
   const [name, setName] = useState(settings.displayName);
   useEffect(() => setName(settings.displayName), [settings.displayName]);
+  const [startupBusy, setStartupBusy] = useState(false);
   const startup = async (enabled: boolean) => {
+    if (startupBusy) return;
+    setStartupBusy(true);
     try {
-      if (isTauri()) await (enabled ? enable() : disable());
       await setSetting("launchAtStartup", enabled);
-    } catch {
-      /* Keep the persisted value aligned with native registration. */
+    } catch (error) {
+      console.error(error);
+      showToast("Unable to synchronize launch at startup", "error");
+    } finally {
+      setStartupBusy(false);
     }
   };
   return (
@@ -193,7 +203,7 @@ function General({ settings, setSetting }: SettingsProps) {
           onChange={(value) => void setSetting("startMaximized", value)}
         />
       </Row>
-      <Row label={t("Launch Shunhen at Windows startup")}>
+      <Row label={t("Launch Shunhen at Windows startup")} disabled={startupBusy}>
         <Toggle
           label={t("Launch Shunhen at Windows startup")}
           checked={settings.launchAtStartup}

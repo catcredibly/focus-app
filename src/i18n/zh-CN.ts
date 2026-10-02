@@ -1,6 +1,7 @@
 import en from "./en";
 
 const zhCN: Record<keyof typeof en, string> = {
+  "Unable to synchronize launch at startup": "无法同步开机启动状态",
   "Multi-select": "多选",
   "Search Academic Years...": "搜索学年…",
   "Search Subjects...": "搜索科目…",

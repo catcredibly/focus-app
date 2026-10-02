@@ -1,3 +1,4 @@
+import { synchronizeStartup } from "./autostart";
 import { defaultEdgeForCorner } from "./popoutPlacement";
 import { db, type FocusDatabase } from "./db";
 import { ACTIVE_TIMER_STORAGE_KEY, LAST_TIMER_DURATION_KEY, type TimerState } from "./timerState";
@@ -415,6 +416,7 @@ export async function saveSetting<K extends keyof FocusSettings>(
 }
 
 export async function restoreSettingDefaults(keys: (keyof FocusSettings)[], database: FocusDatabase = db) {
+  if (keys.includes("launchAtStartup")) await synchronizeStartup(database, DEFAULT_SETTINGS.launchAtStartup);
   await database.transaction("rw", database.settings, async () => {
     await database.settings.bulkDelete(keys.map((key) => SETTINGS_KEYS[key]));
     if (keys.includes("popoutRevealShortcut")) await database.settings.delete(SETTINGS_KEYS.popoutRevealShortcutIntent);
