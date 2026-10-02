@@ -2,6 +2,9 @@ import en from "./en";
 
 const ja: Record<keyof typeof en, string> = {
   "Unable to synchronize launch at startup": "自動起動の状態を同期できませんでした",
+  "Change color": "色を変更",
+  "Change color for {{subject}}": "{{subject}}の色を変更",
+  "Unable to change color. Please try again.": "色を変更できませんでした。もう一度お試しください。",
   "Multi-select": "複数選択",
   "Search Academic Years...": "学年度を検索…",
   "Search Subjects...": "科目を検索…",
