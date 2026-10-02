@@ -1,4 +1,5 @@
 import { dailyFocusAllocations, dailyFocusIntervals } from "../sessionAllocation";
+import type { AllocationReader } from "./snapshot";
 import type { AcademicYear, FocusSession, Subject } from "../types";
 import { matchesSelection } from "../selectorOptions";
 
@@ -46,6 +47,7 @@ function aggregate(
   sessions: FocusSession[],
   key: (stamp: number) => string,
   start: (stamp: number) => number,
+  getDays: AllocationReader = dailyFocusAllocations,
 ): TimePoint[] {
   const map = new Map<string, TimePoint>();
   for (const s of sessions) {
@@ -59,7 +61,7 @@ function aggregate(
     };
     original.sessionCount++;
     map.set(originalKey, original);
-    for (const day of dailyFocusAllocations(s)) {
+    for (const day of getDays(s)) {
       const k = key(day.start),
         existing = map.get(k) ?? { key: k, label: k, start: start(day.start), seconds: 0, sessionCount: 0 };
       existing.seconds += day.seconds;
@@ -68,7 +70,8 @@ function aggregate(
   }
   return [...map.values()].sort((a, b) => a.start - b.start);
 }
-export const dailyTotals = (sessions: FocusSession[]) => aggregate(sessions, localDayKey, startOfLocalDay);
+export const dailyTotals = (sessions: FocusSession[], getDays: AllocationReader = dailyFocusAllocations) =>
+  aggregate(sessions, localDayKey, startOfLocalDay, getDays);
 export const weeklyTotals = (sessions: FocusSession[]) =>
   aggregate(sessions, (stamp) => localDayKey(startOfLocalWeek(stamp)), startOfLocalWeek);
 export const monthlyTotals = (sessions: FocusSession[]) =>
@@ -125,10 +128,8 @@ export function cleanHeatmapStep(p90Seconds: number) {
     increment = raw < 1800 ? 300 : 900;
   return Math.max(increment, Math.round(raw / increment) * increment);
 }
-export function heatmapScale(sessions: FocusSession[]) {
-  const values = dailyTotals(sessions)
-      .map((d) => d.seconds)
-      .filter((v) => v > 0),
+export function heatmapScale(sessions: FocusSession[], daily = dailyTotals(sessions)) {
+  const values = daily.map((d) => d.seconds).filter((v) => v > 0),
     p90 = percentile(values, 0.9),
     step = cleanHeatmapStep(p90);
   return { p90, step, thresholds: [step, step * 2, step * 3, step * 4] };
@@ -137,7 +138,11 @@ export function heatmapLevel(seconds: number, step: number) {
   if (seconds <= 0) return 0;
   return Math.min(4, Math.ceil(seconds / step));
 }
-export function subjectTotals(sessions: FocusSession[], subjects: Subject[]) {
+export function subjectTotals(
+  sessions: FocusSession[],
+  subjects: Subject[],
+  getDays: AllocationReader = dailyFocusAllocations,
+) {
   const subjectsById = new Map(subjects.map((subject) => [subject.id, subject])),
     map = new Map<
       string,
@@ -168,7 +173,7 @@ export function subjectTotals(sessions: FocusSession[], subjects: Subject[]) {
     };
     item.seconds += s.focusedDurationSeconds;
     item.sessions++;
-    for (const day of dailyFocusAllocations(s)) item.activeDays.add(localDayKey(day.start));
+    for (const day of getDays(s)) item.activeDays.add(localDayKey(day.start));
     item.first = Math.min(item.first, s.startTime);
     item.last = Math.max(item.last, s.startTime);
     map.set(s.subjectId, item);
@@ -177,19 +182,27 @@ export function subjectTotals(sessions: FocusSession[], subjects: Subject[]) {
     .map((x) => ({ ...x, activeDayCount: x.activeDays.size, averageSessionSeconds: x.seconds / x.sessions }))
     .sort((a, b) => b.seconds - a.seconds);
 }
-export function academicYearTotals(sessions: FocusSession[], years: AcademicYear[], subjects: Subject[]) {
+export function academicYearTotals(
+  sessions: FocusSession[],
+  years: AcademicYear[],
+  subjects: Subject[],
+  getDays: AllocationReader = dailyFocusAllocations,
+) {
   return years
     .map((year) => {
       const rows = sessions.filter((s) => s.academicYearId === year.id),
-        scale = heatmapScale(rows);
+        daily = dailyTotals(rows, getDays),
+        activeDays = daily.filter((day) => day.seconds > 0).length,
+        seconds = totalFocusedSeconds(rows),
+        scale = heatmapScale(rows, daily);
       return {
         academicYearId: year.id,
         name: year.name,
-        seconds: totalFocusedSeconds(rows),
+        seconds,
         sessions: rows.length,
-        averageSessionSeconds: rows.length ? totalFocusedSeconds(rows) / rows.length : 0,
-        activeDays: activeDayCount(rows),
-        averageActiveDaySeconds: averageActiveDaySeconds(rows),
+        averageSessionSeconds: rows.length ? seconds / rows.length : 0,
+        activeDays,
+        averageActiveDaySeconds: activeDays ? seconds / activeDays : 0,
         subjects: subjects.filter((s) => s.academicYearId === year.id).length,
         p90: scale.p90,
         step: scale.step,
@@ -202,8 +215,13 @@ export function cumulativeTotals(points: TimePoint[]) {
   let total = 0;
   return points.map((p) => ({ ...p, cumulativeSeconds: (total += p.seconds) }));
 }
-export function calendarDailySeries(sessions: FocusSession[], start: number, end: number) {
-  const totals = new Map(dailyTotals(sessions).map((p) => [p.key, p]));
+export function calendarDailySeries(
+  sessions: FocusSession[],
+  start: number,
+  end: number,
+  daily = dailyTotals(sessions),
+) {
+  const totals = new Map(daily.map((p) => [p.key, p]));
   const result: TimePoint[] = [],
     exclusiveEnd = startOfLocalDay(end);
   for (let stamp = startOfLocalDay(start); stamp < exclusiveEnd;) {
@@ -245,7 +263,11 @@ export function sessionLengthBuckets(sessions: FocusSession[]) {
   }
   return buckets;
 }
-export function weekdayTotals(sessions: FocusSession[], period?: { start: number; end: number }) {
+export function weekdayTotals(
+  sessions: FocusSession[],
+  period?: { start: number; end: number },
+  getDays: AllocationReader = dailyFocusAllocations,
+) {
   const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     values = labels.map((label) => ({ label, seconds: 0, count: 0, sessionSeconds: 0 }));
   for (const s of sessions) {
@@ -254,7 +276,7 @@ export function weekdayTotals(sessions: FocusSession[], period?: { start: number
       row.count++;
       row.sessionSeconds += s.focusedDurationSeconds;
     }
-    for (const day of dailyFocusAllocations(s))
+    for (const day of getDays(s))
       if (!period || (day.start >= period.start && day.start < period.end))
         values[(new Date(day.start).getDay() + 6) % 7].seconds += day.seconds;
   }

@@ -1,3 +1,5 @@
+import type { DailySeriesReader } from "./snapshot";
+import { dailyTotals } from "./analytics";
 import type { FocusSession } from "../types";
 import { allocatedFocusInRange } from "../sessionAllocation";
 import { startOfLocalDay, startOfLocalWeek } from "./analytics";
@@ -19,22 +21,25 @@ export function goalAchievement(
   target: number,
   now = Date.now(),
   weekMonth: "start" | "end" = "start",
+  getDailyTotals: DailySeriesReader = dailyTotals,
 ): GoalPoint[] {
   if (!(target > 0)) return [];
   const today = startOfLocalDay(now),
     end = Math.min(period.end, addDays(today, 1));
   if (end <= period.start) return [];
   if (mode === "daily")
-    return calendarBuckets(history, { start: period.start, end }, grouping, target).map((bucket) => ({
-      start: bucket.start,
-      end: bucket.end,
-      seconds: bucket.seconds,
-      goalPercent: bucket.goalPercent,
-      periodCount: bucket.days,
-      goalSeconds: target,
-      grouping,
-      mode,
-    }));
+    return calendarBuckets(history, { start: period.start, end }, grouping, target, getDailyTotals(history)).map(
+      (bucket) => ({
+        start: bucket.start,
+        end: bucket.end,
+        seconds: bucket.seconds,
+        goalPercent: bucket.goalPercent,
+        periodCount: bucket.days,
+        goalSeconds: target,
+        grouping,
+        mode,
+      }),
+    );
   const result: GoalPoint[] = [];
   let progressTotal = 0;
   for (let start = startOfLocalWeek(period.start); start < end; start = addDays(start, 7)) {

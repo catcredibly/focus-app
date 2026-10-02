@@ -1,3 +1,4 @@
+import { initializeSettings } from "../settingsInitialization";
 import { startupState, synchronizeStartup } from "../autostart";
 import { db } from "../db";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -16,12 +17,7 @@ export function useSettings() {
   // Dexie live queries are read-only; complete compatibility writes outside them.
   useEffect(() => {
     let active = true;
-    void loadSettings()
-      .then(() =>
-        synchronizeStartup().catch((error) => {
-          console.error(error);
-        }),
-      )
+    void initializeSettings()
       .then(() => {
         if (active) setMigrated(true);
       })

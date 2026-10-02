@@ -97,6 +97,7 @@ export function calendarBuckets(
   period: Period,
   aggregation: Aggregation,
   dailyGoal = 0,
+  daily = dailyTotals(sessions),
 ): CalendarBucket[] {
   const result: CalendarBucket[] = [];
   const startedTotals = new Map<string, { seconds: number; count: number }>();
@@ -109,7 +110,7 @@ export function calendarBuckets(
   }
   let bucketSessionSeconds = 0,
     progressTotal = 0;
-  for (const day of calendarDailySeries(sessions, period.start, period.end)) {
+  for (const day of calendarDailySeries(sessions, period.start, period.end, daily)) {
     const date = new Date(day.start);
     const key = localDayKey(
       aggregation === "daily"
@@ -150,9 +151,9 @@ export function calendarBuckets(
 }
 
 /** Trailing windows include zero days after the first Session, never artificial pre-history days. */
-export function rollingTimeline(history: FocusSession[], period: Period) {
+export function rollingTimeline(history: FocusSession[], period: Period, daily = dailyTotals(history)) {
   const first = history.reduce((value, session) => Math.min(value, startOfLocalDay(session.startTime)), Infinity);
-  const points = calendarDailySeries(history, addDays(period.start, -364), period.end);
+  const points = calendarDailySeries(history, addDays(period.start, -364), period.end, daily);
   const prefix = [0];
   for (const point of points) prefix.push(prefix.at(-1)! + point.seconds);
   return points.flatMap((point, index) => {
@@ -167,9 +168,9 @@ export function rollingTimeline(history: FocusSession[], period: Period) {
   });
 }
 
-export function summaryMetrics(sessions: FocusSession[], period?: Period) {
+export function summaryMetrics(sessions: FocusSession[], period?: Period, totals = dailyTotals(sessions)) {
   const started = period ? filterSessions(sessions, period) : sessions;
-  const daily = dailyTotals(sessions).filter(
+  const daily = totals.filter(
     (day) => day.seconds > 0 && (!period || (day.start >= period.start && day.start < period.end)),
   );
   const seconds = daily.reduce((sum, day) => sum + day.seconds, 0),
@@ -188,11 +189,9 @@ export function percentageChange(current: number, previous: number): number | un
 }
 
 type RecordRun = { start: number; end: number; days: number; seconds: number };
-export function personalBests(sessions: FocusSession[], period: Period) {
+export function personalBests(sessions: FocusSession[], period: Period, totals = dailyTotals(sessions)) {
   const rows = filterSessions(sessions, period),
-    days = dailyTotals(sessions).filter(
-      (day) => day.seconds > 0 && day.start >= period.start && day.start < period.end,
-    );
+    days = totals.filter((day) => day.seconds > 0 && day.start >= period.start && day.start < period.end);
   const bestDay = days.reduce<(typeof days)[number] | undefined>(
     (best, day) => (!best || day.seconds > best.seconds ? day : best),
     undefined,
@@ -210,7 +209,7 @@ export function personalBests(sessions: FocusSession[], period: Period) {
     if (!longest || run.days > longest.days) longest = run;
     if (!consecutive || run.seconds > consecutive.seconds) consecutive = run;
   }
-  const bestWeek = calendarBuckets(sessions, period, "weekly").reduce<CalendarBucket | undefined>(
+  const bestWeek = calendarBuckets(sessions, period, "weekly", 0, totals).reduce<CalendarBucket | undefined>(
     (best, week) => (week.seconds > (best?.seconds ?? 0) ? week : best),
     undefined,
   );
@@ -226,9 +225,9 @@ export function averageStudyPattern(sessions: FocusSession[], period: Period) {
 }
 
 /** Daily data stays intact; only axis labels are sampled to fit the viewport. */
-export function cumulativeDailyFocus(sessions: FocusSession[], period: Period) {
+export function cumulativeDailyFocus(sessions: FocusSession[], period: Period, totals = dailyTotals(sessions)) {
   let total = 0;
-  return calendarBuckets(sessions, period, "daily").map((point) => ({
+  return calendarBuckets(sessions, period, "daily", 0, totals).map((point) => ({
     ...point,
     cumulativeSeconds: (total += point.seconds),
   }));

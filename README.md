@@ -36,6 +36,10 @@ Track focus time, goals, personal bests, activity, study patterns, Subjects, and
   <img src="docs/screenshots/analytics-study-patterns.png" alt="Shunhen study pattern analytics" width="1200" />
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/analytics-subject-share.png" alt="Shunhen Subject study pattern analytics" width="1200" />
+</p>
+
 ## Keep your timer close
 
 Use the compact always-on-top Popout to keep track of a Session without leaving your work.

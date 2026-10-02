@@ -27,3 +27,23 @@ it("retains long meaningful notes for the scrollable renderer", () => {
   const notes = Array.from({ length: 500 }, (_, i) => `- Fix ${i}`).join("\n");
   expect(meaningfulReleaseNotes(notes)).toBe(notes);
 });
+
+it("renders consecutive Session note bullets following a paragraph without requiring a blank line", () => {
+  const html = renderToStaticMarkup(
+    <ReleaseNotes
+      notes={[
+        "Reviewed yesterday's mistakes and completed a timed practice set.",
+        "- Reworked errors involving operator methods and commutators.",
+        "- Reviewed normalization and expectation-value calculations.",
+        "- Practiced solving time-independent Schrödinger equation problems under time pressure.",
+        "- Checked mistakes involving angular momentum and eigenstates.",
+        "- Reviewed when to use perturbation theory approximations.",
+        "- Identified algebra and notation errors that caused lost marks.",
+        "- Noted which derivations and standard results still need faster recall.",
+      ].join("\n")}
+    />,
+  );
+  expect(html).toContain("<p>Reviewed yesterday&#x27;s mistakes and completed a timed practice set.</p><ul>");
+  expect(html.match(/<li>/g)).toHaveLength(7);
+  expect(html).toContain("<li>Reworked errors involving operator methods and commutators.</li>");
+});

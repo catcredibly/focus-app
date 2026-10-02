@@ -4867,6 +4867,14 @@ button:disabled {
 .update-notes li {
   white-space: pre-wrap;
 }
+.history-note-body ul {
+  list-style: disc;
+  padding-left: 20px;
+}
+.history-note-body ol {
+  list-style: decimal;
+  padding-left: 20px;
+}
 .history-note-body > :first-child {
   margin-top: 0;
 }

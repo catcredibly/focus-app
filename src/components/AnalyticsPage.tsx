@@ -1,6 +1,10 @@
-import { orderSubjectsForStack } from "../analytics/subjectStack";
+import { useSubjectAnalyticsData } from "../hooks/useSubjectAnalyticsData";
+import { prepareSubjectAnalytics } from "../analytics/subjectData";
+import { createAnalyticsSnapshot } from "../analytics/snapshot";
+import { AnalyticsSnapshotContext, useAnalyticsSnapshot } from "../analytics/SnapshotContext";
+import { useAnalyticsClock } from "../hooks/useAnalyticsClock";
+import { useAnalyticsScopes } from "../hooks/useAnalyticsScopes";
 import { Info } from "lucide-react";
-import { analyticsScopes } from "../analytics/scopes";
 import { ValueTooltip } from "./ValueTooltip";
 import { AnalyticsLoading } from "./PageSkeletons";
 import type { FocusSettings } from "../settings";
@@ -8,12 +12,11 @@ import { GoalProgressTooltip } from "./GoalProgressTooltip";
 import { DEFAULT_WEEKDAY_METRIC, availableGoalMode } from "../analytics/controls";
 import { goalAchievement, goalAxisMaximum } from "../analytics/goalAchievement";
 import { academicYearProgress } from "../analytics/yearProgress";
-import { dailyFocusAllocations } from "../sessionAllocation";
 import { validSessions } from "../sessionValidity";
 import { academicYearOptions, subjectOptions, pruneSubjectSelection } from "../selectorOptions";
 import { FilterSelect } from "./FilterSelect";
 import { dailyActivityScope } from "../analytics/dailyActivity";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
   Area,
@@ -45,7 +48,6 @@ import {
   localDayKey,
   medianSessionSeconds,
   sessionLengthBuckets,
-  subjectTotals,
   weekdayTotals,
 } from "../analytics/analytics";
 import {
@@ -106,6 +108,8 @@ type TimelineProps = {
   period: Period;
   range: AnalyticsRange;
   settings: FocusSettings;
+  now: number;
+  today: number;
 };
 
 export function AnalyticsPage() {
@@ -137,11 +141,7 @@ export function AnalyticsPage() {
     start: localDayKey(Date.now()),
     end: localDayKey(Date.now()),
   }));
-  const [now, setNow] = useState(Date.now);
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 60_000);
-    return () => window.clearInterval(id);
-  }, []);
+  const { now, today } = useAnalyticsClock();
   const customValid =
     Number.isFinite(inputDay(customDraft.start)) &&
     Number.isFinite(inputDay(customDraft.end)) &&
@@ -160,165 +160,169 @@ export function AnalyticsPage() {
   // Comparison tabs override the effective scope without destroying saved filter selections.
   const yearDisabled = tab === "Academic Years",
     subjectDisabled = yearDisabled;
-  const { history, period, filtered, goalHistory, goalPeriod } = useMemo(
-    () =>
-      analyticsScopes(
-        effectiveSessions,
-        {
-          academicYearIds: yearDisabled ? undefined : yearIds,
-          subjectIds: subjectDisabled ? undefined : subjectIds,
-        },
-        range,
-        now,
-        customRange,
-        yearDisabled || yearIds.length !== 1 ? undefined : years?.find((year) => year.id === yearIds[0]),
-      ),
-    [effectiveSessions, yearDisabled, subjectDisabled, yearIds, subjectIds, range, now, customRange, years],
+  const { history, period, filtered, goalHistory, goalPeriod } = useAnalyticsScopes(
+    effectiveSessions,
+    yearIds,
+    subjectIds,
+    yearDisabled,
+    range,
+    today,
+    customRange,
+    yearDisabled || yearIds.length !== 1 ? undefined : years?.find((year) => year.id === yearIds[0]),
+  );
+  const timezoneOffset = new Date(now).getTimezoneOffset();
+  const snapshotData = useMemo(() => createAnalyticsSnapshot(effectiveSessions), [effectiveSessions, timezoneOffset]);
+  const activity = useMemo(
+    () => dailyActivityScope(effectiveSessions, years ?? [], subjects ?? [], yearIds, subjectIds, today),
+    [effectiveSessions, years, subjects, yearIds, subjectIds, today],
   );
   if (!years || !subjects || !sessions || !settingsLoaded)
     return <AnalyticsLoading tab={tab} settings={settingsLoaded ? settings : undefined} />;
-  const timeline = { sessions: filtered, history, period, range, settings };
+  const timeline = { sessions: filtered, history, period, range, settings, now, today };
   const emptyScope = period.end <= period.start || (range === "All" && !history.length);
   return (
-    <main className="page analytics-page">
-      {demoEnabled && (
-        <div className="analytics-demo-banner">
-          Development dataset · {number(sessions.length)} generated Sessions · in memory only
-        </div>
-      )}
-      <header className="analytics-header">
-        <div>
-          <h1>{t("Analytics")}</h1>
-          <p>{t("Explore your study habits across subjects, Academic Years, and self-study.")}</p>
-        </div>
-        <div className="analytics-filters">
-          <FilterSelect
-            multiple
-            entity="academicYear"
-            label={t("Academic Year")}
-            disabled={yearDisabled || !years.length}
-            value={yearDisabled ? [] : yearIds}
-            onChange={setYearIds}
-            options={[{ value: "", label: t("All Academic Years") }, ...academicYearOptions(years)]}
-          />
-          <FilterSelect
-            multiple
-            entity="subject"
-            label={t("Subject")}
-            disabled={subjectDisabled}
-            value={subjectDisabled ? [] : subjectIds}
-            onChange={setSubjectIds}
-            options={[{ value: "", label: t("All Subjects") }, ...subjectOptions(years, subjects, yearIds)]}
-          />
-          <div className="custom-range-wrap">
-            <div className="range-control" aria-label={t("Date range")}>
-              {analyticsRanges.map((r) => (
-                <button
-                  key={r}
-                  aria-pressed={(customOpen ? "Custom" : range) === r}
-                  className={(customOpen ? "Custom" : range) === r ? "active" : ""}
-                  onClick={() => {
-                    if (r === "Custom") {
-                      if (customRange)
-                        setCustomDraft({
-                          start: localDayKey(customRange.start),
-                          end: localDayKey(addDays(customRange.end, -1)),
-                        });
-                      setCustomOpen(true);
-                    } else {
-                      setCustomOpen(false);
-                      setRange(r);
-                    }
-                  }}
-                >
-                  {t(r)}
-                </button>
-              ))}
-            </div>
-            {range === "Custom" && <span className="custom-range-label">{periodLabel(period)}</span>}
-            {customOpen && (
-              <div
-                className="custom-range-popover"
-                role="dialog"
-                aria-label={t("Custom")}
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") setCustomOpen(false);
-                }}
-              >
-                <label>
-                  {t("Start date")}
-                  <input
-                    type="date"
-                    value={customDraft.start}
-                    max={customDraft.end || undefined}
-                    onChange={(e) => setCustomDraft({ ...customDraft, start: e.target.value })}
-                  />
-                </label>
-                <label>
-                  {t("End date")}
-                  <input
-                    type="date"
-                    value={customDraft.end}
-                    min={customDraft.start || undefined}
-                    onChange={(e) => setCustomDraft({ ...customDraft, end: e.target.value })}
-                  />
-                </label>
-                {!customValid && <span className="field-error">{t("End date cannot be before Start date.")}</span>}
-                <div className="custom-range-actions">
-                  <button className="secondary-action" onClick={() => setCustomOpen(false)}>
-                    {t("Cancel")}
-                  </button>
+    <AnalyticsSnapshotContext.Provider value={snapshotData}>
+      <main className="page analytics-page">
+        {demoEnabled && (
+          <div className="analytics-demo-banner">
+            Development dataset · {number(sessions.length)} generated Sessions · in memory only
+          </div>
+        )}
+        <header className="analytics-header">
+          <div>
+            <h1>{t("Analytics")}</h1>
+            <p>{t("Explore your study habits across subjects, Academic Years, and self-study.")}</p>
+          </div>
+          <div className="analytics-filters">
+            <FilterSelect
+              multiple
+              entity="academicYear"
+              label={t("Academic Year")}
+              disabled={yearDisabled || !years.length}
+              value={yearDisabled ? [] : yearIds}
+              onChange={setYearIds}
+              options={[{ value: "", label: t("All Academic Years") }, ...academicYearOptions(years)]}
+            />
+            <FilterSelect
+              multiple
+              entity="subject"
+              label={t("Subject")}
+              disabled={subjectDisabled}
+              value={subjectDisabled ? [] : subjectIds}
+              onChange={setSubjectIds}
+              options={[{ value: "", label: t("All Subjects") }, ...subjectOptions(years, subjects, yearIds)]}
+            />
+            <div className="custom-range-wrap">
+              <div className="range-control" aria-label={t("Date range")}>
+                {analyticsRanges.map((r) => (
                   <button
-                    className="primary-action"
-                    disabled={!customValid}
+                    key={r}
+                    aria-pressed={(customOpen ? "Custom" : range) === r}
+                    className={(customOpen ? "Custom" : range) === r ? "active" : ""}
                     onClick={() => {
-                      setCustomRange({
-                        start: inputDay(customDraft.start),
-                        end: addDays(inputDay(customDraft.end), 1),
-                      });
-                      setRange("Custom");
-                      setCustomOpen(false);
+                      if (r === "Custom") {
+                        if (customRange)
+                          setCustomDraft({
+                            start: localDayKey(customRange.start),
+                            end: localDayKey(addDays(customRange.end, -1)),
+                          });
+                        setCustomOpen(true);
+                      } else {
+                        setCustomOpen(false);
+                        setRange(r);
+                      }
                     }}
                   >
-                    {t("Apply")}
+                    {t(r)}
                   </button>
-                </div>
+                ))}
               </div>
-            )}
+              {range === "Custom" && <span className="custom-range-label">{periodLabel(period)}</span>}
+              {customOpen && (
+                <div
+                  className="custom-range-popover"
+                  role="dialog"
+                  aria-label={t("Custom")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setCustomOpen(false);
+                  }}
+                >
+                  <label>
+                    {t("Start date")}
+                    <input
+                      type="date"
+                      value={customDraft.start}
+                      max={customDraft.end || undefined}
+                      onChange={(e) => setCustomDraft({ ...customDraft, start: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    {t("End date")}
+                    <input
+                      type="date"
+                      value={customDraft.end}
+                      min={customDraft.start || undefined}
+                      onChange={(e) => setCustomDraft({ ...customDraft, end: e.target.value })}
+                    />
+                  </label>
+                  {!customValid && <span className="field-error">{t("End date cannot be before Start date.")}</span>}
+                  <div className="custom-range-actions">
+                    <button className="secondary-action" onClick={() => setCustomOpen(false)}>
+                      {t("Cancel")}
+                    </button>
+                    <button
+                      className="primary-action"
+                      disabled={!customValid}
+                      onClick={() => {
+                        setCustomRange({
+                          start: inputDay(customDraft.start),
+                          end: addDays(inputDay(customDraft.end), 1),
+                        });
+                        setRange("Custom");
+                        setCustomOpen(false);
+                      }}
+                    >
+                      {t("Apply")}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </header>
-      <nav className="analytics-tabs" aria-label={t("Analytics views")}>
-        {tabs.map((item) => (
-          <button
-            key={item}
-            aria-pressed={tab === item}
-            className={tab === item ? "active" : ""}
-            onClick={() => setTab(item)}
-          >
-            {t(item)}
-          </button>
-        ))}
-      </nav>
-      {emptyScope && tab !== "Overview" && tab !== "Time Trends" ? (
-        <Empty />
-      ) : tab === "Overview" ? (
-        <Overview
-          {...timeline}
-          allSessions={goalHistory}
-          goalOnly={emptyScope}
-          activity={dailyActivityScope(effectiveSessions, years, subjects, yearIds, subjectIds, now)}
-        />
-      ) : tab === "Study Patterns" ? (
-        <StudyPatterns {...timeline} />
-      ) : tab === "Subjects" ? (
-        <SubjectsAnalytics sessions={filtered} history={history} period={period} subjects={subjects} years={years} />
-      ) : tab === "Academic Years" ? (
-        <YearsAnalytics sessions={filtered} history={history} years={years} subjects={subjects} />
-      ) : (
-        <TimeTrends {...timeline} goalHistory={goalHistory} goalPeriod={goalPeriod} goalOnly={emptyScope} />
-      )}
-    </main>
+        </header>
+        <nav className="analytics-tabs" aria-label={t("Analytics views")}>
+          {tabs.map((item) => (
+            <button
+              key={item}
+              aria-pressed={tab === item}
+              className={tab === item ? "active" : ""}
+              onClick={() => setTab(item)}
+            >
+              {t(item)}
+            </button>
+          ))}
+        </nav>
+        {emptyScope && tab !== "Overview" && tab !== "Time Trends" ? (
+          <Empty />
+        ) : tab === "Overview" ? (
+          <Overview {...timeline} allSessions={goalHistory} goalOnly={emptyScope} activity={activity} />
+        ) : tab === "Study Patterns" ? (
+          <StudyPatterns {...timeline} />
+        ) : tab === "Subjects" ? (
+          <MemoSubjectsAnalytics
+            sessions={filtered}
+            history={history}
+            period={period}
+            subjects={subjects}
+            years={years}
+          />
+        ) : tab === "Academic Years" ? (
+          <YearsAnalytics sessions={filtered} history={history} years={years} subjects={subjects} today={today} />
+        ) : (
+          <TimeTrends {...timeline} goalHistory={goalHistory} goalPeriod={goalPeriod} goalOnly={emptyScope} />
+        )}
+      </main>
+    </AnalyticsSnapshotContext.Provider>
   );
 }
 
@@ -374,6 +378,7 @@ function Overview({
   period,
   range,
   allSessions,
+  today,
   goalOnly,
   activity,
   settings,
@@ -383,11 +388,16 @@ function Overview({
   activity: ReturnType<typeof dailyActivityScope>;
 }) {
   const { t } = useTranslation();
-  const goals = goalProgress(allSessions),
-    current = summaryMetrics(history, period),
-    previous = previousPeriod(period);
-  const previousValues = summaryMetrics(history, previous);
-  const records = personalBests(history, period);
+  const { getDailyTotals } = useAnalyticsSnapshot();
+  const goals = useMemo(() => goalProgress(allSessions, today), [allSessions, today]);
+  const { current, previousValues, records } = useMemo(() => {
+    const daily = getDailyTotals(history);
+    return {
+      current: summaryMetrics(history, period, daily),
+      previousValues: summaryMetrics(history, previousPeriod(period), daily),
+      records: personalBests(history, period, daily),
+    };
+  }, [history, period.start, period.end, getDailyTotals]);
   const consecutive = range === "7D" || (range === "Custom" && calendarDays(period) < 14);
   const fourth = consecutive ? records.consecutive : records.bestWeek;
   const labels = ["Total focus time", "Total Sessions", "Average Session", "Average active day", "Active study days"];
@@ -492,44 +502,9 @@ function SubjectsAnalytics({
   history,
   period,
 }: DataProps & { history: FocusSession[]; period: Period }) {
-  const interactive = useInteractiveTooltip();
   const { t } = useTranslation();
-  const rows = subjectTotals(sessions, subjects),
-    total = rows.reduce((sum, row) => sum + row.seconds, 0);
-  const names = new Map(
-    rows.map((row) => [row.subjectId, `${row.name} · ${years.find((y) => y.id === row.academicYearId)?.name ?? ""}`]),
-  );
-  const shareRows = subjectTotals(
-    history.filter((session) => session.startTime < period.end && session.endTime > period.start),
-    subjects,
-  );
-  const stackedShareRows = orderSubjectsForStack(shareRows);
-  const shareNames = new Map(
-    shareRows.map((row) => [
-      row.subjectId,
-      row.name + " · " + (years.find((year) => year.id === row.academicYearId)?.name ?? ""),
-    ]),
-  );
-  const monthMap = new Map<string, Map<string, number>>();
-  for (const s of history)
-    for (const day of dailyFocusAllocations(s)) {
-      if (day.start < period.start || day.start >= period.end) continue;
-      const month = localDayKey(day.start).slice(0, 7),
-        values = monthMap.get(month) ?? new Map<string, number>();
-      values.set(s.subjectId, (values.get(s.subjectId) ?? 0) + day.seconds);
-      monthMap.set(month, values);
-    }
-  const share = [...monthMap]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, values]) => {
-      const sum = [...values.values()].reduce((a, b) => a + b, 0);
-      return {
-        label: new Date(`${month}-01T12:00:00`).toLocaleDateString(localeCode(), { month: "short", year: "numeric" }),
-        shares: Object.fromEntries(
-          shareRows.map((row) => [row.subjectId, ((values.get(row.subjectId) ?? 0) / sum) * 100]),
-        ),
-      };
-    });
+  const data = useSubjectAnalyticsData(sessions, history, subjects, years, period, localeCode());
+  const { rows, total, names } = data;
   return (
     <div className="analytics-content subjects-layout">
       <Panel className="subject-card" title={t("Subjects")}>
@@ -581,50 +556,78 @@ function SubjectsAnalytics({
           </div>
         </div>
       </Panel>
-      <Panel className="full-row" title={t("Subject share over time")}>
-        <ScrollChart width={share.length * 58}>
-          <AreaChart data={share} onMouseMove={interactive.enter} onMouseLeave={interactive.leave}>
-            <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
-            <XAxis dataKey="label" />
-            <YAxis domain={[0, 100]} tickFormatter={percent} />
-            {stackedShareRows.map((row) => (
-              <Area
-                key={row.subjectId}
-                dataKey={(point) => point.shares[row.subjectId]}
-                name={shareNames.get(row.subjectId)}
-                stackId="subjects"
-                stroke="var(--chart-grid)"
-                strokeWidth={1}
-                fill={row.color}
-                fillOpacity={1}
-              />
-            ))}
-            <Tooltip
-              active={interactive.active || undefined}
-              wrapperStyle={{ pointerEvents: "auto" }}
-              content={(props) => (
-                <div onMouseEnter={interactive.enter} onMouseLeave={interactive.leave}>
-                  <ChartTooltip
-                    {...props}
-                    kind="percent"
-                    colors={Object.fromEntries(
-                      shareRows.map((row) => [shareNames.get(row.subjectId) ?? row.name, row.color]),
-                    )}
-                  />
-                </div>
-              )}
-            />
-          </AreaChart>
-        </ScrollChart>
-      </Panel>
+      <SubjectShareChart data={data} />
     </div>
   );
 }
 
-function YearsAnalytics({ sessions, history, years, subjects }: DataProps & { history: FocusSession[] }) {
+const SubjectShareChart = memo(function SubjectShareChart({
+  data,
+}: {
+  data: ReturnType<typeof prepareSubjectAnalytics>;
+}) {
   const { t } = useTranslation();
-  const rows = academicYearTotals(sessions, years, subjects);
-  const yearProgress = new Map(academicYearProgress(years, history).map((item) => [item.year.id, item]));
+  const interactive = useInteractiveTooltip();
+  const { share, shareRows, stackedShareRows, shareNames } = data;
+  return (
+    <Panel className="full-row" title={t("Subject share over time")}>
+      <ScrollChart width={share.length * 58}>
+        <AreaChart data={share} onMouseMove={interactive.enter} onMouseLeave={interactive.leave}>
+          <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
+          <XAxis dataKey="label" />
+          <YAxis domain={[0, 100]} tickFormatter={percent} />
+          {stackedShareRows.map((row) => (
+            <Area
+              key={row.subjectId}
+              dataKey={(point) => point.shares[row.subjectId]}
+              name={shareNames.get(row.subjectId)}
+              stackId="subjects"
+              stroke="var(--chart-grid)"
+              strokeWidth={1}
+              fill={row.color}
+              fillOpacity={1}
+            />
+          ))}
+          <Tooltip
+            active={interactive.active || undefined}
+            wrapperStyle={{ pointerEvents: "auto" }}
+            content={(props) => (
+              <div onMouseEnter={interactive.enter} onMouseLeave={interactive.leave}>
+                <ChartTooltip
+                  {...props}
+                  kind="percent"
+                  colors={Object.fromEntries(
+                    shareRows.map((row) => [shareNames.get(row.subjectId) ?? row.name, row.color]),
+                  )}
+                />
+              </div>
+            )}
+          />
+        </AreaChart>
+      </ScrollChart>
+    </Panel>
+  );
+});
+const MemoSubjectsAnalytics = memo(SubjectsAnalytics);
+
+function YearsAnalytics({
+  sessions,
+  history,
+  years,
+  subjects,
+  today,
+}: DataProps & { history: FocusSession[]; today: number }) {
+  const { t } = useTranslation();
+  const { getDays, getDailyTotals } = useAnalyticsSnapshot();
+  const rows = useMemo(
+    () => academicYearTotals(sessions, years, subjects, getDays),
+    [sessions, years, subjects, getDays],
+  );
+  const progressRows = useMemo(
+    () => academicYearProgress(years, history, today, getDailyTotals),
+    [years, history, today, getDailyTotals],
+  );
+  const yearProgress = useMemo(() => new Map(progressRows.map((item) => [item.year.id, item])), [progressRows]);
   const averageMaximum = Math.max(1, ...rows.map((row) => row.averageActiveDaySeconds));
   return (
     <div className="analytics-content years-layout">
@@ -674,7 +677,7 @@ function YearsAnalytics({ sessions, history, years, subjects }: DataProps & { hi
         </div>
         {!rows.length && <Empty />}
       </Panel>
-      <YearProgressChart years={years} sessions={history} />
+      <YearProgressChart rows={progressRows} />
       <Panel title={t("Academic Year summary")}>
         <div className="analytics-table year-summary-table" role="table">
           <div className="analytics-table-head" role="row">
@@ -734,6 +737,7 @@ function TimeTrends({
   settings,
   goalHistory,
   goalPeriod,
+  now,
   goalOnly,
 }: TimelineProps & { goalHistory: FocusSession[]; goalPeriod: Period; goalOnly: boolean }) {
   const { t } = useTranslation();
@@ -755,17 +759,44 @@ function TimeTrends({
   const allowedModes: Aggregation[] = goalMode === "daily" ? ["daily", "weekly", "monthly"] : ["weekly", "monthly"];
   const target = goalMode === "daily" ? settings.dailyGoalSeconds : settings.weeklyGoalSeconds;
   const validGoal = dailyAvailable || weeklyAvailable;
-  const goals = goalAchievement(goalHistory, goalPeriod, goalMode, grouping, target).map((point) => ({
-    ...point,
-    label: periodLabel(point),
-  }));
-  const points = calendarBuckets(history, period, aggregation).map((point) => ({
-    ...point,
-    label: periodLabel(point),
-  }));
-  const cumulative = cumulativeDailyFocus(history, period).map((point) => ({ ...point, label: periodLabel(point) }));
+  const { getDailyTotals } = useAnalyticsSnapshot();
+  const locale = localeCode();
+  const goals = useMemo(
+    () =>
+      goalAchievement(goalHistory, goalPeriod, goalMode, grouping, target, now, "start", getDailyTotals).map(
+        (point) => ({ ...point, label: periodLabel(point) }),
+      ),
+    [goalHistory, goalPeriod.start, goalPeriod.end, goalMode, grouping, target, now, getDailyTotals, locale],
+  );
+  const points = useMemo(
+    () =>
+      calendarBuckets(history, period, aggregation, 0, getDailyTotals(history)).map((point) => ({
+        ...point,
+        label: periodLabel(point),
+      })),
+    [history, period.start, period.end, aggregation, getDailyTotals, locale],
+  );
+  const cumulative = useMemo(
+    () =>
+      cumulativeDailyFocus(history, period, getDailyTotals(history)).map((point) => ({
+        ...point,
+        label: periodLabel(point),
+      })),
+    [history, period.start, period.end, getDailyTotals, locale],
+  );
+  const averageSessionPoints = useMemo(
+    () =>
+      points.map((point) => ({
+        ...point,
+        averageSeconds: point.sessionCount ? point.averageSeconds : null,
+      })),
+    [points],
+  );
   const [cumulativeWidth, setCumulativeWidth] = useState(500);
-  const ticks = dailyTickIndices(cumulative.length, cumulativeWidth).map((index) => cumulative[index].label);
+  const ticks = useMemo(
+    () => dailyTickIndices(cumulative.length, cumulativeWidth).map((index) => cumulative[index].label),
+    [cumulative, cumulativeWidth],
+  );
   return (
     <div className="analytics-content trend-grid">
       {validGoal && (
@@ -867,12 +898,7 @@ function TimeTrends({
           </Panel>
           <Panel title={t("Average session length")}>
             <ScrollChart width={points.length * 28}>
-              <BarChart
-                data={points.map((point) => ({
-                  ...point,
-                  averageSeconds: point.sessionCount ? point.averageSeconds : null,
-                }))}
-              >
+              <BarChart data={averageSessionPoints}>
                 <ChartAxes />
                 <Bar dataKey="averageSeconds" name={t("Average Session")} fill="#a879ff" />
                 <Tooltip content={(props) => <ChartTooltip {...props} />} />
@@ -890,10 +916,16 @@ function TimeTrends({
 
 function RollingChart({ history, period, bars = false }: { history: FocusSession[]; period: Period; bars?: boolean }) {
   const { t } = useTranslation();
-  const data = useMemo(() => rollingTimeline(history, period), [history, period.start, period.end]).map((point) => ({
-    ...point,
-    label: dateLabel(point.start),
-  }));
+  const { getDailyTotals } = useAnalyticsSnapshot();
+  const locale = localeCode();
+  const data = useMemo(
+    () =>
+      rollingTimeline(history, period, getDailyTotals(history)).map((point) => ({
+        ...point,
+        label: dateLabel(point.start),
+      })),
+    [history, period.start, period.end, getDailyTotals, locale],
+  );
   return (
     <ScrollChart width={data.length <= 365 ? 0 : data.length * 2}>
       <ComposedChart data={data} barCategoryGap={0} barGap={0}>
@@ -919,21 +951,51 @@ function RollingChart({ history, period, bars = false }: { history: FocusSession
 function StudyPatterns({ sessions, history, period, range }: TimelineProps) {
   const { t } = useTranslation();
   const [weekdayMetric, setWeekdayMetric] = useState(DEFAULT_WEEKDAY_METRIC);
-  const values = summaryMetrics(sessions),
-    matrix = averageStudyPattern(history, period),
-    max = Math.max(1, ...matrix.flat());
-  const previousSessions = filterSessions(history, previousPeriod(period));
-  const currentMetrics = [sessions.length, values[2], medianSessionSeconds(sessions)];
-  const previousMetrics = [
-    previousSessions.length,
-    summaryMetrics(previousSessions)[2],
-    medianSessionSeconds(previousSessions),
-  ];
+  const { getDays, getDailyTotals } = useAnalyticsSnapshot();
+  const { matrix, max, currentMetrics, previousMetrics, weekdays, lengths } = useMemo(() => {
+    const values = summaryMetrics(sessions, undefined, getDailyTotals(sessions));
+    const matrix = averageStudyPattern(history, period);
+    const previousSessions = filterSessions(history, previousPeriod(period));
+    return {
+      matrix,
+      max: Math.max(1, ...matrix.flat()),
+      currentMetrics: [sessions.length, values[2], medianSessionSeconds(sessions)],
+      previousMetrics: [
+        previousSessions.length,
+        summaryMetrics(previousSessions, undefined, getDailyTotals(previousSessions))[2],
+        medianSessionSeconds(previousSessions),
+      ],
+      weekdays: weekdayTotals(history, period, getDays),
+      lengths: sessionLengthBuckets(sessions),
+    };
+  }, [sessions, history, period.start, period.end, getDays, getDailyTotals]);
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const times = Array.from(
-    { length: 8 },
-    (_, index) =>
-      `${new Date(2000, 0, 1, index * 3).toLocaleTimeString(localeCode(), { hour: "2-digit", minute: "2-digit", hour12: false })}–${index === 7 ? "24:00" : new Date(2000, 0, 1, (index + 1) * 3).toLocaleTimeString(localeCode(), { hour: "2-digit", minute: "2-digit", hour12: false })}`,
+  const locale = localeCode();
+  const weekdayPoints = useMemo(
+    () =>
+      weekdays.map((row) => ({
+        ...row,
+        value:
+          weekdayMetric === "count"
+            ? row.count
+            : weekdayMetric === "average"
+              ? row.count
+                ? row.sessionSeconds / row.count
+                : null
+              : row.seconds,
+        label: t(row.label),
+      })),
+    [weekdays, weekdayMetric, t, locale],
+  );
+  const lengthPoints = useMemo(() => lengths.map((row) => ({ ...row, label: t(row.label) })), [lengths, t, locale]);
+  const times = useMemo(
+    () =>
+      Array.from(
+        { length: 8 },
+        (_, index) =>
+          `${new Date(2000, 0, 1, index * 3).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", hour12: false })}–${index === 7 ? "24:00" : new Date(2000, 0, 1, (index + 1) * 3).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", hour12: false })}`,
+      ),
+    [locale],
   );
   const [hover, setHover] = useState<{ day: number; bucket: number }>();
   return (
@@ -979,20 +1041,7 @@ function StudyPatterns({ sessions, history, period, range }: TimelineProps) {
             </select>
           </div>
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart
-              data={weekdayTotals(history, period).map((row) => ({
-                ...row,
-                value:
-                  weekdayMetric === "count"
-                    ? row.count
-                    : weekdayMetric === "average"
-                      ? row.count
-                        ? row.sessionSeconds / row.count
-                        : null
-                      : row.seconds,
-                label: t(row.label),
-              }))}
-            >
+            <BarChart data={weekdayPoints}>
               <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
               <XAxis dataKey="label" />
               <YAxis
@@ -1018,7 +1067,7 @@ function StudyPatterns({ sessions, history, period, range }: TimelineProps) {
         </Panel>
         <Panel title={t("Session length distribution")}>
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={sessionLengthBuckets(sessions).map((row) => ({ ...row, label: t(row.label) }))}>
+            <BarChart data={lengthPoints}>
               <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
               <XAxis dataKey="label" fontSize={11} />
               <YAxis allowDecimals={false} />
@@ -1231,22 +1280,23 @@ function ChartTooltip({
     </div>
   );
 }
-function YearProgressChart({ years, sessions }: { years: AcademicYear[]; sessions: FocusSession[] }) {
+function YearProgressChart({ rows }: { rows: ReturnType<typeof academicYearProgress> }) {
   const { t } = useTranslation();
-  const rows = academicYearProgress(years, sessions);
   const interactive = useInteractiveTooltip();
   const [hover, setHover] = useState<number>();
-  const progressValues = [...new Set(rows.flatMap((row) => row.points.map((point) => point.progress)))].sort(
-    (a, b) => a - b,
-  );
-  const data = progressValues.map((progress) => {
-    const values: Record<string, number | null> = { progress };
-    for (const row of rows) {
-      const point = row.points.filter((point) => point.progress <= progress).at(-1);
-      values[row.year.id] = progress <= row.progress ? (point?.seconds ?? 0) : null;
-    }
-    return values;
-  });
+  const data = useMemo(() => {
+    const progressValues = [...new Set(rows.flatMap((row) => row.points.map((point) => point.progress)))].sort(
+      (a, b) => a - b,
+    );
+    return progressValues.map((progress) => {
+      const values: Record<string, number | null> = { progress };
+      for (const row of rows) {
+        const point = row.points.filter((point) => point.progress <= progress).at(-1);
+        values[row.year.id] = progress <= row.progress ? (point?.seconds ?? 0) : null;
+      }
+      return values;
+    });
+  }, [rows]);
   return (
     <Panel title={t("Cumulative focus by Academic Year")} className="full-row">
       {!rows.length ? (

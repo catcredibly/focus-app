@@ -1,8 +1,8 @@
-import { dailyFocusAllocations } from "../sessionAllocation";
-import { useEffect, useRef, useState } from "react";
+import { useAnalyticsSnapshot } from "../analytics/SnapshotContext";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { FocusSession } from "../types";
-import { dailyTotals, heatmapScale, heatmapLevel, localDayKey } from "../analytics/analytics";
+import { heatmapScale, heatmapLevel, localDayKey } from "../analytics/analytics";
 import { formatDuration } from "../data";
 import { localeCode } from "../i18n";
 type HeatmapDay = { key: string; date: Date; seconds: number; count: number };
@@ -20,9 +20,10 @@ export function ActivityHeatmap({
   futureStart?: number;
 }) {
   const { t } = useTranslation();
-  const points = dailyTotals(sessions),
-    scale = heatmapScale(sessions),
-    scrollRef = useRef<HTMLDivElement>(null),
+  const { getDays, getDailyTotals } = useAnalyticsSnapshot();
+  const points = useMemo(() => getDailyTotals(sessions), [sessions, getDailyTotals]);
+  const scale = useMemo(() => heatmapScale(sessions, points), [sessions, points]);
+  const scrollRef = useRef<HTMLDivElement>(null),
     [selected, setSelected] = useState<HeatmapDay>();
   const trackingStart = calendarStart ?? points[0]?.start ?? Date.now();
   const start = new Date(trackingStart),
@@ -78,7 +79,7 @@ export function ActivityHeatmap({
     .filter(Boolean) as { index: number; label: string }[];
   const selectedSessions = selected
       ? sessions.flatMap((session) => {
-          const day = dailyFocusAllocations(session).find((part) => localDayKey(part.start) === selected.key);
+          const day = getDays(session).find((part) => localDayKey(part.start) === selected.key);
           return day ? [{ ...session, focusedDurationSeconds: day.seconds }] : [];
         })
       : [],

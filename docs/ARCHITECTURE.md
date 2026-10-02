@@ -102,6 +102,10 @@ The Analytics UI reads Dexie stores through live queries, allowing persisted cha
 
 Aggregation utilities group completed focus time by date, Subject, Academic Year, session length, and other dimensions displayed by the analytics interface.
 
+Analytics memoization is scoped to the live database snapshot. Replacing that snapshot after any Session write invalidates derived totals, series, and allocation reuse, including edits retaining the same Session ID. Daily allocations and identical daily series are reused in memory only; hour-of-day and partial-week goal calculations retain their separate interval semantics. Chart interaction state stays local to the chart. Calendar scopes refresh at local midnight, minute-sensitive goal metrics retain minute refreshes, and returning from suspension refreshes the clock immediately. Formatted memoized series also depend on locale.
+
+Settings initialization shares one promise per webview, avoiding repeated migration and native autostart reconciliation on component mounts. Failed initialization remains retryable; explicit setting changes and backup restores continue to verify native state independently.
+
 ## Import / Export
 
 - **JSON full backup and restore** covers Academic Years, Subjects, Sessions, and Settings. Restore data is validated and applied transactionally using either merge or replace behavior.

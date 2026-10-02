@@ -1,8 +1,14 @@
+import type { DailySeriesReader } from "./snapshot";
 import type { AcademicYear, FocusSession } from "../types";
 import { dailyTotals, startOfLocalDay } from "./analytics";
 import { addDays, calendarDays } from "./periods";
 
-export function academicYearProgress(years: AcademicYear[], sessions: FocusSession[], now = Date.now()) {
+export function academicYearProgress(
+  years: AcademicYear[],
+  sessions: FocusSession[],
+  now = Date.now(),
+  getDailyTotals: DailySeriesReader = dailyTotals,
+) {
   const today = startOfLocalDay(now);
   return years.flatMap((year) => {
     const start = year.startDate ? new Date(year.startDate + "T00:00:00").getTime() : NaN;
@@ -12,7 +18,7 @@ export function academicYearProgress(years: AcademicYear[], sessions: FocusSessi
       elapsedEnd = Math.min(end, addDays(today, 1));
     const totalDays = calendarDays({ start, end }),
       elapsedDays = calendarDays({ start, end: elapsedEnd });
-    const days = dailyTotals(sessions.filter((session) => session.academicYearId === year.id));
+    const days = getDailyTotals(sessions.filter((session) => session.academicYearId === year.id));
     const totals = new Map(days.map((day) => [day.start, day.seconds]));
     let seconds = 0;
     const points = [{ progress: 0, seconds: 0, elapsedDays: 0, totalDays }];
