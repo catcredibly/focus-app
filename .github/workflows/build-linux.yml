@@ -57,16 +57,27 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           args: --bundles appimage,deb
-          uploadWorkflowArtifacts: true
+
       - name: Verify both Linux package formats
         shell: bash
         run: |
           set -euo pipefail
           shopt -s nullglob
+
           appimages=(src-tauri/target/release/bundle/appimage/[Ss]hunhen_*.AppImage)
           debs=(src-tauri/target/release/bundle/deb/[Ss]hunhen_*.deb)
+
           test "${#appimages[@]}" -gt 0
           test "${#debs[@]}" -gt 0
+
+          for package in "${appimages[@]}"; do
+            test -f "$package.sig"
+          done
+
+          for package in "${debs[@]}"; do
+            test -f "$package.sig"
+          done
+
           for package in "${debs[@]}"; do
             test "$(dpkg-deb -f "$package" Architecture)" = amd64
             test "$(dpkg-deb -f "$package" Package)" = shunhen
@@ -77,6 +88,7 @@ jobs:
             test -n "$icon"
             find /tmp/shunhen-deb/usr/share/icons/hicolor -name "$icon.png" -print -quit | grep .
           done
+
           for package in "${appimages[@]}"; do
             file "$package" | grep 'x86-64'
             chmod +x "$package"
@@ -85,3 +97,23 @@ jobs:
             grep -R '^Name=Shunhen$' squashfs-root/usr/share/applications
             find squashfs-root/usr/share/icons -name '*.png' -print -quit | grep .
           done
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-amd64-appimage
+          path: |
+            src-tauri/target/release/bundle/appimage/Shunhen_*.AppImage
+            src-tauri/target/release/bundle/appimage/Shunhen_*.AppImage.sig
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Upload Debian artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-amd64-deb
+          path: |
+            src-tauri/target/release/bundle/deb/Shunhen_*.deb
+            src-tauri/target/release/bundle/deb/Shunhen_*.deb.sig
+          if-no-files-found: error
+          compression-level: 0

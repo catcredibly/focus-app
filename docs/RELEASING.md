@@ -125,6 +125,38 @@ Still from the repository root:
 
 ```powershell
 $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+
+$windowsDir = "src-tauri\target\release\bundle\nsis"
+$windowsInstaller = "Shunhen_${version}_x64-setup.exe"
+
+$linuxDir = "src-tauri\target\release\bundle\linux"
+$linuxAppImage = "Shunhen_${version}_amd64.AppImage"
+$linuxDeb = "Shunhen_${version}_amd64.deb"
+
+node tools/generate-updater-manifest.mjs `
+  --notes docs\RELEASE_NOTES.md `
+  --artifact "$windowsDir\$windowsInstaller" `
+  --repository catcredibly/shunhen
+
+node tools/generate-updater-manifest.mjs `
+  --notes docs\RELEASE_NOTES.md `
+  --artifact "$linuxDir\$linuxAppImage" `
+  --repository catcredibly/shunhen `
+  --platform linux-x86_64-appimage `
+  --output "$windowsDir\latest.json"
+
+node tools/generate-updater-manifest.mjs `
+  --notes docs\RELEASE_NOTES.md `
+  --artifact "$linuxDir\$linuxDeb" `
+  --repository catcredibly/shunhen `
+  --platform linux-x86_64-deb `
+  --output "$windowsDir\latest.json"
+```
+
+Version for just Windows build
+
+```powershell
+$version = (Get-Content package.json -Raw | ConvertFrom-Json).version
 $installer = "Shunhen_${version}_x64-setup.exe"
 $dir = "src-tauri\target\release\bundle\nsis"
 
