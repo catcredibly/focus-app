@@ -21,7 +21,6 @@ import {
   Volume2,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { showToast } from "../toasts";
 import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { getVersion } from "@tauri-apps/api/app";
@@ -132,7 +131,6 @@ function RestoreSection({ keys }: { keys: (keyof FocusSettings)[] }) {
                     setConfirming(false);
                   } catch (error) {
                     console.error(error);
-                    showToast("Unable to synchronize launch at startup", "error");
                   }
                 }}
               >
@@ -158,7 +156,6 @@ function General({ settings, setSetting }: SettingsProps) {
       await setSetting("launchAtStartup", enabled);
     } catch (error) {
       console.error(error);
-      showToast("Unable to synchronize launch at startup", "error");
     } finally {
       setStartupBusy(false);
     }

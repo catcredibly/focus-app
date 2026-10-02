@@ -1,5 +1,4 @@
 import { startupState, synchronizeStartup } from "../autostart";
-import { showToast } from "../toasts";
 import { db } from "../db";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
@@ -21,7 +20,6 @@ export function useSettings() {
       .then(() =>
         synchronizeStartup().catch((error) => {
           console.error(error);
-          showToast("Unable to synchronize launch at startup", "error");
         }),
       )
       .then(() => {

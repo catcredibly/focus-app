@@ -1,6 +1,5 @@
 export type ToastMessage =
   | "Unable to change color. Please try again."
-  | "Unable to synchronize launch at startup"
   | "Backup exported successfully"
   | "CSV exported successfully"
   | "Daily goal completed"

@@ -1,7 +1,6 @@
 import en from "./en";
 
 const zhCN: Record<keyof typeof en, string> = {
-  "Unable to synchronize launch at startup": "无法同步开机启动状态",
   "Change color": "更改颜色",
   "Change color for {{subject}}": "更改{{subject}}的颜色",
   "Unable to change color. Please try again.": "无法更改颜色，请重试。",

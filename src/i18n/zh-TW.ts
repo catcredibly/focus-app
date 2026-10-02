@@ -1,7 +1,6 @@
 import en from "./en";
 
 const zhTW: Record<keyof typeof en, string> = {
-  "Unable to synchronize launch at startup": "無法同步開機啟動狀態",
   "Change color": "變更顏色",
   "Change color for {{subject}}": "變更{{subject}}的顏色",
   "Unable to change color. Please try again.": "無法變更顏色，請重試。",
