@@ -181,10 +181,14 @@ Do **not** manually edit the generated `latest.json`.
 Check the generated version:
 
 ```powershell
-$manifest = Get-Content "$dir\latest.json" -Raw | ConvertFrom-Json
+$manifest = Get-Content "$windowsDir\latest.json" -Raw -Encoding UTF8 | ConvertFrom-Json
 
 $manifest.version
 $manifest.notes
+
+$manifest.platforms.PSObject.Properties['windows-x86_64'].Value.url
+$manifest.platforms.PSObject.Properties['linux-x86_64-appimage'].Value.url
+$manifest.platforms.PSObject.Properties['linux-x86_64-deb'].Value.url
 ```
 
 For this release it should report:
@@ -193,12 +197,14 @@ For this release it should report:
 2.4.1
 
 Release Notes:
+
+URLs to setup images
 ```
 
 You can also inspect the generated manifest:
 
 ```powershell
-Get-Content "$dir\latest.json" -Raw |
+Get-Content "$windowsDir\latest.json" -Raw |
 ConvertFrom-Json |
 Format-List
 ```
