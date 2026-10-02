@@ -1,7 +1,20 @@
 import { db, type FocusDatabase } from "./db";
 import type { Subject } from "./types";
 
-export const SUBJECT_COLORS = ["#4da3ff", "#ff4d57", "#ffad3b", "#4dd39a", "#a879ff", "#ff7eb6"];
+export const SUBJECT_COLORS = [
+  "#4da3ff", // Blue
+  "#ff4d57", // Red
+  "#ffad3b", // Orange
+  "#4dd39a", // Green
+  "#a879ff", // Purple
+  "#ff7eb6", // Pink
+  "#45d9e8", // Cyan
+  "#a8d94f", // Lime
+  "#f4d64e", // Yellow
+  "#6672e5", // Indigo
+  "#2cb7a9", // Teal
+  "#d95fe8", // Magenta
+];
 
 export function nextSubjectColor(subjects: Subject[], academicYearId: string): string {
   const counts = SUBJECT_COLORS.map(

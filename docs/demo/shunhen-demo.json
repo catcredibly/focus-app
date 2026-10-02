@@ -1,8 +1,9 @@
 {
   "format": "focus-backup",
   "formatVersion": 1,
-  "exportedAt": "2026-09-30T00:00:00.000Z",
-  "appVersion": "2.3.0",
+  "exportedAt": "2026-10-02T11:00:00.000Z",
+  "appVersion": "2.4.1",
+  "sessionTimingVersion": 1,
   "data": {
     "academicYears": [
       {
@@ -45,56 +46,64 @@
         "academicYearId": "72c5bc25-e03d-4715-b8f7-e20c70d59d74",
         "name": "Calculus I",
         "color": "#4da3ff",
-        "archived": false
+        "archived": true,
+        "archivedBeforeParent": false
       },
       {
         "id": "83f1e275-a661-46a1-9077-82b86741f14f",
         "academicYearId": "72c5bc25-e03d-4715-b8f7-e20c70d59d74",
         "name": "Classical Mechanics",
         "color": "#ffad3b",
-        "archived": false
+        "archived": true,
+        "archivedBeforeParent": false
       },
       {
         "id": "b8217282-43ac-460b-a1a0-23bf8315dbe6",
         "academicYearId": "72c5bc25-e03d-4715-b8f7-e20c70d59d74",
         "name": "General Chemistry",
         "color": "#ff4d57",
-        "archived": false
+        "archived": true,
+        "archivedBeforeParent": false
       },
       {
         "id": "7ebc4ef8-e224-41eb-9e64-2218fee0f8b8",
         "academicYearId": "72c5bc25-e03d-4715-b8f7-e20c70d59d74",
         "name": "Microeconomics",
         "color": "#4dd39a",
-        "archived": false
+        "archived": true,
+        "archivedBeforeParent": false
       },
       {
         "id": "b55a680b-0a95-4178-9b56-766b9f2798fc",
         "academicYearId": "99a04c06-6ebf-46f4-84a6-15f6eec134cd",
         "name": "Linear Algebra",
-        "color": "#4da3ff",
-        "archived": false
+        "color": "#45d9e8",
+        "archived": true,
+        "archivedBeforeParent": false
       },
       {
         "id": "d3523540-272c-4583-acaf-8ad9ef652c44",
         "academicYearId": "99a04c06-6ebf-46f4-84a6-15f6eec134cd",
         "name": "Electricity & Magnetism",
-        "color": "#ffad3b",
-        "archived": false
+        "color": "#a8d94f",
+        "archived": true,
+        "archivedBeforeParent": false
       },
       {
         "id": "a0c8b071-5e12-4505-9a3e-42de6e32ae3c",
         "academicYearId": "99a04c06-6ebf-46f4-84a6-15f6eec134cd",
         "name": "Organic Chemistry",
-        "color": "#ff4d57",
-        "archived": false
+        "color": "#f4d64e",
+        "archived": true,
+        "archivedBeforeParent": false
       },
       {
         "id": "704bf74a-c895-47c7-8ecd-60e54d422a09",
         "academicYearId": "99a04c06-6ebf-46f4-84a6-15f6eec134cd",
         "name": "Macroeconomics",
-        "color": "#4dd39a",
-        "archived": false
+        "color": "#6672e5",
+        "archived": true,
+        "archivedBeforeParent": false
       },
       {
         "id": "354d13da-e438-4790-8aba-3e9d4b4aab64",
@@ -142,22 +151,23 @@
         "id": "1a3080ae-fdfa-42e2-b574-7db95d5effbb",
         "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
         "name": "Spanish",
-        "color": "#2fb7c9",
+        "color": "#2cb7a9",
         "archived": false
       },
       {
         "id": "89817228-63a9-456d-a356-87ef4d33a38a",
         "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
         "name": "Drawing",
-        "color": "#9ccf5b",
+        "color": "#d95fe8",
         "archived": false
       },
       {
         "id": "1e432af1-4592-4339-954e-a5ecc4ad77c3",
         "academicYearId": "5d599131-5312-4d45-8004-a1e492e41dfa",
         "name": "Project Work",
-        "color": "#8f98a8",
-        "archived": false
+        "color": "#45d9e8",
+        "archived": true,
+        "archivedBeforeParent": false
       }
     ],
     "sessions": [
@@ -1869,6 +1879,38 @@
         ]
       },
       {
+        "id": "a6126ddd-b3ce-5510-a866-ae89007b29d6",
+        "subjectId": "354d13da-e438-4790-8aba-3e9d4b4aab64",
+        "subjectName": "Differential Equations",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1789581600000,
+        "endTime": 1789583100000,
+        "focusedDurationSeconds": 1500,
+        "durationMode": "unlocked",
+        "archived": false,
+        "note": "Worked through practice questions and noted the steps to revisit.",
+        "manual": true
+      },
+      {
+        "id": "9dc35933-469f-58db-8740-4b0b2e31d368",
+        "subjectId": "7a662f0d-8319-4e6b-9809-1ec37b0f72e7",
+        "subjectName": "Econometrics",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1789614900000,
+        "endTime": 1789617600000,
+        "focusedDurationSeconds": 2700,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1789614900000,
+            "endTime": 1789617600000
+          }
+        ]
+      },
+      {
         "id": "ab611931-39f7-4a89-94a5-a292261f4a22",
         "subjectId": "9d0cc453-2239-48c6-9d4a-626234bf85e1",
         "subjectName": "Guitar",
@@ -1909,6 +1951,24 @@
         ]
       },
       {
+        "id": "185c4968-8ca1-5cde-9b0c-c84c5bcb58d9",
+        "subjectId": "1a3080ae-fdfa-42e2-b574-7db95d5effbb",
+        "subjectName": "Spanish",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1789688432000,
+        "endTime": 1789692032000,
+        "focusedDurationSeconds": 3600,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1789688432000,
+            "endTime": 1789692032000
+          }
+        ]
+      },
+      {
         "id": "9dd5a95b-78b1-44f9-8350-bdc35b2ddc3a",
         "subjectId": "81264910-ae0b-402f-abbe-fd55cee53a87",
         "subjectName": "Quantum Mechanics",
@@ -1931,6 +1991,84 @@
         ]
       },
       {
+        "id": "56d162b9-8c50-5887-890c-455e3999128c",
+        "subjectId": "81264910-ae0b-402f-abbe-fd55cee53a87",
+        "subjectName": "Quantum Mechanics",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1789710300000,
+        "endTime": 1789714800000,
+        "focusedDurationSeconds": 4500,
+        "durationMode": "locked",
+        "archived": false,
+        "note": "Compared two approaches and wrote a brief summary of the differences.",
+        "focusIntervals": [
+          {
+            "startTime": 1789710300000,
+            "endTime": 1789714800000
+          }
+        ]
+      },
+      {
+        "id": "dddfe660-88a4-5bc6-b6d6-d7e7d8627bcf",
+        "subjectId": "8a0fb9de-0dad-4d83-a95e-c282f4579e0f",
+        "subjectName": "Japanese",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1789768800000,
+        "endTime": 1789771200000,
+        "focusedDurationSeconds": 1800,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1789768800000,
+            "endTime": 1789769700000
+          },
+          {
+            "startTime": 1789770300000,
+            "endTime": 1789771200000
+          }
+        ]
+      },
+      {
+        "id": "964ab455-a651-5dd1-bef0-68d779589139",
+        "subjectId": "89817228-63a9-456d-a356-87ef4d33a38a",
+        "subjectName": "Drawing",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1789802100000,
+        "endTime": 1789807500000,
+        "focusedDurationSeconds": 5400,
+        "durationMode": "unlocked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1789802100000,
+            "endTime": 1789807500000
+          }
+        ]
+      },
+      {
+        "id": "8abd96b7-6715-56de-803c-0040b34c05c3",
+        "subjectId": "236d1d58-d260-43ce-b6ea-9786b417af5a",
+        "subjectName": "Physical Chemistry",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1789846200000,
+        "endTime": 1789848600000,
+        "focusedDurationSeconds": 2400,
+        "durationMode": "locked",
+        "archived": false,
+        "note": "Short revision block: consolidate the main ideas before the next session.",
+        "focusIntervals": [
+          {
+            "startTime": 1789846200000,
+            "endTime": 1789848600000
+          }
+        ]
+      },
+      {
         "id": "53c20360-93f5-4985-87b9-fb7735f577e0",
         "subjectId": "354d13da-e438-4790-8aba-3e9d4b4aab64",
         "subjectName": "Differential Equations",
@@ -1945,6 +2083,214 @@
           {
             "startTime": 1789854304000,
             "endTime": 1789858804000
+          }
+        ]
+      },
+      {
+        "id": "b93025f4-4981-573a-b5d2-bb5c756011b1",
+        "subjectId": "9d0cc453-2239-48c6-9d4a-626234bf85e1",
+        "subjectName": "Guitar",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1789893900000,
+        "endTime": 1789896900000,
+        "focusedDurationSeconds": 3000,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1789893900000,
+            "endTime": 1789896900000
+          }
+        ]
+      },
+      {
+        "id": "42e4c4f9-9205-5d88-aa47-79e082065c67",
+        "subjectId": "81264910-ae0b-402f-abbe-fd55cee53a87",
+        "subjectName": "Quantum Mechanics",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1789927200000,
+        "endTime": 1789929300000,
+        "focusedDurationSeconds": 1500,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1789927200000,
+            "endTime": 1789927950000
+          },
+          {
+            "startTime": 1789928550000,
+            "endTime": 1789929300000
+          }
+        ]
+      },
+      {
+        "id": "9461b85d-8fb3-5247-9337-de4a268860fc",
+        "subjectId": "8a0fb9de-0dad-4d83-a95e-c282f4579e0f",
+        "subjectName": "Japanese",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1789960500000,
+        "endTime": 1789963200000,
+        "focusedDurationSeconds": 2700,
+        "durationMode": "unlocked",
+        "archived": false,
+        "note": "Reviewed yesterday's mistakes and completed a timed practice set.",
+        "manual": true
+      },
+      {
+        "id": "f4dea788-9350-5f1e-b4b9-b186ab243330",
+        "subjectId": "89817228-63a9-456d-a356-87ef4d33a38a",
+        "subjectName": "Drawing",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1790022600000,
+        "endTime": 1790026200000,
+        "focusedDurationSeconds": 3600,
+        "durationMode": "unlocked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790022600000,
+            "endTime": 1790026200000
+          }
+        ]
+      },
+      {
+        "id": "d8a7f6d2-5592-5fdc-a980-00506a25e1f6",
+        "subjectId": "236d1d58-d260-43ce-b6ea-9786b417af5a",
+        "subjectName": "Physical Chemistry",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1790055900000,
+        "endTime": 1790060400000,
+        "focusedDurationSeconds": 4500,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790055900000,
+            "endTime": 1790060400000
+          }
+        ]
+      },
+      {
+        "id": "e7eabe51-6097-57d7-8f71-91224b4a74b0",
+        "subjectId": "9d0cc453-2239-48c6-9d4a-626234bf85e1",
+        "subjectName": "Guitar",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1790114400000,
+        "endTime": 1790116800000,
+        "focusedDurationSeconds": 1800,
+        "durationMode": "locked",
+        "archived": false,
+        "note": "Worked through practice questions and noted the steps to revisit.",
+        "focusIntervals": [
+          {
+            "startTime": 1790114400000,
+            "endTime": 1790115300000
+          },
+          {
+            "startTime": 1790115900000,
+            "endTime": 1790116800000
+          }
+        ]
+      },
+      {
+        "id": "13915467-ab0d-5312-a84e-919c2dab6c35",
+        "subjectId": "354d13da-e438-4790-8aba-3e9d4b4aab64",
+        "subjectName": "Differential Equations",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1790147700000,
+        "endTime": 1790153100000,
+        "focusedDurationSeconds": 5400,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790147700000,
+            "endTime": 1790153100000
+          }
+        ]
+      },
+      {
+        "id": "d478413b-cec5-508e-b768-0b9c8e937d1a",
+        "subjectId": "7a662f0d-8319-4e6b-9809-1ec37b0f72e7",
+        "subjectName": "Econometrics",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1790191800000,
+        "endTime": 1790194200000,
+        "focusedDurationSeconds": 2400,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790191800000,
+            "endTime": 1790194200000
+          }
+        ]
+      },
+      {
+        "id": "884a34f9-dac9-56da-8c8c-14f701af7f88",
+        "subjectId": "1a3080ae-fdfa-42e2-b574-7db95d5effbb",
+        "subjectName": "Spanish",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1790239500000,
+        "endTime": 1790242500000,
+        "focusedDurationSeconds": 3000,
+        "durationMode": "unlocked",
+        "archived": false,
+        "note": "Compared two approaches and wrote a brief summary of the differences.",
+        "focusIntervals": [
+          {
+            "startTime": 1790239500000,
+            "endTime": 1790242500000
+          }
+        ]
+      },
+      {
+        "id": "55163846-4f48-555f-b6bf-c4898e949142",
+        "subjectId": "236d1d58-d260-43ce-b6ea-9786b417af5a",
+        "subjectName": "Physical Chemistry",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1790272800000,
+        "endTime": 1790274900000,
+        "focusedDurationSeconds": 1500,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790272800000,
+            "endTime": 1790273550000
+          },
+          {
+            "startTime": 1790274150000,
+            "endTime": 1790274900000
+          }
+        ]
+      },
+      {
+        "id": "71c08281-cd04-5aec-b130-cd7ee608f5b9",
+        "subjectId": "9d0cc453-2239-48c6-9d4a-626234bf85e1",
+        "subjectName": "Guitar",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1790306100000,
+        "endTime": 1790308800000,
+        "focusedDurationSeconds": 2700,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790306100000,
+            "endTime": 1790308800000
           }
         ]
       },
@@ -1976,6 +2322,97 @@
           {
             "startTime": 1790310009000,
             "endTime": 1790314509000
+          }
+        ]
+      },
+      {
+        "id": "34054c63-04ef-5d09-beca-7a505bd2bbfe",
+        "subjectId": "354d13da-e438-4790-8aba-3e9d4b4aab64",
+        "subjectName": "Differential Equations",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1790368200000,
+        "endTime": 1790371800000,
+        "focusedDurationSeconds": 3600,
+        "durationMode": "unlocked",
+        "archived": false,
+        "note": "Short revision block: consolidate the main ideas before the next session.",
+        "manual": true
+      },
+      {
+        "id": "129305e2-e92e-58ea-9c78-24606f49ce0f",
+        "subjectId": "7a662f0d-8319-4e6b-9809-1ec37b0f72e7",
+        "subjectName": "Econometrics",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1790401500000,
+        "endTime": 1790406000000,
+        "focusedDurationSeconds": 4500,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790401500000,
+            "endTime": 1790406000000
+          }
+        ]
+      },
+      {
+        "id": "601bac0d-23f8-5841-9e8e-a51f49c2f5c6",
+        "subjectId": "1a3080ae-fdfa-42e2-b574-7db95d5effbb",
+        "subjectName": "Spanish",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1790460000000,
+        "endTime": 1790462400000,
+        "focusedDurationSeconds": 1800,
+        "durationMode": "unlocked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790460000000,
+            "endTime": 1790460900000
+          },
+          {
+            "startTime": 1790461500000,
+            "endTime": 1790462400000
+          }
+        ]
+      },
+      {
+        "id": "0869c772-5f00-50b2-ad5a-b73e32397fb5",
+        "subjectId": "81264910-ae0b-402f-abbe-fd55cee53a87",
+        "subjectName": "Quantum Mechanics",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1790493300000,
+        "endTime": 1790498700000,
+        "focusedDurationSeconds": 5400,
+        "durationMode": "locked",
+        "archived": false,
+        "note": "Reviewed yesterday's mistakes and completed a timed practice set.",
+        "focusIntervals": [
+          {
+            "startTime": 1790493300000,
+            "endTime": 1790498700000
+          }
+        ]
+      },
+      {
+        "id": "f5936951-6eef-5056-897c-ff4baf877970",
+        "subjectId": "8a0fb9de-0dad-4d83-a95e-c282f4579e0f",
+        "subjectName": "Japanese",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1790537400000,
+        "endTime": 1790539800000,
+        "focusedDurationSeconds": 2400,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790537400000,
+            "endTime": 1790539800000
           }
         ]
       },
@@ -2015,6 +2452,291 @@
           }
         ],
         "note": "Second-order ODE practice"
+      },
+      {
+        "id": "acb22aac-96c9-5a51-95ec-b9ad9675598c",
+        "subjectId": "89817228-63a9-456d-a356-87ef4d33a38a",
+        "subjectName": "Drawing",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1790585100000,
+        "endTime": 1790588100000,
+        "focusedDurationSeconds": 3000,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790585100000,
+            "endTime": 1790588100000
+          }
+        ]
+      },
+      {
+        "id": "6ffed509-d9e2-54a5-afa3-fb00a1a4d101",
+        "subjectId": "7a662f0d-8319-4e6b-9809-1ec37b0f72e7",
+        "subjectName": "Econometrics",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1790618400000,
+        "endTime": 1790620500000,
+        "focusedDurationSeconds": 1500,
+        "durationMode": "locked",
+        "archived": false,
+        "note": "Worked through practice questions and noted the steps to revisit.",
+        "focusIntervals": [
+          {
+            "startTime": 1790618400000,
+            "endTime": 1790619150000
+          },
+          {
+            "startTime": 1790619750000,
+            "endTime": 1790620500000
+          }
+        ]
+      },
+      {
+        "id": "1c0b0d41-27cd-5c22-9e38-e0e86a4f4802",
+        "subjectId": "1a3080ae-fdfa-42e2-b574-7db95d5effbb",
+        "subjectName": "Spanish",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1790651700000,
+        "endTime": 1790654400000,
+        "focusedDurationSeconds": 2700,
+        "durationMode": "unlocked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790651700000,
+            "endTime": 1790654400000
+          }
+        ]
+      },
+      {
+        "id": "b8940192-1390-5ce6-ac2e-9c3331638ee8",
+        "subjectId": "354d13da-e438-4790-8aba-3e9d4b4aab64",
+        "subjectName": "Differential Equations",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1790712000000,
+        "endTime": 1790716200000,
+        "focusedDurationSeconds": 3600,
+        "durationMode": "locked",
+        "archived": false,
+        "note": "## Tutorial preparation\n- Review **second-order ODEs**\n- Rework the boundary-value example\n\nCheck the [course notes](https://example.com/course-notes) before the next tutorial.",
+        "focusIntervals": [
+          {
+            "startTime": 1790712000000,
+            "endTime": 1790713800000
+          },
+          {
+            "startTime": 1790714400000,
+            "endTime": 1790716200000
+          }
+        ]
+      },
+      {
+        "id": "f94ad775-76c5-5eb2-8f02-c7f9931cf080",
+        "subjectId": "81264910-ae0b-402f-abbe-fd55cee53a87",
+        "subjectName": "Quantum Mechanics",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1790717100000,
+        "endTime": 1790720700000,
+        "focusedDurationSeconds": 3600,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790717100000,
+            "endTime": 1790720700000
+          }
+        ]
+      },
+      {
+        "id": "c8e332bc-9866-57b2-a41a-3b63145c3368",
+        "subjectId": "1a3080ae-fdfa-42e2-b574-7db95d5effbb",
+        "subjectName": "Spanish",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1790744400000,
+        "endTime": 1790746200000,
+        "focusedDurationSeconds": 1800,
+        "durationMode": "unlocked",
+        "archived": false,
+        "note": "Manual entry: vocabulary practice away from the computer.",
+        "manual": true
+      },
+      {
+        "id": "ba692973-26ec-5c7e-bcbc-9d294d9f67cd",
+        "subjectId": "8a0fb9de-0dad-4d83-a95e-c282f4579e0f",
+        "subjectName": "Japanese",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1790747100000,
+        "endTime": 1790751600000,
+        "focusedDurationSeconds": 4500,
+        "durationMode": "unlocked",
+        "archived": false,
+        "note": "Compared two approaches and wrote a brief summary of the differences.",
+        "manual": true
+      },
+      {
+        "id": "f663db4b-6279-5dd8-8423-416a69c0aba8",
+        "subjectId": "81264910-ae0b-402f-abbe-fd55cee53a87",
+        "subjectName": "Quantum Mechanics",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1790802000000,
+        "endTime": 1790806500000,
+        "focusedDurationSeconds": 4500,
+        "durationMode": "locked",
+        "archived": false,
+        "note": "Practise operator identities and check each derivation.",
+        "focusIntervals": [
+          {
+            "startTime": 1790802000000,
+            "endTime": 1790806500000
+          }
+        ]
+      },
+      {
+        "id": "9f0250b5-905d-5f8a-8e33-e15e57bb9b89",
+        "subjectId": "89817228-63a9-456d-a356-87ef4d33a38a",
+        "subjectName": "Drawing",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1790807400000,
+        "endTime": 1790809800000,
+        "focusedDurationSeconds": 1800,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790807400000,
+            "endTime": 1790808300000
+          },
+          {
+            "startTime": 1790808900000,
+            "endTime": 1790809800000
+          }
+        ]
+      },
+      {
+        "id": "2672d2ae-8cbf-5be2-b70d-bad5f633dfb5",
+        "subjectId": "236d1d58-d260-43ce-b6ea-9786b417af5a",
+        "subjectName": "Physical Chemistry",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1790838900000,
+        "endTime": 1790844300000,
+        "focusedDurationSeconds": 5400,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790838900000,
+            "endTime": 1790844300000
+          }
+        ]
+      },
+      {
+        "id": "efe16089-db81-5f09-8c86-3387e5165711",
+        "subjectId": "8a0fb9de-0dad-4d83-a95e-c282f4579e0f",
+        "subjectName": "Japanese",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1790851200000,
+        "endTime": 1790853900000,
+        "focusedDurationSeconds": 2700,
+        "durationMode": "locked",
+        "archived": false,
+        "note": "Reading practice across midnight; revisit unfamiliar kanji tomorrow.",
+        "focusIntervals": [
+          {
+            "startTime": 1790851200000,
+            "endTime": 1790853900000
+          }
+        ]
+      },
+      {
+        "id": "7b70da20-4136-5245-9b22-32da71733627",
+        "subjectId": "236d1d58-d260-43ce-b6ea-9786b417af5a",
+        "subjectName": "Physical Chemistry",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1790884800000,
+        "endTime": 1790888700000,
+        "focusedDurationSeconds": 3600,
+        "durationMode": "locked",
+        "archived": false,
+        "note": "## Revision\n1. Compare reaction rates\n2. Summarise **activation energy**\n3. Mark two questions for the next session",
+        "focusIntervals": [
+          {
+            "startTime": 1790884800000,
+            "endTime": 1790886600000
+          },
+          {
+            "startTime": 1790886900000,
+            "endTime": 1790888700000
+          }
+        ]
+      },
+      {
+        "id": "6335ed79-f099-5306-a46c-96804f4d3cdb",
+        "subjectId": "9d0cc453-2239-48c6-9d4a-626234bf85e1",
+        "subjectName": "Guitar",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1790889600000,
+        "endTime": 1790892000000,
+        "focusedDurationSeconds": 2400,
+        "durationMode": "unlocked",
+        "archived": false,
+        "note": "Short revision block: consolidate the main ideas before the next session.",
+        "focusIntervals": [
+          {
+            "startTime": 1790889600000,
+            "endTime": 1790892000000
+          }
+        ]
+      },
+      {
+        "id": "aa369a2f-c831-5352-b0c9-6e5015a8bbe7",
+        "subjectId": "89817228-63a9-456d-a356-87ef4d33a38a",
+        "subjectName": "Drawing",
+        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
+        "academicYearName": "Self-Study",
+        "startTime": 1790910000000,
+        "endTime": 1790912400000,
+        "focusedDurationSeconds": 2400,
+        "durationMode": "locked",
+        "archived": false,
+        "note": "Perspective study: two-point street scene. Next: repeat with a higher horizon.",
+        "focusIntervals": [
+          {
+            "startTime": 1790910000000,
+            "endTime": 1790912400000
+          }
+        ]
+      },
+      {
+        "id": "53a7c1f9-6b64-51e3-ad14-01a9118778c8",
+        "subjectId": "354d13da-e438-4790-8aba-3e9d4b4aab64",
+        "subjectName": "Differential Equations",
+        "academicYearId": "abf37039-f992-4dc2-8e90-976e66033e52",
+        "academicYearName": "Third Year",
+        "startTime": 1790930700000,
+        "endTime": 1790933700000,
+        "focusedDurationSeconds": 3000,
+        "durationMode": "locked",
+        "archived": false,
+        "focusIntervals": [
+          {
+            "startTime": 1790930700000,
+            "endTime": 1790933700000
+          }
+        ]
       }
     ],
     "settings": [
@@ -2049,10 +2771,6 @@
       {
         "key": "completionSoundVolume",
         "value": "65"
-      },
-      {
-        "key": "currentAcademicYearId",
-        "value": "abf37039-f992-4dc2-8e90-976e66033e52"
       },
       {
         "key": "dailyGoalEnabled",
@@ -2271,6 +2989,5 @@
         "value": "43200"
       }
     ]
-  },
-  "sessionTimingVersion": 1
+  }
 }

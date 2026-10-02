@@ -1,3 +1,4 @@
+import { orderSubjectsForStack } from "../analytics/subjectStack";
 import { Info } from "lucide-react";
 import { analyticsScopes } from "../analytics/scopes";
 import { ValueTooltip } from "./ValueTooltip";
@@ -502,6 +503,7 @@ function SubjectsAnalytics({
     history.filter((session) => session.startTime < period.end && session.endTime > period.start),
     subjects,
   );
+  const stackedShareRows = orderSubjectsForStack(shareRows);
   const shareNames = new Map(
     shareRows.map((row) => [
       row.subjectId,
@@ -585,7 +587,7 @@ function SubjectsAnalytics({
             <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
             <XAxis dataKey="label" />
             <YAxis domain={[0, 100]} tickFormatter={percent} />
-            {shareRows.map((row) => (
+            {stackedShareRows.map((row) => (
               <Area
                 key={row.subjectId}
                 dataKey={(point) => point.shares[row.subjectId]}
