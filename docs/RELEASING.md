@@ -7,7 +7,7 @@ Use this process for Windows production releases of Shunhen.
 The current release version used by this guide is:
 
 ```text
-2.4.0
+2.4.1
 ```
 
 When preparing a new release, first use Ctrl+H in this file to replace every occurrence of the current release version with the new version.
@@ -18,11 +18,11 @@ Then, from the repository root, update and verify the application version and ru
 
 ```powershell
 npx prettier . --write
-npm run version:set -- 2.4.0
+npm run version:set -- 2.4.1
 npm run version:check
 ```
 
-Replace `2.4.0` with the new release version before running the commands.
+Replace `2.4.1` with the new release version before running the commands.
 
 `package.json` is the authoritative version source. `version:set` synchronizes the required npm and Cargo metadata, and Tauri reads the resulting package version.
 
@@ -106,11 +106,11 @@ The NSIS release files are created under:
 src-tauri\target\release\bundle\nsis\
 ```
 
-For Shunhen 2.4.0, expect:
+For Shunhen 2.4.1, expect:
 
 ```text
-Shunhen_2.4.0_x64-setup.exe
-Shunhen_2.4.0_x64-setup.exe.sig
+Shunhen_2.4.1_x64-setup.exe
+Shunhen_2.4.1_x64-setup.exe.sig
 ```
 
 The `.sig` belongs to that exact build.
@@ -158,7 +158,7 @@ $manifest.notes
 For this release it should report:
 
 ```text
-2.4.0
+2.4.1
 
 Release Notes:
 ```

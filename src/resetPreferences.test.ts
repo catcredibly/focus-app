@@ -48,6 +48,12 @@ beforeEach(async () => {
 
   mocks.invoke.mockResolvedValue(true);
   mocks.enabled.mockResolvedValue(false);
+  mocks.disable.mockImplementation(async () => {
+    mocks.enabled.mockResolvedValue(false);
+  });
+  mocks.enable.mockImplementation(async () => {
+    mocks.enabled.mockResolvedValue(true);
+  });
   mocks.geometry.mockResolvedValue({ tabVisible: false });
 
   mocks.registerReveal.mockImplementation(async (_shortcut: string, applyDefaults: () => Promise<void>) => {

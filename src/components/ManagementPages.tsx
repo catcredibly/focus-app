@@ -13,7 +13,8 @@ import { historyPagination, enteredHistoryPage } from "../historyPagination";
 import { NoteViewer, NoteSnippet, NotePreview } from "./HistoryNotes";
 import { NoteEditor } from "./NoteEditor";
 import { readableNote, noteSearchTerms, noteMetrics } from "../notes";
-import { nextSubjectColor } from "../subjectColors";
+import { showToast } from "../toasts";
+import { cycleSubjectColor, nextSubjectColor } from "../subjectColors";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
@@ -490,7 +491,19 @@ export function SubjectsPage() {
           const active = subjectIsActive(subject.id);
           return (
             <article className="data-row" key={subject.id}>
-              <span className="list-dot" style={{ background: subject.color }} />
+              <button
+                type="button"
+                className="list-dot subject-color-dot"
+                style={{ background: subject.color }}
+                title={t("Change color")}
+                aria-label={t("Change color for {{subject}}", { subject: subject.name })}
+                onClick={() =>
+                  void cycleSubjectColor(subject.id).catch((error) => {
+                    console.error(error);
+                    showToast("Unable to change color. Please try again.", "error");
+                  })
+                }
+              />
               <div className="row-main">
                 <strong>{subject.name}</strong>
                 <span>{years.find((y) => y.id === subject.academicYearId)?.name ?? t("Unknown Academic Year")}</span>

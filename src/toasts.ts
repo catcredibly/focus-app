@@ -1,6 +1,11 @@
 export type ToastMessage =
-  "Backup exported successfully" | "CSV exported successfully" | "Daily goal completed" | "Weekly goal completed";
-export type Toast = { id: string; message: ToastMessage; kind: "success" | "daily" | "weekly" };
+  | "Unable to change color. Please try again."
+  | "Unable to synchronize launch at startup"
+  | "Backup exported successfully"
+  | "CSV exported successfully"
+  | "Daily goal completed"
+  | "Weekly goal completed";
+export type Toast = { id: string; message: ToastMessage; kind: "error" | "success" | "daily" | "weekly" };
 const listeners = new Set<() => void>();
 let queue: Toast[] = [];
 let channel: BroadcastChannel | undefined;

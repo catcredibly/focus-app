@@ -1,6 +1,8 @@
+import { startupState, synchronizeStartup } from "../autostart";
+import { showToast } from "../toasts";
 import { db } from "../db";
 import { useLiveQuery } from "dexie-react-hooks";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { DEFAULT_SETTINGS, reconcileDefaultSubject, loadSettings, saveSetting, type FocusSettings } from "../settings";
 
 // Match the early HTML paint while IndexedDB loads; this is only a theme hint,
@@ -16,6 +18,12 @@ export function useSettings() {
   useEffect(() => {
     let active = true;
     void loadSettings()
+      .then(() =>
+        synchronizeStartup().catch((error) => {
+          console.error(error);
+          showToast("Unable to synchronize launch at startup", "error");
+        }),
+      )
       .then(() => {
         if (active) setMigrated(true);
       })
@@ -33,11 +41,15 @@ export function useSettings() {
   useEffect(() => {
     if (stored) void reconcileDefaultSubject().catch(console.error);
   }, [stored]);
-  const settings = stored ?? initialSettings;
-  const setSetting = useCallback(
-    <K extends keyof FocusSettings>(key: K, value: FocusSettings[K]) => saveSetting(key, value),
-    [],
-  );
+  const nativeStartup = useSyncExternalStore(startupState.subscribe, startupState.snapshot);
+  const settings =
+    nativeStartup === undefined
+      ? (stored ?? initialSettings)
+      : { ...(stored ?? initialSettings), launchAtStartup: nativeStartup };
+  const setSetting = useCallback(async <K extends keyof FocusSettings>(key: K, value: FocusSettings[K]) => {
+    if (key === "launchAtStartup") await synchronizeStartup(db, value as boolean);
+    else await saveSetting(key, value);
+  }, []);
   return {
     settings,
     loaded: stored !== undefined,

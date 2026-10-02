@@ -1468,6 +1468,12 @@ input {
   border-radius: 50%;
   flex: none;
 }
+.subject-color-dot {
+  padding: 0;
+  border: 0;
+  appearance: none;
+  cursor: pointer;
+}
 .empty-state {
   min-height: 250px;
   display: grid;
@@ -5122,6 +5128,9 @@ html[data-utility-window] #root {
 .history-filters > label > select {
   min-width: 0;
   width: 100%;
+}
+:root:not([data-theme="light"]) .history-filters > label > select {
+  background: var(--surface-control);
 }
 .history-note-search {
   margin-left: auto;

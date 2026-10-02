@@ -1,3 +1,4 @@
+import { synchronizeStartup } from "../autostart";
 import { migrateLegacySession } from "../sessionDuration";
 import { sessionInvalidReason } from "../sessionValidity";
 import { normalizeNote } from "../notes";
@@ -157,79 +158,94 @@ export async function restoreBackup(
     conflicts: 0,
     invalidRowsSkipped: 0,
   };
-  await database.transaction(
-    "rw",
-    database.academicYears,
-    database.subjects,
-    database.sessions,
-    database.settings,
-    async () => {
-      if (mode === "replace")
-        await Promise.all([
-          database.sessions.clear(),
-          database.subjects.clear(),
-          database.academicYears.clear(),
-          database.settings.clear(),
-        ]);
-      const countInvalid = async (id: string) => {
-        const session = await database.sessions.get(id);
-        if (session && sessionInvalidReason(session, await database.academicYears.get(session.academicYearId)))
-          summary.invalidSessionsImported = (summary.invalidSessionsImported ?? 0) + 1;
-      };
-      const apply = async <T extends { id: string }>(
-        table: { get: (id: string) => Promise<T | undefined>; put: (row: T) => Promise<unknown> },
-        rows: T[],
-        counter: keyof Pick<ImportSummary, "academicYearsCreated" | "subjectsCreated" | "sessionsImported">,
-      ) => {
-        for (const row of rows) {
-          const existing = await table.get(row.id);
-          if (!existing) {
-            await table.put(row);
-            summary[counter]++;
-            if (counter === "sessionsImported") await countInvalid(row.id);
-          } else if (equivalent(existing, row)) summary.duplicatesSkipped++;
-          else {
-            summary.conflicts++;
-            if (policy === "use-imported") {
+  const importedStartup = [...backup.data.settings].reverse().find((row) => row.key === SETTINGS_KEYS.launchAtStartup);
+  const existingStartup = await database.settings.get(SETTINGS_KEYS.launchAtStartup);
+  const applyStartup = importedStartup && (mode === "replace" || policy === "use-imported" || !existingStartup);
+  const requestedStartup = applyStartup ? importedStartup.value === "true" : undefined;
+  await synchronizeStartup(database, requestedStartup, async (verifiedStartup) =>
+    database.transaction(
+      "rw",
+      database.academicYears,
+      database.subjects,
+      database.sessions,
+      database.settings,
+      async () => {
+        if (mode === "replace")
+          await Promise.all([
+            database.sessions.clear(),
+            database.subjects.clear(),
+            database.academicYears.clear(),
+            database.settings.clear(),
+          ]);
+        const countInvalid = async (id: string) => {
+          const session = await database.sessions.get(id);
+          if (session && sessionInvalidReason(session, await database.academicYears.get(session.academicYearId)))
+            summary.invalidSessionsImported = (summary.invalidSessionsImported ?? 0) + 1;
+        };
+        const apply = async <T extends { id: string }>(
+          table: { get: (id: string) => Promise<T | undefined>; put: (row: T) => Promise<unknown> },
+          rows: T[],
+          counter: keyof Pick<ImportSummary, "academicYearsCreated" | "subjectsCreated" | "sessionsImported">,
+        ) => {
+          for (const row of rows) {
+            const existing = await table.get(row.id);
+            if (!existing) {
               await table.put(row);
+              summary[counter]++;
               if (counter === "sessionsImported") await countInvalid(row.id);
+            } else if (equivalent(existing, row)) summary.duplicatesSkipped++;
+            else {
+              summary.conflicts++;
+              if (policy === "use-imported") {
+                await table.put(row);
+                if (counter === "sessionsImported") await countInvalid(row.id);
+              }
             }
           }
+        };
+        await apply(database.academicYears, backup.data.academicYears, "academicYearsCreated");
+        await apply(database.subjects, backup.data.subjects, "subjectsCreated");
+        const parentYears = new Map((await database.academicYears.toArray()).map((year) => [year.id, year]));
+        await database.subjects.toCollection().modify((subject) => {
+          if (parentYears.get(subject.academicYearId)?.archived) {
+            subject.archivedBeforeParent ??= subject.archived;
+            subject.archived = true;
+          } else if (subject.archivedBeforeParent !== undefined) {
+            subject.archived = subject.archivedBeforeParent;
+            delete subject.archivedBeforeParent;
+          }
+        });
+        await apply(
+          database.sessions,
+          backup.data.sessions.map((session) => ({
+            ...(backup.sessionTimingVersion === undefined ? migrateLegacySession(session) : session),
+            note: typeof session.note === "string" ? normalizeNote(session.note) : undefined,
+          })),
+          "sessionsImported",
+        );
+        for (const setting of backup.data.settings) {
+          if (setting.key === SETTINGS_KEYS.launchAtStartup) {
+            const existing = mode === "replace" ? undefined : existingStartup;
+            if (existing && policy !== "use-imported") {
+              if (equivalent(existing, setting)) summary.duplicatesSkipped++;
+              else summary.conflicts++;
+            }
+            continue;
+          }
+          if (setting.key === "popoutCloseOnCompletion") continue;
+          const existing = await database.settings.get(setting.key);
+          if (!existing || policy === "use-imported" || mode === "replace")
+            await database.settings.put(
+              setting.key === SETTINGS_KEYS.popoutRevealShortcut
+                ? { ...setting, value: normalizeLegacyRevealShortcut(setting.value) }
+                : setting,
+            );
+          else if (equivalent(existing, setting)) summary.duplicatesSkipped++;
+          else summary.conflicts++;
         }
-      };
-      await apply(database.academicYears, backup.data.academicYears, "academicYearsCreated");
-      await apply(database.subjects, backup.data.subjects, "subjectsCreated");
-      const parentYears = new Map((await database.academicYears.toArray()).map((year) => [year.id, year]));
-      await database.subjects.toCollection().modify((subject) => {
-        if (parentYears.get(subject.academicYearId)?.archived) {
-          subject.archivedBeforeParent ??= subject.archived;
-          subject.archived = true;
-        } else if (subject.archivedBeforeParent !== undefined) {
-          subject.archived = subject.archivedBeforeParent;
-          delete subject.archivedBeforeParent;
-        }
-      });
-      await apply(
-        database.sessions,
-        backup.data.sessions.map((session) => ({
-          ...(backup.sessionTimingVersion === undefined ? migrateLegacySession(session) : session),
-          note: typeof session.note === "string" ? normalizeNote(session.note) : undefined,
-        })),
-        "sessionsImported",
-      );
-      for (const setting of backup.data.settings) {
-        if (setting.key === "popoutCloseOnCompletion") continue;
-        const existing = await database.settings.get(setting.key);
-        if (!existing || policy === "use-imported" || mode === "replace")
-          await database.settings.put(
-            setting.key === SETTINGS_KEYS.popoutRevealShortcut
-              ? { ...setting, value: normalizeLegacyRevealShortcut(setting.value) }
-              : setting,
-          );
-        else if (equivalent(existing, setting)) summary.duplicatesSkipped++;
-        else summary.conflicts++;
-      }
-    },
+        await database.settings.put({ key: SETTINGS_KEYS.launchAtStartup, value: String(verifiedStartup) });
+      },
+    ),
   );
   return summary;
 }

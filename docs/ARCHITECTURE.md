@@ -118,7 +118,7 @@ The current Windows implementation includes:
 - Popout always-on-top behavior, taskbar visibility control, sizing, positioning, and monitor-bound checks
 - Native close handling that hides the popout without altering timer state
 - Desktop completion notifications
-- Launch-at-startup support
+- Launch-at-startup support (disabled by default). Native autostart state is authoritative: settings initialization reconciles the stored value, and changes and backup restores persist only verified native state. Failed restore transactions attempt native rollback and reconcile the observed state before reporting failure. The legacy Focus autostart identity is retained.
 - Main-window maximize and restore controls through the Tauri window API
 
 Custom window commands and lifecycle handling reside in `src-tauri/src/lib.rs`. Tauri plugins provide dialogs, filesystem access, notifications, and autostart support.

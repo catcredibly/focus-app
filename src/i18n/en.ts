@@ -1,4 +1,8 @@
 const en = {
+  "Unable to synchronize launch at startup": "Unable to synchronize launch at startup",
+  "Change color": "Change color",
+  "Change color for {{subject}}": "Change color for {{subject}}",
+  "Unable to change color. Please try again.": "Unable to change color. Please try again.",
   "Multi-select": "Multi-select",
   "Search Academic Years...": "Search Academic Years...",
   "Search Subjects...": "Search Subjects...",
