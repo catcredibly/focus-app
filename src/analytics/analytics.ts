@@ -253,8 +253,8 @@ export function sessionLengthBuckets(sessions: FocusSession[]) {
     { label: "30–59 min", count: 0 },
     { label: "60–89 min", count: 0 },
     { label: "90–119 min", count: 0 },
-    { label: "2–2:59 hr", count: 0 },
-    { label: "3 hr+", count: 0 },
+    { label: "120–179 min", count: 0 },
+    { label: "180+ min", count: 0 },
   ];
   for (const s of sessions) {
     const seconds = s.focusedDurationSeconds;
@@ -281,6 +281,27 @@ export function weekdayTotals(
         values[(new Date(day.start).getDay() + 6) % 7].seconds += day.seconds;
   }
   return values;
+}
+/** Calendar occurrences include days with no Sessions; the end boundary is exclusive. */
+export function weekdayAverages(
+  sessions: FocusSession[],
+  period: { start: number; end: number },
+  getDays: AllocationReader = dailyFocusAllocations,
+) {
+  const occurrences = Array<number>(7).fill(0);
+  const day = new Date(startOfLocalDay(period.start));
+  while (day.getTime() < period.end && period.start < period.end) {
+    occurrences[(day.getDay() + 6) % 7]++;
+    // Advance by local calendar date so daylight-saving changes do not skip a day.
+    day.setDate(day.getDate() + 1);
+  }
+  return weekdayTotals(sessions, period, getDays).map((row, index) => ({
+    ...row,
+    occurrences: occurrences[index],
+    averageFocusSeconds: occurrences[index] ? row.seconds / occurrences[index] : 0,
+    averageSessionCount: occurrences[index] ? row.count / occurrences[index] : 0,
+    averageSessionSeconds: row.count ? row.sessionSeconds / row.count : null,
+  }));
 }
 export function timeOfDayMatrix(sessions: FocusSession[], period?: { start: number; end: number }) {
   const matrix = Array.from({ length: 7 }, () => Array(8).fill(0) as number[]);

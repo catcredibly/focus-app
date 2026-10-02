@@ -5635,3 +5635,7 @@ html[data-utility-window] #root {
 [data-theme="dark"] .heatmap-legend .heat-4 {
   background: var(--accent) !important;
 }
+
+.weekday-mode-switch button:disabled {
+  opacity: 0.45;
+}

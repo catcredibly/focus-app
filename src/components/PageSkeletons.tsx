@@ -160,7 +160,7 @@ export function AnalyticsLoading({
           className={`analytics-content ${tab === "Study Patterns" ? "patterns-grid aligned-pattern-charts" : tab === "Subjects" ? "subjects-layout" : tab === "Academic Years" ? "years-layout" : "trend-grid"}`}
         >
           {(tab === "Study Patterns"
-            ? ["Focus time by weekday", "Session length distribution", "Study time by weekday and time"]
+            ? ["Average focus time by weekday", "Session length distribution", "Study time by weekday and time"]
             : tab === "Subjects"
               ? ["Subjects", "Focus time by Subject"]
               : tab === "Academic Years"
@@ -176,7 +176,7 @@ export function AnalyticsLoading({
               title={title}
               key={title}
               className={title === "Study time by weekday and time" ? "full-row" : undefined}
-              controls={tab === "Study Patterns" && title === "Focus time by weekday"}
+              controls={tab === "Study Patterns" && title === "Average focus time by weekday"}
             />
           ))}
         </div>

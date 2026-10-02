@@ -1,4 +1,8 @@
 const en = {
+  Total: "Total",
+  "Total focus time by weekday": "Total focus time by weekday",
+  "Total Sessions by weekday": "Total Sessions by weekday",
+
   "Change color": "Change color",
   "Change color for {{subject}}": "Change color for {{subject}}",
   "Unable to change color. Please try again.": "Unable to change color. Please try again.",
@@ -42,8 +46,8 @@ const en = {
   "30–59 min": "30–59 min",
   "60–89 min": "60–89 min",
   "90–119 min": "90–119 min",
-  "2–2:59 hr": "2–2:59 hr",
-  "3 hr+": "3 hr+",
+  "120–179 min": "120–179 min",
+  "180+ min": "180+ min",
   "Academic Year summary": "Academic Year summary",
   "Developer tools": "Developer tools",
   "Preview update dialog": "Preview update dialog",
@@ -343,7 +347,7 @@ const en = {
   "Focus trend": "Focus trend",
   "Cumulative Focus Time": "Cumulative Focus Time",
   "Weeks with Sessions": "Weeks with Sessions",
-  "Focus time by weekday": "Focus time by weekday",
+  "Average focus time by weekday": "Average focus time by weekday",
   "Focused time is distributed across each three-hour period a Session crosses.":
     "Focused time is distributed across each three-hour period a Session crosses.",
   "Jump to latest": "Jump to latest",
@@ -674,7 +678,7 @@ const en = {
   "+1 day": "+1 day",
   "In progress": "In progress",
   "Average session": "Average session",
-  "Sessions by weekday": "Sessions by weekday",
+  "Average Sessions by weekday": "Average Sessions by weekday",
   "Average session by weekday": "Average session by weekday",
   "Match case": "Match case",
   "No academic years": "No academic years",

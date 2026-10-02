@@ -1,6 +1,10 @@
 import en from "./en";
 
 const ja: Record<keyof typeof en, string> = {
+  Total: "合計",
+  "Total focus time by weekday": "曜日別の合計集中時間",
+  "Total Sessions by weekday": "曜日別の合計セッション数",
+
   "Change color": "色を変更",
   "Change color for {{subject}}": "{{subject}}の色を変更",
   "Unable to change color. Please try again.": "色を変更できませんでした。もう一度お試しください。",
@@ -42,8 +46,8 @@ const ja: Record<keyof typeof en, string> = {
   "30–59 min": "30～59分",
   "60–89 min": "60～89分",
   "90–119 min": "90～119分",
-  "2–2:59 hr": "2時間～2時間59分",
-  "3 hr+": "3時間以上",
+  "120–179 min": "120～179分",
+  "180+ min": "180分以上",
   "Academic Year summary": "学年の概要",
   "Developer tools": "開発者ツール",
   "Preview update dialog": "更新ダイアログのプレビュー",
@@ -341,7 +345,7 @@ const ja: Record<keyof typeof en, string> = {
   "Focus trend": "集中トレンド",
   "Cumulative Focus Time": "累積集中時間",
   "Weeks with Sessions": "セッションのある週",
-  "Focus time by weekday": "曜日別の集中時間",
+  "Average focus time by weekday": "曜日別の平均集中時間",
   "Focused time is distributed across each three-hour period a Session crosses.":
     "集中時間は、セッションが通過する 3 時間ごとに分散されます。",
   "Jump to latest": "最新にジャンプ",
@@ -674,7 +678,7 @@ const ja: Record<keyof typeof en, string> = {
   "+1 day": "+1日",
   "In progress": "進行中",
   "Average session": "平均セッション時間",
-  "Sessions by weekday": "曜日別のセッション数",
+  "Average Sessions by weekday": "曜日別の平均セッション数",
   "Average session by weekday": "曜日別の平均セッション時間",
   "Match case": "大文字と小文字を区別",
   "No academic years": "学年がありません",

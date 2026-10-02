@@ -1,8 +1,8 @@
 {
   "format": "focus-backup",
   "formatVersion": 1,
-  "exportedAt": "2026-10-02T21:12:18.563Z",
-  "appVersion": "2.4.1",
+  "exportedAt": "2026-10-02T21:35:08.307Z",
+  "appVersion": "2.4.2",
   "sessionTimingVersion": 1,
   "data": {
     "academicYears": [
@@ -171,18 +171,6 @@
       }
     ],
     "sessions": [
-      {
-        "id": "00106cda-b33e-486f-9cc7-601954a8e019",
-        "subjectId": "9d0cc453-2239-48c6-9d4a-626234bf85e1",
-        "subjectName": "Guitar",
-        "academicYearId": "846436ad-4379-4c7e-b706-b10af421e499",
-        "academicYearName": "Self-Study",
-        "startTime": 1790971320000,
-        "endTime": 1790975700000,
-        "manual": true,
-        "focusedDurationSeconds": 4380,
-        "archived": false
-      },
       {
         "id": "025fbbeb-51b6-448b-a0f2-fd9f387a3845",
         "subjectId": "236d1d58-d260-43ce-b6ea-9786b417af5a",
@@ -2820,7 +2808,7 @@
       },
       {
         "key": "lastBackupAt",
-        "value": "null"
+        "value": "2026-10-02T21:12:23.572Z"
       },
       {
         "key": "lastSubjectId",

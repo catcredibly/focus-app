@@ -1,6 +1,10 @@
 import en from "./en";
 
 const zhCN: Record<keyof typeof en, string> = {
+  Total: "总计",
+  "Total focus time by weekday": "按星期几统计的总专注时间",
+  "Total Sessions by weekday": "按星期几统计的总专注次数",
+
   "Change color": "更改颜色",
   "Change color for {{subject}}": "更改{{subject}}的颜色",
   "Unable to change color. Please try again.": "无法更改颜色，请重试。",
@@ -42,8 +46,8 @@ const zhCN: Record<keyof typeof en, string> = {
   "30–59 min": "30–59 分钟",
   "60–89 min": "60–89 分钟",
   "90–119 min": "90–119 分钟",
-  "2–2:59 hr": "2–2:59 小时",
-  "3 hr+": "3 小时以上",
+  "120–179 min": "120–179 分钟",
+  "180+ min": "180 分钟以上",
   "Academic Year summary": "学年汇总",
   "Developer tools": "开发者工具",
   "Preview update dialog": "预览更新对话框",
@@ -337,7 +341,7 @@ const zhCN: Record<keyof typeof en, string> = {
   "Focus trend": "聚焦趋势",
   "Cumulative Focus Time": "累计专注时间",
   "Weeks with Sessions": "专注时段周数",
-  "Focus time by weekday": "按星期几统计的专注时间",
+  "Average focus time by weekday": "按星期几统计的平均专注时间",
   "Focused time is distributed across each three-hour period a Session crosses.":
     "专注时间分布在专注时段跨越的每个三小时时段内。",
   "Jump to latest": "跳转到最新内容",
@@ -658,8 +662,8 @@ const zhCN: Record<keyof typeof en, string> = {
   "+1 day": "+1 天",
   "In progress": "进行中",
   "Average session": "平均专注时长",
-  "Sessions by weekday": "按星期几统计的专注记录",
-  "Average session by weekday": "按星期几统计的平均专注时长",
+  "Average Sessions by weekday": "按星期几统计的平均专注次数",
+  "Average session by weekday": "按星期几统计的平均单次专注时间",
   "Match case": "区分大小写",
   "No academic years": "没有学年",
   "By day": "按日",

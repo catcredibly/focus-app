@@ -22,6 +22,7 @@ import {
   subjectTotals,
   timeOfDayMatrix,
   weeklyTotals,
+  weekdayAverages,
 } from "./analytics";
 
 const at = (y: number, m: number, d: number, h = 12) => new Date(y, m - 1, d, h).getTime();
@@ -244,4 +245,62 @@ it("keeps year entity counts independent of session date range", () => {
   expect(academicYearTotals(rows, years, subjects)).toMatchObject([
     { subjects: 2, sessions: 2, averageSessionSeconds: 2700 },
   ]);
+});
+
+describe("weekday averages", () => {
+  const period = { start: at(2026, 9, 7, 0), end: at(2026, 10, 5, 0) };
+  const rows = [
+    session("first", at(2026, 9, 7), 7200),
+    session("third", at(2026, 9, 21), 10800),
+    session("fourth", at(2026, 9, 28), 3600),
+    session("outside", period.end, 3600),
+  ];
+  it("includes zero-study occurrences without averaging Session length again", () => {
+    const [monday, tuesday] = weekdayAverages(rows, period);
+    expect(monday.occurrences).toBe(4);
+    expect(monday.averageFocusSeconds).toBe(5400);
+    expect(monday.averageSessionCount).toBe(0.75);
+    expect(monday.averageSessionSeconds).toBe(7200);
+    expect(tuesday.averageFocusSeconds).toBe(0);
+    expect(tuesday.averageSessionCount).toBe(0);
+    expect(tuesday.averageSessionSeconds).toBeNull();
+  });
+  it("preserves the range denominator when Subjects or Academic Years are filtered", () => {
+    const filtered = filterSessions(rows, { subjectIds: ["physics"], academicYearIds: ["uni"] });
+    expect(weekdayAverages(filtered, period)[0].occurrences).toBe(4);
+    expect(weekdayAverages(filtered, period)[0].averageFocusSeconds).toBe(0);
+    const selected = [
+      rows[0],
+      session("other", at(2026, 9, 14), 3600, { subjectId: "physics", academicYearId: "uni" }),
+    ];
+    const result = weekdayAverages(
+      filterSessions(selected, { subjectIds: ["physics"], academicYearIds: ["uni"] }),
+      period,
+    )[0];
+    expect(result.averageFocusSeconds).toBe(900);
+    expect(result.averageSessionCount).toBe(0.25);
+    expect(result.averageSessionSeconds).toBe(3600);
+  });
+  it("counts unequal weekday occurrences and handles absent weekdays and empty ranges", () => {
+    const partial = weekdayAverages([], { start: at(2026, 9, 7, 0), end: at(2026, 9, 16, 0) });
+    expect(partial.map((row) => row.occurrences)).toEqual([2, 2, 1, 1, 1, 1, 1]);
+    const single = weekdayAverages([], { start: period.start, end: at(2026, 9, 8, 0) });
+    expect(single.map((row) => row.occurrences)).toEqual([1, 0, 0, 0, 0, 0, 0]);
+    expect(
+      weekdayAverages([], { start: period.start, end: period.start }).every((row) => row.averageFocusSeconds === 0),
+    ).toBe(true);
+  });
+  it("keeps distribution boundaries and counts with minute labels", () => {
+    const durations = [1799, 1800, 3599, 3600, 5399, 5400, 7199, 7200, 10799, 10800];
+    const buckets = sessionLengthBuckets(durations.map((seconds, i) => session(String(i), period.start, seconds)));
+    expect(buckets.map((row) => row.label)).toEqual([
+      "<30 min",
+      "30–59 min",
+      "60–89 min",
+      "90–119 min",
+      "120–179 min",
+      "180+ min",
+    ]);
+    expect(buckets.map((row) => row.count)).toEqual([1, 2, 2, 2, 2, 1]);
+  });
 });

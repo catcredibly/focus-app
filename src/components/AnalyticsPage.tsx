@@ -9,7 +9,15 @@ import { ValueTooltip } from "./ValueTooltip";
 import { AnalyticsLoading } from "./PageSkeletons";
 import type { FocusSettings } from "../settings";
 import { GoalProgressTooltip } from "./GoalProgressTooltip";
-import { DEFAULT_WEEKDAY_METRIC, availableGoalMode } from "../analytics/controls";
+import {
+  DEFAULT_WEEKDAY_METRIC,
+  DEFAULT_WEEKDAY_MODE,
+  availableGoalMode,
+  weekdayChartMode,
+  weekdayChartTitle,
+  weekdayChartValue,
+  type WeekdayMode,
+} from "../analytics/controls";
 import { goalAchievement, goalAxisMaximum } from "../analytics/goalAchievement";
 import { academicYearProgress } from "../analytics/yearProgress";
 import { validSessions } from "../sessionValidity";
@@ -48,7 +56,7 @@ import {
   localDayKey,
   medianSessionSeconds,
   sessionLengthBuckets,
-  weekdayTotals,
+  weekdayAverages,
 } from "../analytics/analytics";
 import {
   addDays,
@@ -951,6 +959,8 @@ function RollingChart({ history, period, bars = false }: { history: FocusSession
 function StudyPatterns({ sessions, history, period, range }: TimelineProps) {
   const { t } = useTranslation();
   const [weekdayMetric, setWeekdayMetric] = useState(DEFAULT_WEEKDAY_METRIC);
+  const [selectedWeekdayMode, setSelectedWeekdayMode] = useState<WeekdayMode>(DEFAULT_WEEKDAY_MODE);
+  const weekdayMode = weekdayChartMode(weekdayMetric, selectedWeekdayMode);
   const { getDays, getDailyTotals } = useAnalyticsSnapshot();
   const { matrix, max, currentMetrics, previousMetrics, weekdays, lengths } = useMemo(() => {
     const values = summaryMetrics(sessions, undefined, getDailyTotals(sessions));
@@ -965,7 +975,7 @@ function StudyPatterns({ sessions, history, period, range }: TimelineProps) {
         summaryMetrics(previousSessions, undefined, getDailyTotals(previousSessions))[2],
         medianSessionSeconds(previousSessions),
       ],
-      weekdays: weekdayTotals(history, period, getDays),
+      weekdays: weekdayAverages(history, period, getDays),
       lengths: sessionLengthBuckets(sessions),
     };
   }, [sessions, history, period.start, period.end, getDays, getDailyTotals]);
@@ -975,17 +985,10 @@ function StudyPatterns({ sessions, history, period, range }: TimelineProps) {
     () =>
       weekdays.map((row) => ({
         ...row,
-        value:
-          weekdayMetric === "count"
-            ? row.count
-            : weekdayMetric === "average"
-              ? row.count
-                ? row.sessionSeconds / row.count
-                : null
-              : row.seconds,
+        value: weekdayChartValue(row, weekdayMetric, weekdayMode),
         label: t(row.label),
       })),
-    [weekdays, weekdayMetric, t, locale],
+    [weekdays, weekdayMetric, weekdayMode, t, locale],
   );
   const lengthPoints = useMemo(() => lengths.map((row) => ({ ...row, label: t(row.label) })), [lengths, t, locale]);
   const times = useMemo(
@@ -1020,18 +1023,24 @@ function StudyPatterns({ sessions, history, period, range }: TimelineProps) {
         <ComparisonFooter period={period} range={range} />
       </div>
       <div className="patterns-grid aligned-pattern-charts">
-        <Panel
-          title={t(
-            weekdayMetric === "count"
-              ? "Sessions by weekday"
-              : weekdayMetric === "average"
-                ? "Average session by weekday"
-                : "Focus time by weekday",
-          )}
-        >
+        <Panel title={t(weekdayChartTitle(weekdayMetric, weekdayMode))}>
           <div className="trend-controls">
+            <div className="range-control goal-mode-switch weekday-mode-switch">
+              {(["average", "total"] as const).map((mode) => (
+                <button
+                  type="button"
+                  key={mode}
+                  aria-pressed={weekdayMode === mode}
+                  className={weekdayMode === mode ? "active" : ""}
+                  disabled={mode === "total" && weekdayMetric === "average"}
+                  onClick={() => setSelectedWeekdayMode(mode)}
+                >
+                  {t(mode === "total" ? "Total" : "Average")}
+                </button>
+              ))}
+            </div>
             <select
-              aria-label={t("Focus time by weekday")}
+              aria-label={t("Average focus time by weekday")}
               value={weekdayMetric}
               onChange={(event) => setWeekdayMetric(event.target.value)}
             >
@@ -1045,7 +1054,7 @@ function StudyPatterns({ sessions, history, period, range }: TimelineProps) {
               <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
               <XAxis dataKey="label" />
               <YAxis
-                allowDecimals={weekdayMetric !== "count"}
+                allowDecimals={weekdayMetric !== "count" || weekdayMode === "average"}
                 tickFormatter={weekdayMetric === "count" ? number : formatDurationAxis}
               />
               <Bar
